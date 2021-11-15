@@ -225,6 +225,17 @@
     <Library Include="deps\libraries\vulkan\VkLayer_utils.lib" />
     <Library Include="deps\libraries\vulkan\vulkan-1.lib" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="deps\include\Logi\Logi.vcxproj">
+      <Project>{a07e1ed1-e43e-4c1d-a808-613c48b0ce1c}</Project>
+    </ProjectReference>
+    <ProjectReference Include="deps\include\M3D\M3D.vcxproj">
+      <Project>{b56c2cf3-e855-4681-9ef5-00f3e30479e0}</Project>
+    </ProjectReference>
+    <ProjectReference Include="deps\include\Tent\Tent.vcxproj">
+      <Project>{9214ab19-9bb8-4741-a93b-aa97e38c5a5f}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

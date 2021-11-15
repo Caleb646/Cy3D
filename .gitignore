@@ -10,6 +10,15 @@
 *.userosscache
 *.sln.docstates
 
+#IGNORE: LIBS ARE TOO LARGE
+deps/libraries/glfw
+deps/libraries/vulkan
+
+#DONT COMMIT SUBMODULES
+deps/include/Logi
+deps/include/M3D
+deps/include/Tent
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
