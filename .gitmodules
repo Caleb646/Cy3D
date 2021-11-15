@@ -1,0 +1,9 @@
+[submodule "deps/include/Logi"]
+	path = deps/include/Logi
+	url = https://github.com/Caleb646/Logi.git
+[submodule "deps/include/M3D"]
+	path = deps/include/M3D
+	url = https://github.com/Caleb646/M3D.git
+[submodule "deps/include/Tent"]
+	path = deps/include/Tent
+	url = https://github.com/Caleb646/Tent.git

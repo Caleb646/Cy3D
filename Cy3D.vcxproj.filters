@@ -14,4 +14,81 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitattributes" />
+    <None Include=".gitignore" />
+    <None Include="AddSubMods.bat">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="UpdateSubMods.bat">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include=".gitmodules" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="deps\libraries\vulkan\dxcompiler.lib" />
+    <Library Include="deps\libraries\vulkan\GenericCodeGen.lib" />
+    <Library Include="deps\libraries\vulkan\GenericCodeGend.lib" />
+    <Library Include="deps\libraries\vulkan\glslang.lib" />
+    <Library Include="deps\libraries\vulkan\glslangd.lib" />
+    <Library Include="deps\libraries\vulkan\glslang-default-resource-limits.lib" />
+    <Library Include="deps\libraries\vulkan\glslang-default-resource-limitsd.lib" />
+    <Library Include="deps\libraries\vulkan\HLSL.lib" />
+    <Library Include="deps\libraries\vulkan\HLSLd.lib" />
+    <Library Include="deps\libraries\vulkan\MachineIndependent.lib" />
+    <Library Include="deps\libraries\vulkan\MachineIndependentd.lib" />
+    <Library Include="deps\libraries\vulkan\OGLCompiler.lib" />
+    <Library Include="deps\libraries\vulkan\OGLCompilerd.lib" />
+    <Library Include="deps\libraries\vulkan\OSDependent.lib" />
+    <Library Include="deps\libraries\vulkan\OSDependentd.lib" />
+    <Library Include="deps\libraries\vulkan\shaderc.lib" />
+    <Library Include="deps\libraries\vulkan\shaderc_combined.lib" />
+    <Library Include="deps\libraries\vulkan\shaderc_combinedd.lib" />
+    <Library Include="deps\libraries\vulkan\shaderc_shared.lib" />
+    <Library Include="deps\libraries\vulkan\shaderc_sharedd.lib" />
+    <Library Include="deps\libraries\vulkan\shaderc_util.lib" />
+    <Library Include="deps\libraries\vulkan\shaderc_utild.lib" />
+    <Library Include="deps\libraries\vulkan\shadercd.lib" />
+    <Library Include="deps\libraries\vulkan\SPIRV.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-c.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-cd.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-core.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-cored.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-cpp.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-cppd.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-c-shared.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-c-sharedd.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-glsl.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-glsld.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-hlsl.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-hlsld.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-msl.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-msld.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-reflect.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-reflectd.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-util.lib" />
+    <Library Include="deps\libraries\vulkan\spirv-cross-utild.lib" />
+    <Library Include="deps\libraries\vulkan\SPIRVd.lib" />
+    <Library Include="deps\libraries\vulkan\SPIRV-Tools.lib" />
+    <Library Include="deps\libraries\vulkan\SPIRV-Toolsd.lib" />
+    <Library Include="deps\libraries\vulkan\SPIRV-Tools-link.lib" />
+    <Library Include="deps\libraries\vulkan\SPIRV-Tools-linkd.lib" />
+    <Library Include="deps\libraries\vulkan\SPIRV-Tools-lint.lib" />
+    <Library Include="deps\libraries\vulkan\SPIRV-Tools-lintd.lib" />
+    <Library Include="deps\libraries\vulkan\SPIRV-Tools-opt.lib" />
+    <Library Include="deps\libraries\vulkan\SPIRV-Tools-optd.lib" />
+    <Library Include="deps\libraries\vulkan\SPIRV-Tools-reduce.lib" />
+    <Library Include="deps\libraries\vulkan\SPIRV-Tools-reduced.lib" />
+    <Library Include="deps\libraries\vulkan\SPIRV-Tools-shared.lib" />
+    <Library Include="deps\libraries\vulkan\SPIRV-Tools-sharedd.lib" />
+    <Library Include="deps\libraries\vulkan\SPVRemapper.lib" />
+    <Library Include="deps\libraries\vulkan\SPVRemapperd.lib" />
+    <Library Include="deps\libraries\vulkan\VkLayer_utils.lib" />
+    <Library Include="deps\libraries\vulkan\vulkan-1.lib" />
+  </ItemGroup>
 </Project>
