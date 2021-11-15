@@ -29,6 +29,12 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\CyWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FirstApp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="deps\libraries\vulkan\dxcompiler.lib" />
@@ -90,5 +96,13 @@
     <Library Include="deps\libraries\vulkan\SPVRemapperd.lib" />
     <Library Include="deps\libraries\vulkan\VkLayer_utils.lib" />
     <Library Include="deps\libraries\vulkan\vulkan-1.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\CyWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\FirstApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

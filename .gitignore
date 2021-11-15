@@ -11,13 +11,12 @@
 *.sln.docstates
 
 #IGNORE: LIBS ARE TOO LARGE
-deps/libraries/glfw
-deps/libraries/vulkan
+deps/libraries/
 
 #DONT COMMIT SUBMODULES
-deps/include/Logi
-deps/include/M3D
-deps/include/Tent
+deps/include/Logi/
+deps/include/M3D/
+deps/include/Tent/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

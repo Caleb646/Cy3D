@@ -126,12 +126,13 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)deps\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)deps\libraries\glfw;$(SolutionDir)deps\libraries\vulkan</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;user32.lib;gdi32.lib;shell32.lib;vcruntime.lib;msvcrt.lib</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;user32.lib;gdi32.lib;shell32.lib;msvcrtd.lib;vcruntime.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -162,6 +163,8 @@
     <None Include="UpdateSubMods.bat" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\FirstApp.cpp" />
+    <ClCompile Include="src\CyWindow.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -235,6 +238,10 @@
     <ProjectReference Include="deps\include\Tent\Tent.vcxproj">
       <Project>{9214ab19-9bb8-4741-a93b-aa97e38c5a5f}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\FirstApp.h" />
+    <ClInclude Include="src\CyWindow.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
