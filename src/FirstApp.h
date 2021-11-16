@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CyPipeline.h"
 #include "CyWindow.h"
 
 namespace cy3d
@@ -8,6 +9,7 @@ namespace cy3d
 	{
 	private:
 		CyWindow cyWindow{ WindowTraits{ 800, 600, "Hello" } };
+		CyPipeline cyPipeline{ "resources\shaders\SimpleShader.vert", "resources\shaders\SimpleShader.frag" };
 
 	public:
 		void run();

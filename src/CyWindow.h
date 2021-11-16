@@ -39,9 +39,6 @@ namespace cy3d
 		WindowTraits windowTraits;
 		_internal::windowPtr window;
 
-	private:
-		void initWindow();
-
 	public:
 		CyWindow(WindowTraits);
 		~CyWindow();
@@ -50,8 +47,11 @@ namespace cy3d
 		CyWindow(const CyWindow&) = delete;
 		CyWindow& operator=(const CyWindow&) = delete;
 
-
+		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 		bool shouldClose() { return glfwWindowShouldClose(window.get()); }
+
+	private:
+		void initWindow();
 	};
 };
 
