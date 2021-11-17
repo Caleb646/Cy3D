@@ -1,9 +1,8 @@
 #pragma once
 
-#include "CyDevice.h"
+#include "pch.h"
 
-#include <string>
-#include <vector>
+#include "CyDevice.h"
 
 namespace cy3d
 {

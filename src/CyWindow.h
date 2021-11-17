@@ -1,10 +1,7 @@
 #pragma once
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include "pch.h"
 
-#include <memory>
-#include <string>
 
 namespace cy3d
 {

@@ -1,49 +1,41 @@
+#include "pch.h"
+
 #include "CyDevice.h"
 
+#include <Logi/Logi.h>
 
-#include <cstring>
-#include <iostream>
-#include <set>
-#include <unordered_set>
 
 namespace cy3d
 {
 
 	// local callback functions
-	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-		VkDebugUtilsMessageTypeFlagsEXT messageType,
-		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-		void* pUserData)
+	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 	{
 		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 		return VK_FALSE;
 	}
 
-	VkResult CreateDebugUtilsMessengerEXT(
-		VkInstance instance,
-		const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-		const VkAllocationCallbacks* pAllocator,
-		VkDebugUtilsMessengerEXT* pDebugMessenger) {
+	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
+	{
 		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
 			instance,
 			"vkCreateDebugUtilsMessengerEXT");
-		if (func != nullptr) {
+		if (func != nullptr)
+		{
 			return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
 		}
-		else {
+		else 
+		{
 			return VK_ERROR_EXTENSION_NOT_PRESENT;
 		}
 	}
 
-	void DestroyDebugUtilsMessengerEXT(
-		VkInstance instance,
-		VkDebugUtilsMessengerEXT debugMessenger,
-		const VkAllocationCallbacks* pAllocator) {
+	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
 		auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
 			instance,
 			"vkDestroyDebugUtilsMessengerEXT");
-		if (func != nullptr) {
+		if (func != nullptr) 
+		{
 			func(instance, debugMessenger, pAllocator);
 		}
 	}
@@ -64,7 +56,8 @@ namespace cy3d
 		vkDestroyCommandPool(device_, commandPool, nullptr);
 		vkDestroyDevice(device_, nullptr);
 
-		if (enableValidationLayers) {
+		if (enableValidationLayers) 
+		{
 			DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 		}
 
@@ -72,14 +65,17 @@ namespace cy3d
 		vkDestroyInstance(instance, nullptr);
 	}
 
-	void CyDevice::createInstance() {
-		if (enableValidationLayers && !checkValidationLayerSupport()) {
-			throw std::runtime_error("validation layers requested, but not available!");
-		}
+	void CyDevice::createInstance() 
+	{
+		ASSERT_ERROR(DEFAULT_LOGGABLE, enableValidationLayers && checkValidationLayerSupport(), "Validation layers requested, but not available");
+		//if (enableValidationLayers && !checkValidationLayerSupport()) 
+		//{
+		//	throw std::runtime_error("validation layers requested, but not available!");
+		//}
 
 		VkApplicationInfo appInfo = {};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		appInfo.pApplicationName = "LittleVulkanEngine App";
+		appInfo.pApplicationName = "Cy3D";
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.pEngineName = "No Engine";
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -94,35 +90,36 @@ namespace cy3d
 		createInfo.ppEnabledExtensionNames = extensions.data();
 
 		VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo;
-		if (enableValidationLayers) {
+		if (enableValidationLayers) 
+		{
 			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 			createInfo.ppEnabledLayerNames = validationLayers.data();
 
 			populateDebugMessengerCreateInfo(debugCreateInfo);
 			createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 		}
-		else {
+		else 
+		{
 			createInfo.enabledLayerCount = 0;
 			createInfo.pNext = nullptr;
 		}
-
-		if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create instance!");
-		}
-
+		ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateInstance(&createInfo, nullptr, &instance) == VK_SUCCESS, "Validation layers requested, but not available");
 		hasGlfwRequiredInstanceExtensions();
 	}
 
+	/**
+	 * @brief Creates a vector of available physical devices and picks
+	 * a suitable one.
+	*/
 	void CyDevice::pickPhysicalDevice()
 	{
 		uint32_t deviceCount = 0;
+		//get the device count
 		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
-		if (deviceCount == 0)
-		{
-			throw std::runtime_error("failed to find GPUs with Vulkan support!");
-		}
+		ASSERT_ERROR(DEFAULT_LOGGABLE, deviceCount != 0, "Failed to find GPUs with Vulkan support.");
 		std::cout << "Device count: " << deviceCount << std::endl;
 		std::vector<VkPhysicalDevice> devices(deviceCount);
+		//place the available devices in the devices vector.
 		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
 		for (const auto& device : devices)
@@ -133,27 +130,32 @@ namespace cy3d
 				break;
 			}
 		}
-
-		if (physicalDevice == VK_NULL_HANDLE)
-		{
-			throw std::runtime_error("failed to find a suitable GPU!");
-		}
-
+		ASSERT_ERROR(DEFAULT_LOGGABLE, physicalDevice != VK_NULL_HANDLE, "Physical device cannot be null.");
 		vkGetPhysicalDeviceProperties(physicalDevice, &properties);
 		std::cout << "physical device: " << properties.deviceName << std::endl;
 	}
 
+	/**
+	 * @brief 
+	*/
 	void CyDevice::createLogicalDevice()
 	{
+		//get the supported queue family indices for the picked physical device
 		QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-		std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily, indices.presentFamily };
+		std::set<uint32_t> uniqueQueueFamilies{ indices.graphicsFamily.value(), indices.presentFamily.value() };
 
+		/**
+		 * Vulkan lets you assign priorities to queues to influence the scheduling of
+		 * command buffer execution using floating point numbers between 0.0 and 1.0. 
+		 * This is required even if there is only a single queue
+		*/
 		float queuePriority = 1.0f;
 		for (uint32_t queueFamily : uniqueQueueFamilies)
 		{
-			VkDeviceQueueCreateInfo queueCreateInfo = {};
+			//describes the number of queues we want for a single queue family
+			VkDeviceQueueCreateInfo queueCreateInfo{};
 			queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 			queueCreateInfo.queueFamilyIndex = queueFamily;
 			queueCreateInfo.queueCount = 1;
@@ -161,10 +163,10 @@ namespace cy3d
 			queueCreateInfos.push_back(queueCreateInfo);
 		}
 
-		VkPhysicalDeviceFeatures deviceFeatures = {};
+		VkPhysicalDeviceFeatures deviceFeatures{};
 		deviceFeatures.samplerAnisotropy = VK_TRUE;
 
-		VkDeviceCreateInfo createInfo = {};
+		VkDeviceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
 		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
@@ -185,14 +187,20 @@ namespace cy3d
 		{
 			createInfo.enabledLayerCount = 0;
 		}
+		/**
+		 * The parameters are the physical device to interface with, 
+		 * the queue and usage info we just specified, the optional allocation 
+		 * callbacks pointer and a pointer to a variable to store the logical device handle in.
+		*/
+		ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateDevice(physicalDevice, &createInfo, nullptr, &device_) == VK_SUCCESS, "Failed to create logical device.");
 
-		if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device_) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create logical device!");
-		}
-
-		vkGetDeviceQueue(device_, indices.graphicsFamily, 0, &graphicsQueue_);
-		vkGetDeviceQueue(device_, indices.presentFamily, 0, &presentQueue_);
+		/**
+		 * We can use the vkGetDeviceQueue function to retrieve queue handles for each queue family.
+		 * The parameters are the logical device, queue family, queue index and a pointer to the variable 
+		 * to store the queue handle in. Because we're only creating a single queue from this family, we'll simply use index 0.
+		*/
+		vkGetDeviceQueue(device_, indices.graphicsFamily.value(), 0, &graphicsQueue_);
+		vkGetDeviceQueue(device_, indices.presentFamily.value(), 0, &presentQueue_);
 	}
 
 
@@ -202,7 +210,7 @@ namespace cy3d
 
 		VkCommandPoolCreateInfo poolInfo = {};
 		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
+		poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 		poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
 		if (vkCreateCommandPool(device_, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
@@ -213,7 +221,11 @@ namespace cy3d
 
 	void CyDevice::createSurface() { window.createWindowSurface(instance, &surface_); }
 
-
+	/**
+	 * @brief Returns true is the neccessary queues, extensions, and present modes are supported
+	 * @param device is the current physical device being checked for suitablility
+	 * @return True if the device is suitable
+	*/
 	bool CyDevice::isDeviceSuitable(VkPhysicalDevice device)
 	{
 		QueueFamilyIndices indices = findQueueFamilies(device);
@@ -230,8 +242,7 @@ namespace cy3d
 		VkPhysicalDeviceFeatures supportedFeatures;
 		vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
-		return indices.isComplete() && extensionsSupported && swapChainAdequate &&
-			supportedFeatures.samplerAnisotropy;
+		return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 	}
 
 	void CyDevice::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
@@ -354,36 +365,40 @@ namespace cy3d
 		return requiredExtensions.empty();
 	}
 
+	/**
+	 * @brief We need to check which queue families are supported by the device and which one of these supports the commands that we want to use. 
+	 * For that purpose we'll add a new function findQueueFamilies that looks for all the queue families we need.
+	 * @param device 
+	 * @return The supported queues along with their corresponding queue family index
+	*/
 	QueueFamilyIndices CyDevice::findQueueFamilies(VkPhysicalDevice device)
 	{
 		QueueFamilyIndices indices;
 
 		uint32_t queueFamilyCount = 0;
+		//get supported queues count
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 
+
+		/*
+		* get the queues themselves
+		*
+		* The VkQueueFamilyProperties struct contains some details about the queue family,
+		* including the type of operations that are supported and the number of queues that
+		* can be created based on that family. We need to find at least one queue family that supports VK_QUEUE_GRAPHICS_BIT
+		*/
 		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
+		// i represents the queue family index for the particular device
 		int i = 0;
 		for (const auto& queueFamily : queueFamilies)
 		{
-			if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-			{
-				indices.graphicsFamily = i;
-				indices.graphicsFamilyHasValue = true;
-			}
+			if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) indices.graphicsFamily = i;
 			VkBool32 presentSupport = false;
 			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface_, &presentSupport);
-			if (queueFamily.queueCount > 0 && presentSupport)
-			{
-				indices.presentFamily = i;
-				indices.presentFamilyHasValue = true;
-			}
-			if (indices.isComplete())
-			{
-				break;
-			}
-
+			if (queueFamily.queueCount > 0 && presentSupport) indices.presentFamily = i;
+			if (indices.isComplete()) break;
 			i++;
 		}
 

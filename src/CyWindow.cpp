@@ -1,7 +1,7 @@
+#include "pch.h"
+
 #include "CyWindow.h"
 
-
-#include <stdexcept>
 
 namespace cy3d
 {

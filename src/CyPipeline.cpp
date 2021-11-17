@@ -1,10 +1,6 @@
+#include "pch.h"
+
 #include "CyPipeline.h"
-
-
-#include <fstream>
-#include <iostream>
-#include <stdexcept>
-#include <vector>
 
 #include <Logi/Logi.h>
 

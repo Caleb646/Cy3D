@@ -1,14 +1,9 @@
-#include <array>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <limits>
-#include <set>
-#include <stdexcept>
+#include "pch.h"
+
+#include "CySwapChain.h"
 
 #include <Logi/Logi.h>
 
-#include "CySwapChain.h"
 
 namespace cy3d {
 
@@ -149,7 +144,7 @@ namespace cy3d {
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
         QueueFamilyIndices indices = device.findPhysicalQueueFamilies();
-        uint32_t queueFamilyIndices[] = { indices.graphicsFamily, indices.presentFamily };
+        uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
         if (indices.graphicsFamily != indices.presentFamily)
         {
@@ -187,7 +182,8 @@ namespace cy3d {
         swapChainExtent = extent;
     }
 
-    void CySwapChain::createImageViews() {
+    void CySwapChain::createImageViews() 
+    {
         swapChainImageViews.resize(swapChainImages.size());
         for (size_t i = 0; i < swapChainImages.size(); i++)
         {
@@ -206,7 +202,8 @@ namespace cy3d {
         }
     }
 
-    void CySwapChain::createRenderPass() {
+    void CySwapChain::createRenderPass() 
+    {
         /**
          * Creates a blueprint to be used for the framebuffer
         */
@@ -224,7 +221,7 @@ namespace cy3d {
         depthAttachmentRef.attachment = 1;
         depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-        VkAttachmentDescription colorAttachment = {};
+        VkAttachmentDescription colorAttachment{};
         colorAttachment.format = getSwapChainImageFormat();
         colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -234,7 +231,7 @@ namespace cy3d {
         colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-        VkAttachmentReference colorAttachmentRef = {};
+        VkAttachmentReference colorAttachmentRef{};
         colorAttachmentRef.attachment = 0;
         colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
@@ -244,7 +241,7 @@ namespace cy3d {
         subpass.pColorAttachments = &colorAttachmentRef;
         subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
-        VkSubpassDependency dependency = {};
+        VkSubpassDependency dependency{};
 
         dependency.dstSubpass = 0;
         dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -268,9 +265,11 @@ namespace cy3d {
             "Failed to create render pass");
     }
 
-    void CySwapChain::createFramebuffers() {
+    void CySwapChain::createFramebuffers() 
+    {
         swapChainFramebuffers.resize(imageCount());
-        for (size_t i = 0; i < imageCount(); i++) {
+        for (size_t i = 0; i < imageCount(); i++) 
+        {
             std::array<VkImageView, 2> attachments = { swapChainImageViews[i], depthImageViews[i] };
 
             VkExtent2D swapChainExtent = getSwapChainExtent();
@@ -290,7 +289,8 @@ namespace cy3d {
         }
     }
 
-    void CySwapChain::createDepthResources() {
+    void CySwapChain::createDepthResources() 
+    {
         VkFormat depthFormat = findDepthFormat();
         VkExtent2D swapChainExtent = getSwapChainExtent();
 
@@ -298,7 +298,8 @@ namespace cy3d {
         depthImageMemorys.resize(imageCount());
         depthImageViews.resize(imageCount());
 
-        for (int i = 0; i < depthImages.size(); i++) {
+        for (int i = 0; i < depthImages.size(); i++) 
+        {
             VkImageCreateInfo imageInfo{};
             imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
             imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -335,7 +336,8 @@ namespace cy3d {
         }
     }
 
-    void CySwapChain::createSyncObjects() {
+    void CySwapChain::createSyncObjects()
+    {
         imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
@@ -348,7 +350,8 @@ namespace cy3d {
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        {
             ASSERT_ERROR
             (
                 DEFAULT_LOGGABLE, 
@@ -360,11 +363,12 @@ namespace cy3d {
         }
     }
 
-    VkSurfaceFormatKHR CySwapChain::chooseSwapSurfaceFormat(
-        const std::vector<VkSurfaceFormatKHR>& availableFormats) {
-        for (const auto& availableFormat : availableFormats) {
-            if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
-                availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+    VkSurfaceFormatKHR CySwapChain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+    {
+        for (const auto& availableFormat : availableFormats) 
+        {
+            if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            {
                 return availableFormat;
             }
         }

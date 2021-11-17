@@ -1,11 +1,4 @@
-//check that libs are linked.
-//#include <Logi/Logi.h>
-//#include <M3D/M3D.h>
-//#include <Tent/Tent.h>
-
-#include <cstdlib>
-#include <iostream>
-#include <stdexcept>
+#include "pch.h"
 
 #include "src/FirstApp.h"
 
