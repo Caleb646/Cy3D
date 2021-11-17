@@ -51,12 +51,12 @@ namespace cy3d
 
 	CyDevice::CyDevice(CyWindow& w) : window(w)
 	{
-		createInstance();
-		setupDebugMessenger();
-		createSurface();
-		pickPhysicalDevice();
-		createLogicalDevice();
-		createCommandPool();
+		createInstance(); //init vulkan and create an instance of it
+		setupDebugMessenger(); //setup validation layers.
+		createSurface(); //connection between the window and vulkan
+		pickPhysicalDevice(); //picks the gpu that the program will use
+		createLogicalDevice(); //describes what features of the physical device will be used.
+		createCommandPool(); //
 	}
 
 	CyDevice::~CyDevice()
@@ -110,7 +110,7 @@ namespace cy3d
 			throw std::runtime_error("failed to create instance!");
 		}
 
-		hasGflwRequiredInstanceExtensions();
+		hasGlfwRequiredInstanceExtensions();
 	}
 
 	void CyDevice::pickPhysicalDevice()
@@ -305,22 +305,22 @@ namespace cy3d
 		return extensions;
 	}
 
-	void CyDevice::hasGflwRequiredInstanceExtensions()
+	void CyDevice::hasGlfwRequiredInstanceExtensions()
 	{
 		uint32_t extensionCount = 0;
 		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
 		std::vector<VkExtensionProperties> extensions(extensionCount);
 		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-		std::cout << "available extensions:" << std::endl;
+		/*std::cout << "available extensions:" << std::endl;
 		std::unordered_set<std::string> available;
 		for (const auto& extension : extensions)
 		{
 			std::cout << "\t" << extension.extensionName << std::endl;
 			available.insert(extension.extensionName);
-		}
+		}*/
 
-		std::cout << "required extensions:" << std::endl;
+		/*std::cout << "required extensions:" << std::endl;
 		auto requiredExtensions = getRequiredExtensions();
 		for (const auto& required : requiredExtensions)
 		{
@@ -329,7 +329,7 @@ namespace cy3d
 			{
 				throw std::runtime_error("Missing required glfw extension");
 			}
-		}
+		}*/
 	}
 
 	bool CyDevice::checkDeviceExtensionSupport(VkPhysicalDevice device)

@@ -26,6 +26,10 @@
     <None Include=".gitmodules" />
     <None Include="src\resources\shaders\SimpleShader.vert" />
     <None Include="src\resources\shaders\SimpleShader.frag" />
+    <None Include="cpp.hint" />
+    <None Include="CompileShaders.bat">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -41,6 +45,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\CyDevice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CySwapChain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -116,6 +123,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\CyDevice.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\CySwapChain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

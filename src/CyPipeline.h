@@ -1,20 +1,62 @@
 #pragma once
 
+#include "CyDevice.h"
+
 #include <string>
 #include <vector>
 
 namespace cy3d
 {
+	struct PipelineConfigInfo
+	{
+		PipelineConfigInfo() = default;
+		PipelineConfigInfo(const PipelineConfigInfo&) = delete;
+		PipelineConfigInfo& operator=(const PipelineConfigInfo&) = delete;
+
+		VkViewport viewport;
+		VkRect2D scissor;
+		VkPipelineViewportStateCreateInfo viewportInfo;
+		VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
+		VkPipelineRasterizationStateCreateInfo rasterizationInfo;
+		VkPipelineMultisampleStateCreateInfo multisampleInfo;
+		VkPipelineColorBlendAttachmentState colorBlendAttachment;
+		VkPipelineColorBlendStateCreateInfo colorBlendInfo;
+		VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
+		VkPipelineLayout pipelineLayout = nullptr;
+		VkRenderPass renderPass = nullptr;
+		uint32_t subpass = 0;
+	};
+
 	class CyPipeline
 	{
-	public:
-		CyPipeline(const std::string& vertFilepath, const std::string& fragFilepath);
-
 	private:
-		void createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath);
+		CyDevice& cyDevice;
+		VkPipeline graphicsPipeline;
+		VkShaderModule vertShaderModule;
+		VkShaderModule fragShaderModule;
+
+	public:
+		CyPipeline(CyDevice& d, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config);
+		~CyPipeline();
+
+		//delete copy methods
+		CyPipeline(const CyPipeline&) = delete;
+		CyPipeline& operator=(const CyPipeline&) = delete;
+
+		void bind(VkCommandBuffer commandBuffer);
 
 		/*
-		* STATIC METHODS
+		* PUBLIC STATIC METHODS
+		*/
+		static void defaultPipelineConfigInfo(PipelineConfigInfo& configInfo, uint32_t width, uint32_t height);
+
+	private:
+		void createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config);
+
+		void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
+
+		/*
+		* PRIVATE STATIC METHODS
 		*/
 		static std::vector<char> readFile(const std::string& filename);
 	};

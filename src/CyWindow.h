@@ -17,27 +17,18 @@ namespace cy3d
 		WindowTraits(int&& w, int&& h, std::string&& name) : width(std::move(w)), height(std::move(h)), windowName(std::move(name)) {}
 	};
 
-	namespace _internal
-	{
-		//specify destructor for std::unique_ptr for glfw window.
-		struct DestroyWindow
-		{
-			void operator()(GLFWwindow* ptr)
-			{
-				glfwDestroyWindow(ptr);
-			}
-		};
-
-		typedef std::unique_ptr<GLFWwindow, DestroyWindow> windowPtr;
-	}
-
-
-
 	class CyWindow
 	{
 	private:
+		struct DestroyWindow //custom destructor for GLFWwindow ptr;
+		{
+			void operator()(GLFWwindow* ptr) { glfwDestroyWindow(ptr); }
+		};
+
+		using windowPtr = std::unique_ptr<GLFWwindow, DestroyWindow>;
+
 		WindowTraits windowTraits;
-		_internal::windowPtr window;
+		windowPtr window;
 
 	public:
 		CyWindow(WindowTraits);
@@ -49,6 +40,7 @@ namespace cy3d
 
 		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 		bool shouldClose() { return glfwWindowShouldClose(window.get()); }
+		VkExtent2D getExtent() { return { static_cast<uint32_t>(windowTraits.width), static_cast<uint32_t>(windowTraits.height) }; }
 
 	private:
 		void initWindow();

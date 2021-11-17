@@ -160,11 +160,14 @@
     <None Include=".gitignore" />
     <None Include=".gitmodules" />
     <None Include="AddSubMods.bat" />
+    <None Include="cpp.hint" />
+    <None Include="CompileShaders.bat" />
     <None Include="src\resources\shaders\SimpleShader.frag" />
     <None Include="src\resources\shaders\SimpleShader.vert" />
     <None Include="UpdateSubMods.bat" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\CySwapChain.cpp" />
     <ClCompile Include="src\CyDevice.cpp" />
     <ClCompile Include="src\CyPipeline.cpp" />
     <ClCompile Include="src\FirstApp.cpp" />
@@ -244,6 +247,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\CySwapChain.h" />
     <ClInclude Include="src\CyDevice.h" />
     <ClInclude Include="src\CyPipeline.h" />
     <ClInclude Include="src\FirstApp.h" />
