@@ -42,6 +42,11 @@ namespace cy3d
 		*/
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 		CyWindow& window;
+
+		/**
+		 * Command pools manage the memory that is used to store the buffers and 
+		 * command buffers are allocated from them.
+		*/
 		VkCommandPool commandPool;
 
 		/**
@@ -69,7 +74,12 @@ namespace cy3d
 		VkQueue presentQueue_;
 
 		const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
-		//the supported features/extensions of physicalDevice
+		//
+		/**
+		* The supported features/extensions of physicalDevice.
+		* 
+		* Check that the physical device has Swap Chain Support
+		*/
 		const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 

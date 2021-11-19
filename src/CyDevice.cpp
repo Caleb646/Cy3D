@@ -17,9 +17,7 @@ namespace cy3d
 
 	VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
 	{
-		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
-			instance,
-			"vkCreateDebugUtilsMessengerEXT");
+		auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
 		if (func != nullptr)
 		{
 			return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
@@ -31,9 +29,7 @@ namespace cy3d
 	}
 
 	void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
-		auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
-			instance,
-			"vkDestroyDebugUtilsMessengerEXT");
+		auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
 		if (func != nullptr) 
 		{
 			func(instance, debugMessenger, pAllocator);
@@ -48,7 +44,7 @@ namespace cy3d
 		createSurface(); //connection between the window and vulkan
 		pickPhysicalDevice(); //picks the gpu that the program will use
 		createLogicalDevice(); //describes what features of the physical device will be used.
-		createCommandPool(); //
+		createCommandPool();
 	}
 
 	CyDevice::~CyDevice()
@@ -68,11 +64,6 @@ namespace cy3d
 	void CyDevice::createInstance() 
 	{
 		ASSERT_ERROR(DEFAULT_LOGGABLE, enableValidationLayers && checkValidationLayerSupport(), "Validation layers requested, but not available");
-		//if (enableValidationLayers && !checkValidationLayerSupport()) 
-		//{
-		//	throw std::runtime_error("validation layers requested, but not available!");
-		//}
-
 		VkApplicationInfo appInfo = {};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pApplicationName = "Cy3D";
@@ -197,26 +188,35 @@ namespace cy3d
 		/**
 		 * We can use the vkGetDeviceQueue function to retrieve queue handles for each queue family.
 		 * The parameters are the logical device, queue family, queue index and a pointer to the variable 
-		 * to store the queue handle in. Because we're only creating a single queue from this family, we'll simply use index 0.
+		 * to store the queue handle in.
+		 * 
+		 * If the queue families are the same "have the same queueIndex", then we only need to pass its index once. 
 		*/
 		vkGetDeviceQueue(device_, indices.graphicsFamily.value(), 0, &graphicsQueue_);
 		vkGetDeviceQueue(device_, indices.presentFamily.value(), 0, &presentQueue_);
 	}
 
-
+	/**
+	 * @brief Command buffers are executed by submitting them on one of the device queues, like the
+	 * graphics and presentation queues we retrieved. Each command pool can only allocate command buffers that are submitted on a single type of queue.
+	*/
 	void CyDevice::createCommandPool() 
 	{
 		QueueFamilyIndices queueFamilyIndices = findPhysicalQueueFamilies();
 
-		VkCommandPoolCreateInfo poolInfo = {};
+		VkCommandPoolCreateInfo poolInfo{};
 		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+
+		/**
+		 * There are two possible flags for command pools:
+
+		 * VK_COMMAND_POOL_CREATE_TRANSIENT_BIT: Hint that command buffers are rerecorded with new commands very often (may change memory allocation behavior)
+		 * VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT: Allow command buffers to be rerecorded individually, without this flag they all have to be reset together
+		*/
 		poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-		if (vkCreateCommandPool(device_, &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create command pool!");
-		}
+		ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateCommandPool(device_, &poolInfo, nullptr, &commandPool) == VK_SUCCESS, "Failed to create command pool.");
 	}
 
 	void CyDevice::createSurface() { window.createWindowSurface(instance, &surface_); }
@@ -394,6 +394,12 @@ namespace cy3d
 		int i = 0;
 		for (const auto& queueFamily : queueFamilies)
 		{
+			/**
+			 * It's actually possible that the queue families supporting drawing commands
+			 * and the ones supporting presentation do not overlap. 
+			 * 
+			 * Will treat them as if they were separate queues for a uniform approach
+			*/
 			if (queueFamily.queueCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) indices.graphicsFamily = i;
 			VkBool32 presentSupport = false;
 			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface_, &presentSupport);
@@ -405,6 +411,15 @@ namespace cy3d
 		return indices;
 	}
 
+	/**
+	 * @brief This function takes the specified VkPhysicalDevice and VkSurfaceKHR window 
+	 * surface into account when determining the supported capabilities. All of the support 
+	 * querying functions have these two as first parameters because they are the core components of the swap chain.
+	 *
+	 * Three kinds of properties we need to check:
+	 * Basic surface capabilities (min/max number of images in swap chain, min/max width and height of images),
+	 * Surface formats (pixel format, color space), and Available presentation modes. 
+	*/
 	SwapChainSupportDetails CyDevice::querySwapChainSupport(VkPhysicalDevice device)
 	{
 		SwapChainSupportDetails details;
@@ -425,17 +440,12 @@ namespace cy3d
 		if (presentModeCount != 0)
 		{
 			details.presentModes.resize(presentModeCount);
-			vkGetPhysicalDeviceSurfacePresentModesKHR(
-				device,
-				surface_,
-				&presentModeCount,
-				details.presentModes.data());
+			vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface_, &presentModeCount, details.presentModes.data());
 		}
 		return details;
 	}
 
-	VkFormat CyDevice::findSupportedFormat(
-		const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+	VkFormat CyDevice::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
 	{
 		for (VkFormat format : candidates)
 		{
@@ -460,22 +470,17 @@ namespace cy3d
 		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 		for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) 
 		{
-			if ((typeFilter & (1 << i)) &&
-				(memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+			if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
 			{
 				return i;
 			}
 		}
 
-		throw std::runtime_error("failed to find suitable memory type!");
+		ASSERT_ERROR(DEFAULT_LOGGABLE, true == false, "Failed to find memory type.");
 	}
 
-	void CyDevice::createBuffer(
-		VkDeviceSize size,
-		VkBufferUsageFlags usage,
-		VkMemoryPropertyFlags properties,
-		VkBuffer& buffer,
-		VkDeviceMemory& bufferMemory) {
+	void CyDevice::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+	{ 
 		VkBufferCreateInfo bufferInfo{};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		bufferInfo.size = size;
@@ -577,11 +582,8 @@ namespace cy3d
 		endSingleTimeCommands(commandBuffer);
 	}
 
-	void CyDevice::createImageWithInfo(
-		const VkImageCreateInfo& imageInfo,
-		VkMemoryPropertyFlags properties,
-		VkImage& image,
-		VkDeviceMemory& imageMemory) {
+	void CyDevice::createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
+	{
 		if (vkCreateImage(device_, &imageInfo, nullptr, &image) != VK_SUCCESS)
 		{
 			throw std::runtime_error("failed to create image!");

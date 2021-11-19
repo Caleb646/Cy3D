@@ -8,10 +8,15 @@ namespace cy3d
 {
     CyPipeline::CyPipeline(CyDevice& d, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config) : cyDevice(d)
     {
-        createGraphicsPipeline(vertFilepath, fragFilepath, config);
+        createGraphicsPipeline(vertFilepath, fragFilepath, config); 
     }
 
     CyPipeline::~CyPipeline()
+    {
+        cleanup();
+    }
+
+    void CyPipeline::cleanup()
     {
         vkDestroyShaderModule(cyDevice.device(), fragShaderModule, nullptr);
         vkDestroyShaderModule(cyDevice.device(), vertShaderModule, nullptr);
@@ -34,7 +39,12 @@ namespace cy3d
         createShaderModule(vertCode, &vertShaderModule);
         createShaderModule(fragCode, &fragShaderModule);
 
+        /**
+         * To actually use the shaders we'll need to assign them to a specific pipeline stage through 
+         * VkPipelineShaderStageCreateInfo structures as part of the actual pipeline creation process.
+        */
         VkPipelineShaderStageCreateInfo shaderStages[2];
+
         //vertex shader
         shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT; //tell vulkan this is a vertex shader.
@@ -42,7 +52,8 @@ namespace cy3d
         shaderStages[0].pName = "main"; //name of entry function in vertex shader
         shaderStages[0].flags = 0;
         shaderStages[0].pNext = nullptr;
-        shaderStages[0].pSpecializationInfo = nullptr;
+        shaderStages[0].pSpecializationInfo = nullptr; // allows you to specify values for shader constants
+
         //fragment shader
         shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -52,6 +63,15 @@ namespace cy3d
         shaderStages[1].pNext = nullptr;
         shaderStages[1].pSpecializationInfo = nullptr;
 
+        /**
+         * The VkPipelineVertexInputStateCreateInfo structure describes the format of the vertex data that will be passed to the vertex shader. 
+         * It describes this in roughly two ways:
+
+         * Bindings: spacing between data and whether the data is per-vertex or per-instance (see instancing).
+         * 
+         * Attribute descriptions: type of the attributes passed to the vertex shader, which binding to load them from and at which offset.
+         * 
+        */
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexBindingDescriptionCount = 0;
@@ -80,21 +100,20 @@ namespace cy3d
         pipelineInfo.basePipelineIndex = -1;               // Optional
 
 
-        ASSERT_ERROR(DEFAULT_LOGGABLE, 
-            vkCreateGraphicsPipelines(cyDevice.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) == VK_SUCCESS, 
-            "Failed to create graphics pipeline.");
-
-        //vkDestroyShaderModule(cyDevice.device(), fragShaderModule, nullptr);
-        //vkDestroyShaderModule(cyDevice.device(), vertShaderModule, nullptr);
-        //fragShaderModule = VK_NULL_HANDLE;
-        //vertShaderModule = VK_NULL_HANDLE;
+        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateGraphicsPipelines(cyDevice.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) == VK_SUCCESS, "Failed to create graphics pipeline.");
     }
 
+    /**
+     * @brief 
+     * @param code is a buffer with bytecode
+     * @param shaderModule 
+    */
     void CyPipeline::createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule)
     {
         VkShaderModuleCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         createInfo.codeSize = code.size();
+        //std::vector ensures that the data satisfies the worst case alignment requirements.
         createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
         
         ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateShaderModule(cyDevice.device(), &createInfo, nullptr, shaderModule) == VK_SUCCESS, "Failed to create shader module.");
@@ -103,36 +122,64 @@ namespace cy3d
     /*
     * PUBLIC STATIC METHODS
     */
-
-
     
-
-    
+    /**
+     * @brief 
+     * @param configInfo 
+     * @param width is the width of the swapChainExtent not of the window
+     * @param height is the height of the swapChainExtent not of the window
+    */
     void CyPipeline::defaultPipelineConfigInfo(PipelineConfigInfo& configInfo, uint32_t width, uint32_t height)
     {
         configInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         configInfo.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         configInfo.inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
+
         //describes the relationship between our pipelines output and the target image
         //how the gl_Position values in the vert shader are transformed into the output image
         configInfo.viewport.x = 0.0f;
         configInfo.viewport.y = 0.0f;
         configInfo.viewport.width = static_cast<float>(width);
         configInfo.viewport.height = static_cast<float>(height);
+
+        /**
+         * The minDepth and maxDepth values specify the range of depth values to use for the framebuffer. These values 
+         * must be within the [0.0f, 1.0f] range, but minDepth may be higher than maxDepth.
+        */
         configInfo.viewport.minDepth = 0.0f;
         configInfo.viewport.maxDepth = 1.0f;
-        //any pixels outside of the scissor will be cut
+
+        //any pixels outside of the scissor will be removed
         configInfo.scissor.offset = { 0, 0 };
         configInfo.scissor.extent = { width, height };
 
+        /**
+         * Now this viewport and scissor rectangle need to be combined into a viewport state using the VkPipelineViewportStateCreateInfo struct.
+        */
         configInfo.viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         configInfo.viewportInfo.viewportCount = 1;
         configInfo.viewportInfo.pViewports = &configInfo.viewport;
         configInfo.viewportInfo.scissorCount = 1;
         configInfo.viewportInfo.pScissors = &configInfo.scissor;
 
+
+        /**
+         * The rasterizer takes the geometry that is shaped by the vertices from the vertex shader and turns it into 
+         * fragments to be colored by the fragment shader. It also performs depth testing, face culling and the scissor test, 
+         * and it can be configured to output fragments that fill entire polygons or just the edges (wireframe rendering). 
+         * All this is configured using the VkPipelineRasterizationStateCreateInfo structure.
+        */
         configInfo.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+
+        /**
+         * If depthClampEnable is set to VK_TRUE, then fragments that are beyond the near and far planes are clamped to them as opposed
+         * to discarding them. This is useful in some special cases like shadow maps. Using this requires enabling a GPU feature.
+        */
         configInfo.rasterizationInfo.depthClampEnable = VK_FALSE; //forces gl_Positions zed position between 0 and 1
+
+        /*
+        * If rasterizerDiscardEnable is set to VK_TRUE, then geometry never passes through the rasterizer stage. This basically disables any output to the framebuffer.
+        */
         configInfo.rasterizationInfo.rasterizerDiscardEnable = VK_FALSE;
         configInfo.rasterizationInfo.polygonMode = VK_POLYGON_MODE_FILL;
         configInfo.rasterizationInfo.lineWidth = 1.0f;
@@ -143,6 +190,12 @@ namespace cy3d
         configInfo.rasterizationInfo.depthBiasClamp = 0.0f;           // Optional
         configInfo.rasterizationInfo.depthBiasSlopeFactor = 0.0f;     // Optional
 
+        /**
+         * The VkPipelineMultisampleStateCreateInfo struct configures multisampling, which is one of the ways to perform anti-aliasing. It works 
+         * by combining the fragment shader results of multiple polygons that rasterize to the same pixel. This mainly occurs along edges, which is also 
+         * where the most noticeable aliasing artifacts occur. Because it doesn't need to run the fragment shader multiple times if only one polygon maps to a 
+         * pixel, it is significantly less expensive than simply rendering to a higher resolution and then downscaling. Enabling it requires enabling a GPU feature.
+        */
         configInfo.multisampleInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         configInfo.multisampleInfo.sampleShadingEnable = VK_FALSE;
         configInfo.multisampleInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
@@ -151,9 +204,20 @@ namespace cy3d
         configInfo.multisampleInfo.alphaToCoverageEnable = VK_FALSE;  // Optional
         configInfo.multisampleInfo.alphaToOneEnable = VK_FALSE;       // Optional
 
-        configInfo.colorBlendAttachment.colorWriteMask =
-            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
-            VK_COLOR_COMPONENT_A_BIT;
+        /**
+         * After a fragment shader has returned a color, it needs to be combined with the color that is already in the framebuffer. This transformation is known as color blending and there are two ways to do it:
+         * Mix the old and new value to produce a final color
+         * Combine the old and new value using a bitwise operation
+         * There are two types of structs to configure color blending. The first struct, VkPipelineColorBlendAttachmentState contains the configuration per attached framebuffer and the 
+         * second struct, VkPipelineColorBlendStateCreateInfo contains the global color blending settings
+         * 
+         * 
+         * If blendEnable is set to VK_FALSE, then the new color from the fragment shader is passed through unmodified. Otherwise, 
+         * the two mixing operations are performed to compute a new color. The resulting color is AND'd with the colorWriteMask to determine which channels are actually passed through.
+
+         * The most common way to use color blending is to implement alpha blending, where we want the new color to be blended with the old color based on its opacity. 
+        */
+        configInfo.colorBlendAttachment.colorWriteMask =  VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         configInfo.colorBlendAttachment.blendEnable = VK_FALSE;
         configInfo.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;   // Optional
         configInfo.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;  // Optional

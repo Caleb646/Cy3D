@@ -14,10 +14,7 @@ namespace cy3d
 		//are instantiated from top to bottom and destroyed from bottom to top.
 		CyWindow cyWindow{ WindowTraits{ 800, 600, "Hello" } };
 		CyDevice cyDevice{ cyWindow, };
-		CySwapChain cySwapChain{ cyDevice, cyWindow.getExtent() };
-		std::unique_ptr<CyPipeline> cyPipeline; // {cyDevice, "src/resources/shaders/SimpleShader.vert", "src/resources/shaders/SimpleShader.frag", CyPipeline::defaultPipelineConfigInfo(800, 600) };
-		VkPipelineLayout pipelineLayout;
-		std::vector<VkCommandBuffer> commandBuffers;
+		CySwapChain cySwapChain{ cyDevice, cyWindow };
 
 	public:
 		FirstApp();

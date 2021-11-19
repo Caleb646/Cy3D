@@ -17,10 +17,8 @@ namespace cy3d
 	class CyWindow
 	{
 	private:
-		struct DestroyWindow //custom destructor for GLFWwindow ptr;
-		{
-			void operator()(GLFWwindow* ptr) { glfwDestroyWindow(ptr); }
-		};
+		//custom destructor for GLFWwindow ptr;
+		struct DestroyWindow { void operator()(GLFWwindow* ptr) { glfwDestroyWindow(ptr); } };
 
 		using windowPtr = std::unique_ptr<GLFWwindow, DestroyWindow>;
 
@@ -38,6 +36,7 @@ namespace cy3d
 		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 		bool shouldClose() { return glfwWindowShouldClose(window.get()); }
 		VkExtent2D getExtent() { return { static_cast<uint32_t>(windowTraits.width), static_cast<uint32_t>(windowTraits.height) }; }
+		void getWindowFrameBufferSize(int outWidth, int outHeight) { return glfwGetFramebufferSize(window.get(), &outWidth, &outHeight); }
 
 	private:
 		void initWindow();

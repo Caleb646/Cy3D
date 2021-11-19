@@ -14,6 +14,7 @@
 #include <set>
 #include <unordered_set>
 #include <optional>
+#include <algorithm>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
