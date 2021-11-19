@@ -34,9 +34,9 @@ namespace cy3d
 	{
 		uint32_t imageIndex;
 		auto result = cySwapChain.acquireNextImage(&imageIndex);
-		ASSERT_ERROR(DEFAULT_LOGGABLE, result == VK_SUCCESS, "Failed to acquire swap chain image");
+		//ASSERT_ERROR(DEFAULT_LOGGABLE, result == VK_SUCCESS, "Failed to acquire swap chain image");
 		result = cySwapChain.submitCommandBuffers(&imageIndex);
-		ASSERT_ERROR(DEFAULT_LOGGABLE, result == VK_SUCCESS, "Failed to present swap chain image");
+		//ASSERT_ERROR(DEFAULT_LOGGABLE, result == VK_SUCCESS, "Failed to present swap chain image");
 	}
 }
 

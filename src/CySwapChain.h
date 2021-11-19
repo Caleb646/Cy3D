@@ -47,7 +47,7 @@ namespace cy3d {
          * Instead, we must use glfwGetFramebufferSize to query the resolution of the window in pixel before matching it against 
          * the minimum and maximum image extent.
         */
-        VkExtent2D windowExtent;
+        //VkExtent2D windowExtent;
 
         VkSwapchainKHR swapChain;
 
@@ -81,7 +81,12 @@ namespace cy3d {
         VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
         VkRenderPass getRenderPass() { return renderPass; }
         VkImageView getImageView(int index) { return swapChainImageViews[index]; }
-        size_t imageCount() { return swapChainImages.size(); }
+
+        /**
+         * @brief 
+         * @return the current number of Swap Chain Images.
+        */
+        std::size_t imageCount() { return swapChainImages.size(); }
         VkFormat getSwapChainImageFormat() { return swapChainImageFormat; }
         VkExtent2D getSwapChainExtent() { return swapChainExtent; }
         uint32_t width() { return swapChainExtent.width; }

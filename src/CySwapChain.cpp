@@ -9,7 +9,7 @@ namespace cy3d {
 
     CySwapChain::CySwapChain(CyDevice& d, CyWindow& w) : cyDevice(d), cyWindow(w)
     {
-        windowExtent = cyWindow.getExtent();
+        //windowExtent = cyWindow.getExtent();
 
         createSwapChain();
         createImageViews();
@@ -25,32 +25,6 @@ namespace cy3d {
 
     CySwapChain::~CySwapChain()
     {
-        //for (auto imageView : swapChainImageViews)
-        //{
-        //    vkDestroyImageView(cyDevice.device(), imageView, nullptr);
-        //}
-        //swapChainImageViews.clear();
-
-        //if (swapChain != nullptr)
-        //{
-        //    vkDestroySwapchainKHR(cyDevice.device(), swapChain, nullptr);
-        //    swapChain = nullptr;
-        //}
-
-        //for (int i = 0; i < depthImages.size(); i++)
-        //{
-        //    vkDestroyImageView(cyDevice.device(), depthImageViews[i], nullptr);
-        //    vkDestroyImage(cyDevice.device(), depthImages[i], nullptr);
-        //    vkFreeMemory(cyDevice.device(), depthImageMemorys[i], nullptr);
-        //}
-
-        //for (auto framebuffer : swapChainFramebuffers)
-        //{
-        //    vkDestroyFramebuffer(cyDevice.device(), framebuffer, nullptr);
-        //}
-
-        //vkDestroyRenderPass(cyDevice.device(), renderPass, nullptr);
-
         cleanup();
 
         // cleanup synchronization objects
@@ -62,6 +36,10 @@ namespace cy3d {
         }
     }
 
+    /**
+     * @brief Destroys and Frees the depth images/views/memories, framebuffers, command buffers (NOT command pool),
+     * pipeline layout, pipeline, renderpass, swapchain image view, and the VkSwapChainKHR.
+    */
     void CySwapChain::cleanup()
     {
         for (int i = 0; i < depthImages.size(); i++)
@@ -77,7 +55,7 @@ namespace cy3d {
         }
         vkFreeCommandBuffers(cyDevice.device(), cyDevice.getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 
-        //let std::unique_ptr cleanup the graphics pipeline.
+        //let std::unique_ptr cleanup the cyPipeline.
         
         vkDestroyPipelineLayout(cyDevice.device(), pipelineLayout, nullptr);
         vkDestroyRenderPass(cyDevice.device(), renderPass, nullptr);
@@ -94,15 +72,14 @@ namespace cy3d {
         }
     }
 
+    /**
+     * @brief Recreates the swap chain. Will first block until the window is not minimized, then will block until the device is idle
+     * and, then begin cleaning up and recreating the swap chain with the new window extent.
+    */
     void CySwapChain::recreate()
     {
-        int width = 0, height = 0;
-        cyWindow.getWindowFrameBufferSize(width, height);
-        while (width == 0 || height == 0)
-        {
-            cyWindow.getWindowFrameBufferSize(width, height);
-            glfwWaitEvents();
-        }
+        //if window is currently minimized block
+        cyWindow.blockWhileWindowMinimized();
 
         //make sure nothing is currently being used 
         //before cleaning up.
@@ -115,11 +92,14 @@ namespace cy3d {
         createRenderPass();
         createDepthResources();
         createFramebuffers();
-        createSyncObjects();
+        //createSyncObjects();
 
         createDefaultPipelineLayout();
         createDefaultPipeline();
         createCommandBuffers();
+
+        //because sync objects are being reused the imagesInFlight to be reset.
+        imagesInFlight.resize(imageCount(), VK_NULL_HANDLE);
     }
 
     VkResult CySwapChain::acquireNextImage(uint32_t* imageIndex)
@@ -146,6 +126,21 @@ namespace cy3d {
         VkResult result = vkAcquireNextImageKHR(cyDevice.device(), swapChain, UINT64_MAX,
             imageAvailableSemaphores[currentFrame],  //must be a not signaled semaphore
             VK_NULL_HANDLE, imageIndex);
+
+        /**
+         * If the swap chain turns out to be out of date when attempting to acquire an image, 
+         * then it is no longer possible to present to it. Therefore we should immediately recreate 
+         * the swap chain and try again in the next drawFrame call. 
+        */
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            recreate();
+            return result;
+        }
+        else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) 
+        {
+            throw std::runtime_error("failed to acquire swap chain image!");
+        }
 
         return result;
     }
@@ -216,6 +211,22 @@ namespace cy3d {
 
         //The vkQueuePresentKHR function submits the request to present an image to the swap chain.
         auto result = vkQueuePresentKHR(cyDevice.presentQueue(), &presentInfo);
+
+        /**
+         * If the swap chain turns out to be out of date when attempting to acquire an image,
+         * then it is no longer possible to present to it. Therefore we should immediately recreate
+         * the swap chain and try again in the next drawFrame call.
+        */
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || cyWindow.isWindowFrameBufferResized()) 
+        {
+            cyWindow.resetWindowFrameBufferResized();
+            recreate();
+            return result;
+        }
+        else if (result != VK_SUCCESS) 
+        {
+            throw std::runtime_error("failed to present swap chain image!");
+        }
 
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
@@ -794,13 +805,9 @@ namespace cy3d {
         }
         else 
         {
-            VkExtent2D actualExtent = windowExtent;
-
+            VkExtent2D actualExtent = cyWindow.getExtent();
             actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
             actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
-
-            //actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
-            //actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
             return actualExtent;
         }
     }
