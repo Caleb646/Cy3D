@@ -2,8 +2,9 @@
 
 #include "pch.h"
 
-#include "CyDevice.h"
-#include "CyPipeline.h"
+#include "VulkanDevice.h"
+#include "VulkanPipeline.h"
+#include "VulkanVertexBuffer.h"
 #include "Fwd.hpp"
 
 
@@ -18,7 +19,7 @@ namespace cy3d {
      * Presentation mode (conditions for "swapping" images to the screen)
      * and Swap extent (resolution of images in swap chain).
     */
-    class CySwapChain {
+    class VulkanSwapChain {
 
     public:
         static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
@@ -50,13 +51,11 @@ namespace cy3d {
         std::vector<VkImage> swapChainImages;
         std::vector<VkImageView> swapChainImageViews;
 
-        //CyDevice& cyDevice;
-        //CyWindow& cyWindow;
-
         VulkanContext& cyContext;
+        std::unique_ptr<VulkanVertexBuffer> vertexBuffer;
 
 
-        std::unique_ptr<CyPipeline> cyPipeline;
+        std::unique_ptr<VulkanPipeline> cyPipeline;
         VkPipelineLayout pipelineLayout;
 
         /**
@@ -97,12 +96,12 @@ namespace cy3d {
 
     public:
 
-        //CySwapChain(CyDevice& d, CyWindow& w);
-        CySwapChain(VulkanContext& context);
-        ~CySwapChain();
+        //VulkanSwapChain(VulkanDevice& d, VulkanWindow& w);
+        VulkanSwapChain(VulkanContext& context);
+        ~VulkanSwapChain();
 
-        CySwapChain(const CySwapChain&) = delete;
-        void operator=(const CySwapChain&) = delete;
+        VulkanSwapChain(const VulkanSwapChain&) = delete;
+        void operator=(const VulkanSwapChain&) = delete;
 
         VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
         VkRenderPass getRenderPass() { return renderPass; }
@@ -133,6 +132,7 @@ namespace cy3d {
         void createImageViews();
         void createDepthResources();
         void createRenderPass();
+        void createVertexBuffers();
         void createFramebuffers();
         void createSyncObjects();
         void createDefaultPipelineLayout();

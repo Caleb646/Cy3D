@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "CyDevice.h"
+#include "VulkanDevice.h"
 #include "VulkanContext.h"
 
 #include <Logi/Logi.h>
@@ -37,18 +37,7 @@ namespace cy3d
 		}
 	}
 
-
-	//CyDevice::CyDevice(CyWindow& w) : window(w)
-	//{
-	//	createInstance(); //init vulkan and create an instance of it
-	//	setupDebugMessenger(); //setup validation layers.
-	//	createSurface(); //connection between the window and vulkan
-	//	pickPhysicalDevice(); //picks the gpu that the program will use
-	//	createLogicalDevice(); //describes what features of the physical device will be used.
-	//	createCommandPool();
-	//}
-
-	CyDevice::CyDevice(VulkanContext& context) : cyContext(context) 
+	VulkanDevice::VulkanDevice(VulkanContext& context) : cyContext(context) 
 	{
 		createInstance(); //init vulkan and create an instance of it
 		setupDebugMessenger(); //setup validation layers.
@@ -58,7 +47,7 @@ namespace cy3d
 		createCommandPool();
 	}
 
-	CyDevice::~CyDevice()
+	VulkanDevice::~VulkanDevice()
 	{
 		vkDestroyCommandPool(device_, commandPool, nullptr);
 		vkDestroyDevice(device_, nullptr);
@@ -72,7 +61,7 @@ namespace cy3d
 		vkDestroyInstance(instance, nullptr);
 	}
 
-	void CyDevice::createInstance() 
+	void VulkanDevice::createInstance() 
 	{
 		ASSERT_ERROR(DEFAULT_LOGGABLE, enableValidationLayers && checkValidationLayerSupport(), "Validation layers requested, but not available");
 		VkApplicationInfo appInfo = {};
@@ -113,7 +102,7 @@ namespace cy3d
 	 * @brief Creates a vector of available physical devices and picks
 	 * a suitable one.
 	*/
-	void CyDevice::pickPhysicalDevice()
+	void VulkanDevice::pickPhysicalDevice()
 	{
 		uint32_t deviceCount = 0;
 		//get the device count
@@ -140,7 +129,7 @@ namespace cy3d
 	/**
 	 * @brief 
 	*/
-	void CyDevice::createLogicalDevice()
+	void VulkanDevice::createLogicalDevice()
 	{
 		//get the supported queue family indices for the picked physical device
 		QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
@@ -211,7 +200,7 @@ namespace cy3d
 	 * @brief Command buffers are executed by submitting them on one of the device queues, like the
 	 * graphics and presentation queues we retrieved. Each command pool can only allocate command buffers that are submitted on a single type of queue.
 	*/
-	void CyDevice::createCommandPool() 
+	void VulkanDevice::createCommandPool() 
 	{
 		QueueFamilyIndices queueFamilyIndices = findPhysicalQueueFamilies();
 
@@ -230,7 +219,7 @@ namespace cy3d
 		ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateCommandPool(device_, &poolInfo, nullptr, &commandPool) == VK_SUCCESS, "Failed to create command pool.");
 	}
 
-	void CyDevice::createSurface() 
+	void VulkanDevice::createSurface() 
 	{ 
 		cyContext.getWindow()->createWindowSurface(instance, &surface_);
 		//window.createWindowSurface(instance, &surface_); 
@@ -241,7 +230,7 @@ namespace cy3d
 	 * @param device is the current physical device being checked for suitablility
 	 * @return True if the device is suitable
 	*/
-	bool CyDevice::isDeviceSuitable(VkPhysicalDevice device)
+	bool VulkanDevice::isDeviceSuitable(VkPhysicalDevice device)
 	{
 		QueueFamilyIndices indices = findQueueFamilies(device);
 
@@ -260,21 +249,22 @@ namespace cy3d
 		return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 	}
 
-	void CyDevice::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
+	void VulkanDevice::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
 	{
 		createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-		createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-			VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-			VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-		createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-			VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-			VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+		createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+
+		// to add general validation messages to console
+		//createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+
+		//to remove general validation messages from console
+		createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 		createInfo.pfnUserCallback = debugCallback;
 		createInfo.pUserData = nullptr;  // Optional
 	}
 
-	void CyDevice::setupDebugMessenger()
+	void VulkanDevice::setupDebugMessenger()
 	{
 		if (!enableValidationLayers) return;
 		VkDebugUtilsMessengerCreateInfoEXT createInfo;
@@ -285,7 +275,7 @@ namespace cy3d
 		}
 	}
 
-	bool CyDevice::checkValidationLayerSupport()
+	bool VulkanDevice::checkValidationLayerSupport()
 	{
 		uint32_t layerCount;
 		vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -315,7 +305,7 @@ namespace cy3d
 		return true;
 	}
 
-	std::vector<const char*> CyDevice::getRequiredExtensions()
+	std::vector<const char*> VulkanDevice::getRequiredExtensions()
 	{
 		uint32_t glfwExtensionCount = 0;
 		const char** glfwExtensions;
@@ -331,7 +321,7 @@ namespace cy3d
 		return extensions;
 	}
 
-	void CyDevice::hasGlfwRequiredInstanceExtensions()
+	void VulkanDevice::hasGlfwRequiredInstanceExtensions()
 	{
 		uint32_t extensionCount = 0;
 		vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
@@ -358,7 +348,7 @@ namespace cy3d
 		}*/
 	}
 
-	bool CyDevice::checkDeviceExtensionSupport(VkPhysicalDevice device)
+	bool VulkanDevice::checkDeviceExtensionSupport(VkPhysicalDevice device)
 	{
 		uint32_t extensionCount;
 		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
@@ -386,7 +376,7 @@ namespace cy3d
 	 * @param device 
 	 * @return The supported queues along with their corresponding queue family index
 	*/
-	QueueFamilyIndices CyDevice::findQueueFamilies(VkPhysicalDevice device)
+	QueueFamilyIndices VulkanDevice::findQueueFamilies(VkPhysicalDevice device)
 	{
 		QueueFamilyIndices indices;
 
@@ -435,7 +425,7 @@ namespace cy3d
 	 * Basic surface capabilities (min/max number of images in swap chain, min/max width and height of images),
 	 * Surface formats (pixel format, color space), and Available presentation modes. 
 	*/
-	SwapChainSupportDetails CyDevice::querySwapChainSupport(VkPhysicalDevice device)
+	SwapChainSupportDetails VulkanDevice::querySwapChainSupport(VkPhysicalDevice device)
 	{
 		SwapChainSupportDetails details;
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface_, &details.capabilities);
@@ -460,7 +450,7 @@ namespace cy3d
 		return details;
 	}
 
-	VkFormat CyDevice::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+	VkFormat VulkanDevice::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
 	{
 		for (VkFormat format : candidates)
 		{
@@ -479,51 +469,120 @@ namespace cy3d
 		throw std::runtime_error("failed to find supported format!");
 	}
 
-	uint32_t CyDevice::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+	/**
+	 * @brief Combine the requirements of the buffer and our own application 
+	 * requirements to find the right type of memory to use
+	 * @param typeFilter is VkMemoryRequirements.memoryTypeBits. Used to specify the bit field of memory types that are suitable. 
+	 * @param properties 
+	 * @return 
+	*/
+	uint32_t VulkanDevice::findMemoryType(decltype(VkMemoryRequirements::memoryTypeBits) typeFilter, VkMemoryPropertyFlags properties)
 	{
 		VkPhysicalDeviceMemoryProperties memProperties;
 		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 		for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) 
 		{
+			/**
+			 * The memoryTypes array consists of VkMemoryType structs that specify the 
+			 * heap and properties of each type of memory.
+			 * 
+			 * The properties define special features of the memory, like being able 
+			 * to map it so we can write to it from the CPU. 
+			 * 
+			 * We may have more than one desirable property, so we should check if the 
+			 * result of the bitwise AND is not just non-zero, but equal to the desired 
+			 * properties bit field. If there is a memory type suitable for the buffer 
+			 * that also has all of the properties we need, then we return its index, 
+			 * otherwise we throw an exception.
+			*/
 			if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
 			{
 				return i;
 			}
 		}
 
-		ASSERT_ERROR(DEFAULT_LOGGABLE, true == false, "Failed to find memory type.");
+		ASSERT_ERROR(DEFAULT_LOGGABLE, false, "Failed to find memory type.");
 	}
 
-	void CyDevice::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+	void VulkanDevice::createBuffer(BufferCreationAllocationInfo cyBufferInfo, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
 	{ 
 		VkBufferCreateInfo bufferInfo{};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = size;
-		bufferInfo.usage = usage;
+		bufferInfo.size = cyBufferInfo.size;
+		bufferInfo.usage = cyBufferInfo.usage;
+
+		/**
+		 * buffers can also be owned by a specific queue family or be 
+		 * shared between multiple at the same time. The buffer will only 
+		 * be used from the graphics queue, so we can stick to exclusive access.
+		*/
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-		if (vkCreateBuffer(device_, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create vertex buffer!");
-		}
+		ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateBuffer(cyContext.getDevice()->device(), &bufferInfo, nullptr, &buffer) == VK_SUCCESS, "Failed to create buffer.");
 
+		/**
+		 * The VkMemoryRequirements struct has three fields:
+
+		 * size: The size of the required amount of memory in bytes, may differ from bufferInfo.size.
+		 * 
+		 * alignment: The offset in bytes where the buffer begins in the allocated region of memory, 
+		 * depends on bufferInfo.usage and bufferInfo.flags.
+		 * 
+		 * memoryTypeBits: Bit field of the memory types that are suitable for the buffer.
+		*/
 		VkMemoryRequirements memRequirements;
 		vkGetBufferMemoryRequirements(device_, buffer, &memRequirements);
 
 		VkMemoryAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, cyBufferInfo.properties);
+		ASSERT_ERROR(DEFAULT_LOGGABLE, vkAllocateMemory(device_, &allocInfo, nullptr, &bufferMemory) == VK_SUCCESS, "Failed to allocate memory for buffer.");
 
-		if (vkAllocateMemory(device_, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) 
-		{
-			throw std::runtime_error("failed to allocate vertex buffer memory!");
-		}
-
+		/**
+		 * 
+		 * If memory allocation was successful, then we can now associate this memory 
+		 * with the buffer using vkBindBufferMemory:
+		 * 
+		 * The fourth param is the offset within the region of memory.
+		 * Since this memory is allocated specifically for this the vertex buffer, 
+		 * the offset is simply 0. If the offset is non-zero, then it is required to 
+		 * be divisible by memRequirements.alignment.
+		*/
 		vkBindBufferMemory(device_, buffer, bufferMemory, 0);
 	}
 
-	VkCommandBuffer CyDevice::beginSingleTimeCommands()
+	void VulkanDevice::fillBuffer(void* dataSource, VkDeviceSize size, VkDeviceMemory& bufferMemory)
+	{
+		void* dataDestination;
+
+		/**
+		 * This function allows us to access a region of the specified memory 
+		 * resource defined by an offset and size. The offset and size here are 0 and bufferInfo.size.
+		 * 
+		 * It is also possible to specify the special value VK_WHOLE_SIZE to map all of the memory.
+		 * 
+		 * The last parameter specifies the output for the pointer to the mapped memory.
+		*/
+		vkMapMemory(device(), bufferMemory, 0, size, 0, &dataDestination);
+
+		/**
+		 * The driver may not immediately copy the 
+		 * data into the buffer memory, for example because of caching. It is also possible 
+		 * that writes to the buffer are not visible in the mapped memory yet. There are 
+		 * two ways to deal with that problem:
+
+		 * Use a memory heap that is host coherent, indicated with VK_MEMORY_PROPERTY_HOST_COHERENT_BIT.
+		 * Ensures that the mapped memory always matches the contents of the allocated memory.
+		 * 
+		 * Call vkFlushMappedMemoryRanges after writing to the mapped memory, and call 
+		 * vkInvalidateMappedMemoryRanges before reading from the mapped memory
+		*/
+		memcpy(dataDestination, dataSource, static_cast<std::size_t>(size));
+		vkUnmapMemory(device(), bufferMemory);
+	}
+
+	VkCommandBuffer VulkanDevice::beginSingleTimeCommands()
 	{
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -542,7 +601,7 @@ namespace cy3d
 		return commandBuffer;
 	}
 
-	void CyDevice::endSingleTimeCommands(VkCommandBuffer commandBuffer)
+	void VulkanDevice::endSingleTimeCommands(VkCommandBuffer commandBuffer)
 	{
 		vkEndCommandBuffer(commandBuffer);
 
@@ -557,7 +616,7 @@ namespace cy3d
 		vkFreeCommandBuffers(device_, commandPool, 1, &commandBuffer);
 	}
 
-	void CyDevice::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+	void VulkanDevice::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 	{
 		VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -570,7 +629,7 @@ namespace cy3d
 		endSingleTimeCommands(commandBuffer);
 	}
 
-	void CyDevice::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount)
+	void VulkanDevice::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount)
 	{
 		VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -597,7 +656,7 @@ namespace cy3d
 		endSingleTimeCommands(commandBuffer);
 	}
 
-	void CyDevice::createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
+	void VulkanDevice::createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory)
 	{
 		if (vkCreateImage(device_, &imageInfo, nullptr, &image) != VK_SUCCESS)
 		{

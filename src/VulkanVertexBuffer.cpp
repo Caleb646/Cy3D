@@ -1,31 +1,71 @@
 #include "pch.h"
 
 #include "VulkanVertexBuffer.h"
-
+#include "VulkanDevice.h"
+#include "VulkanContext.h"
 #include <Logi/Logi.h>
 
 
 namespace cy3d
 {
-	VulkanVertexBuffer::VulkanVertexBuffer(std::vector<Vertex>& verts)
-	{
-		init(verts);
-	}
+	VulkanVertexBuffer::VulkanVertexBuffer(VulkanContext& context) : cyContext(context) {}
+
+	/**
+	 * @brief
+	 * @note as long as the object this class belongs to doesnt outlive the Device class the
+	 * default destructor will work.
+	*/
 	VulkanVertexBuffer::~VulkanVertexBuffer()
 	{
-		//vkDestroyBuffer(device, vertexBuffer, nullptr);
+		//TODO buffers are not being destroyed.
+		cleanup();
 	}
 
-	void VulkanVertexBuffer::init(std::vector<Vertex>& verts)
+	/**
+	 * @brief Creates a buffer
+	 * @param data pass std::vector<vertex>.data() or equivalent.
+	 * @param size is the size of the first element multiplied by the number of elements.
+	*/
+	void VulkanVertexBuffer::setData(void* data, VkDeviceSize size)
 	{
-		VkBufferCreateInfo bufferInfo{};
-		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = sizeof(verts[0]) * verts.size();
-		bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		/**
+		 * Before adding data to the Vertex Buffer first check if the vertexBuffer and vertexBufferMemory are nullptr.
+		 * If not that means their current memory needs to be freed before more is added.
+		*/
+		BufferCreationAllocationInfo bufferInfo
+		{ 
+			size, 
+			VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		};
+		setData(data, size, bufferInfo);
+	}
 
-		//if (vkCreateBuffer(device, &bufferInfo, nullptr, &vertexBuffer) != VK_SUCCESS) {
-			//throw std::runtime_error("failed to create vertex buffer!");
-		//}
+	/**
+	 * @brief Creates a buffer
+	 * @param data pass std::vector<vertex>.data() or equivalent.
+	 * @param size is the size of the first element multiplied by the number of elements.
+	 * @param bufferInfo
+	*/
+	void VulkanVertexBuffer::setData(void* data, VkDeviceSize size, BufferCreationAllocationInfo bufferInfo)
+	{
+		/**
+		 * Before adding data to the Vertex Buffer first check if the vertexBuffer and vertexBufferMemory are nullptr.
+		 * If not that means their current memory needs to be freed before more is added.
+		*/
+		if (vertexBuffer != nullptr && vertexBufferMemory != nullptr) cleanup();
+		cyContext.getDevice()->createBuffer(bufferInfo, vertexBuffer, vertexBufferMemory);
+		cyContext.getDevice()->fillBuffer(data, size, vertexBufferMemory);
+	}
+
+	/**
+	 * @brief Should not be called from outside this class because it will cause the same
+	 * buffer and memory buffer to be destroyed twice. Once by the cleanup method and once by the 
+	 * destructor when it goes out of scope.
+	*/
+	void VulkanVertexBuffer::cleanup()
+	{
+		vkDestroyBuffer(cyContext.getDevice()->device(), vertexBuffer, nullptr);
+		vkFreeMemory(cyContext.getDevice()->device(), vertexBufferMemory, nullptr);
 	}
 }

@@ -1,20 +1,20 @@
 #include "pch.h"
 
-#include "CyWindow.h"
+#include "VulkanWindow.h"
 
 #include <Logi/Logi.h>
 
 
 namespace cy3d
 {
-	CyWindow::CyWindow(WindowTraits wts) : windowTraits(wts) { initWindow(); }
+	VulkanWindow::VulkanWindow(WindowTraits wts) : windowTraits(wts) { initWindow(); }
 
-	CyWindow::~CyWindow()
+	VulkanWindow::~VulkanWindow()
 	{
 		glfwTerminate();
 	}
 
-	void CyWindow::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface)
+	void VulkanWindow::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface)
 	{
 		ASSERT_ERROR(DEFAULT_LOGGABLE, glfwCreateWindowSurface(instance, window.get(), nullptr, surface) == VK_SUCCESS, "Failed to create window surface.");
 	}
@@ -22,12 +22,12 @@ namespace cy3d
 	/**
 	 * @brief Will block until the window is no longer minimized using glfwWaitEvents().
 	*/
-	void CyWindow::blockWhileWindowMinimized()
+	void VulkanWindow::blockWhileWindowMinimized()
 	{
 		while (isWindowMinimized()) glfwWaitEvents();
 	}
 
-	void CyWindow::initWindow()
+	void VulkanWindow::initWindow()
 	{
 		glfwInit();
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -43,10 +43,10 @@ namespace cy3d
 	/**
 	 * PRIVATE STATIC METHODS
 	*/
-	void CyWindow::framebufferResizeCallback(GLFWwindow* window, int width, int height)
+	void VulkanWindow::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 	{
 		//
-		auto cyWin = reinterpret_cast<CyWindow*>(glfwGetWindowUserPointer(window));
+		auto cyWin = reinterpret_cast<VulkanWindow*>(glfwGetWindowUserPointer(window));
 		cyWin->framebufferResized = true;
 		cyWin->resetWidthHeight(width, height);
 	}

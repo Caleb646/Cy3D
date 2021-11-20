@@ -1,10 +1,10 @@
 #pragma once
 #include "pch.h"
 
-#include "CyPipeline.h"
-#include "CyWindow.h"
-#include "CyDevice.h"
-#include "CySwapChain.h"
+#include "VulkanPipeline.h"
+#include "VulkanWindow.h"
+#include "VulkanDevice.h"
+#include "VulkanSwapChain.h"
 #include "VulkanContext.h"
 
 namespace cy3d
@@ -13,9 +13,9 @@ namespace cy3d
 	{
 	private:
 		//are instantiated from top to bottom and destroyed from bottom to top.
-		//CyWindow cyWindow{ WindowTraits{ 800, 600, "Hello" } };
-		//CyDevice cyDevice{ cyWindow, };
-		//CySwapChain cySwapChain{ cyDevice, cyWindow };
+		//VulkanWindow cyWindow{ WindowTraits{ 800, 600, "Hello" } };
+		//VulkanDevice cyDevice{ cyWindow, };
+		//VulkanSwapChain cySwapChain{ cyDevice, cyWindow };
 		VulkanContext cyContext; 
 
 	public:

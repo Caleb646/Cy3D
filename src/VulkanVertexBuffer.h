@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 
-
+#include "Fwd.hpp"
 #include <M3D/M3D.h>
 
 namespace cy3d
@@ -56,24 +56,41 @@ namespace cy3d
         }
     };
 
-
+	/**
+	 * @brief 
+     * @note as long as the object this class belongs to doesnt outlive the Device class the 
+     * default destructor will work.
+	*/
 	class VulkanVertexBuffer
 	{
     private:
-        VkBuffer vertexBuffer;
+        VkBuffer vertexBuffer{ nullptr };
+        VkDeviceMemory vertexBufferMemory{ nullptr };
+        VulkanContext& cyContext;
 
     public:
-        VulkanVertexBuffer(std::vector<Vertex>& verts);
+        VulkanVertexBuffer(VulkanContext&);
         ~VulkanVertexBuffer();
 
+        //cannot be created without a context.
+        VulkanVertexBuffer() = delete;
+        //cannot be copied or reassigned.
         VulkanVertexBuffer(const VulkanVertexBuffer&) = delete;
+        VulkanVertexBuffer(VulkanVertexBuffer&&) = delete;
         VulkanVertexBuffer& operator=(const VulkanVertexBuffer&) = delete;
 
-        VkBuffer getVertexBuffer() { return vertexBuffer; }
+
+        void setData(void* data, VkDeviceSize size);
+        void setData(void* data, VkDeviceSize size, BufferCreationAllocationInfo bufferInfo);
+        
+        VkBuffer getVertexBuffer() 
+        { 
+            ASSERT_ERROR(DEFAULT_LOGGABLE, vertexBuffer != nullptr, "Data has not been set. Buffer is null.");
+            return vertexBuffer;
+        }
 
     private:
-        void init(std::vector<Vertex>& verts);
-
+        void cleanup();
 	};
 }
 

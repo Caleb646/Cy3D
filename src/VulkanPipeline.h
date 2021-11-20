@@ -2,7 +2,7 @@
 
 #include "pch.h"
 
-#include "CyDevice.h"
+#include "VulkanDevice.h"
 #include "Fwd.hpp"
 
 namespace cy3d
@@ -49,23 +49,23 @@ namespace cy3d
 		uint32_t subpass = 0;
 	};
 
-	class CyPipeline
+	class VulkanPipeline
 	{
 	private:
-		//CyDevice& cyDevice;
+		//VulkanDevice& cyDevice;
 		VulkanContext& cyContext;
 		VkPipeline graphicsPipeline;
 		VkShaderModule vertShaderModule;
 		VkShaderModule fragShaderModule;
 
 	public:
-		//CyPipeline(CyDevice& d, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config);
-		CyPipeline(VulkanContext& context, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config);
-		~CyPipeline();
+		//VulkanPipeline(VulkanDevice& d, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config);
+		VulkanPipeline(VulkanContext& context, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config);
+		~VulkanPipeline();
 
 		//delete copy methods
-		CyPipeline(const CyPipeline&) = delete;
-		CyPipeline& operator=(const CyPipeline&) = delete;
+		VulkanPipeline(const VulkanPipeline&) = delete;
+		VulkanPipeline& operator=(const VulkanPipeline&) = delete;
 
 		void bind(VkCommandBuffer commandBuffer);
 		VkPipeline getGraphicsPipeline() { return graphicsPipeline; }

@@ -35,19 +35,19 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\CyWindow.cpp">
+    <ClCompile Include="src\VulkanWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\FirstApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\CyPipeline.cpp">
+    <ClCompile Include="src\VulkanPipeline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\CyDevice.cpp">
+    <ClCompile Include="src\VulkanDevice.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\CySwapChain.cpp">
+    <ClCompile Include="src\VulkanSwapChain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
@@ -60,6 +60,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\VulkanContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Vulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -125,19 +128,19 @@
     <Library Include="deps\libraries\vulkan\vulkan-1.lib" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\CyWindow.h">
+    <ClInclude Include="src\VulkanWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\FirstApp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\CyPipeline.h">
+    <ClInclude Include="src\VulkanPipeline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\CyDevice.h">
+    <ClInclude Include="src\VulkanDevice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\CySwapChain.h">
+    <ClInclude Include="src\VulkanSwapChain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
@@ -152,7 +155,10 @@
     <ClInclude Include="src\VulkanContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Fwd.hpp">
+    <ClInclude Include="Fwd.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Vulkan.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

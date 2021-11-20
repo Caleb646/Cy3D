@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "CySwapChain.h"
+#include "VulkanSwapChain.h"
 #include "VulkanContext.h"
 
 #include <Logi/Logi.h>
@@ -8,28 +8,13 @@
 
 namespace cy3d {
 
-    //CySwapChain::CySwapChain(CyDevice& d, CyWindow& w) : cyDevice(d), cyWindow(w)
-    //{
-    //    //windowExtent = cyWindow.getExtent();
-
-    //    createSwapChain();
-    //    createImageViews();
-    //    createRenderPass();
-    //    createDepthResources();
-    //    createFramebuffers();
-    //    createSyncObjects();
-
-    //    createDefaultPipelineLayout();
-    //    createDefaultPipeline();
-    //    createCommandBuffers();
-    //}
-
-    CySwapChain::CySwapChain(VulkanContext& context) : cyContext(context)
+    VulkanSwapChain::VulkanSwapChain(VulkanContext& context) : cyContext(context)
     {
         createSwapChain();
         createImageViews();
         createRenderPass();
         createDepthResources();
+        createVertexBuffers();
         createFramebuffers();
         createSyncObjects();
 
@@ -38,7 +23,7 @@ namespace cy3d {
         createCommandBuffers();
     }
 
-    CySwapChain::~CySwapChain()
+    VulkanSwapChain::~VulkanSwapChain()
     {
         cleanup();
 
@@ -55,7 +40,7 @@ namespace cy3d {
      * @brief Destroys and Frees the depth images/views/memories, framebuffers, command buffers (NOT command pool),
      * pipeline layout, pipeline, renderpass, swapchain image view, and the VkSwapChainKHR.
     */
-    void CySwapChain::cleanup()
+    void VulkanSwapChain::cleanup()
     {
         for (int i = 0; i < depthImages.size(); i++)
         {
@@ -91,7 +76,7 @@ namespace cy3d {
      * @brief Recreates the swap chain. Will first block until the window is not minimized, then will block until the device is idle
      * and, then begin cleaning up and recreating the swap chain with the new window extent.
     */
-    void CySwapChain::recreate()
+    void VulkanSwapChain::recreate()
     {
         //if window is currently minimized block
         cyContext.getWindow()->blockWhileWindowMinimized();
@@ -117,7 +102,7 @@ namespace cy3d {
         imagesInFlight.resize(imageCount(), VK_NULL_HANDLE);
     }
 
-    VkResult CySwapChain::acquireNextImage(uint32_t* imageIndex)
+    VkResult VulkanSwapChain::acquireNextImage(uint32_t* imageIndex)
     {
         /**
          * The vkWaitForFences function takes an array of fences and waits for either any or all of them to be signaled before returning. 
@@ -160,12 +145,12 @@ namespace cy3d {
         return result;
     }
 
-    void CySwapChain::resetFences(std::size_t frameNumber)
+    void VulkanSwapChain::resetFences(std::size_t frameNumber)
     {
         vkResetFences(cyContext.getDevice()->device(), 1, &inFlightFences[currentFrame]);
     }
 
-    VkResult CySwapChain::submitCommandBuffers(uint32_t* imageIndex)
+    VkResult VulkanSwapChain::submitCommandBuffers(uint32_t* imageIndex)
     {
         //Check if a previous frame is using this image (i.e. there is its fence to wait on)
         if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE)
@@ -248,7 +233,7 @@ namespace cy3d {
         return result;
     }
 
-    void CySwapChain::createSwapChain()
+    void VulkanSwapChain::createSwapChain()
     {
         SwapChainSupportDetails swapChainSupport = cyContext.getDevice()->getSwapChainSupport();
 
@@ -318,6 +303,7 @@ namespace cy3d {
 
         createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
 
+
         /**
          * The compositeAlpha field specifies if the alpha channel should be used for blending with other windows in the window system. 
          * You'll almost always want to simply ignore the alpha channel, hence VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR.
@@ -360,7 +346,7 @@ namespace cy3d {
      * image and which part of the image to access, for example if it should be treated as a 2D 
      * texture depth texture without any mipmapping levels.
     */
-    void CySwapChain::createImageViews() 
+    void VulkanSwapChain::createImageViews() 
     {
         swapChainImageViews.resize(swapChainImages.size());
         for (size_t i = 0; i < swapChainImages.size(); i++)
@@ -399,7 +385,7 @@ namespace cy3d {
         }
     }
 
-    void CySwapChain::createRenderPass() 
+    void VulkanSwapChain::createRenderPass() 
     {
         /**
          * Creates a blueprint to be used for the framebuffer
@@ -517,11 +503,16 @@ namespace cy3d {
         ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateRenderPass(cyContext.getDevice()->device(), &renderPassInfo, nullptr, &renderPass) == VK_SUCCESS, "Failed to create render pass");
     }
 
+    void VulkanSwapChain::createVertexBuffers()
+    {
+        vertexBuffer = std::make_unique<VulkanVertexBuffer>(cyContext);
+    }
+
     /**
      * @brief The attachments specified during render pass creation are bound by wrapping them into a VkFramebuffer object. 
      * A framebuffer object references all of the VkImageView objects that represent the attachments.
     */
-    void CySwapChain::createFramebuffers() 
+    void VulkanSwapChain::createFramebuffers() 
     {
         swapChainFramebuffers.resize(imageCount());
         for (size_t i = 0; i < imageCount(); i++) 
@@ -547,7 +538,7 @@ namespace cy3d {
         }
     }
 
-    void CySwapChain::createDepthResources() 
+    void VulkanSwapChain::createDepthResources() 
     {
         VkFormat depthFormat = findDepthFormat();
         VkExtent2D swapChainExtent = getSwapChainExtent();
@@ -590,7 +581,7 @@ namespace cy3d {
         }
     }
 
-    void CySwapChain::createSyncObjects()
+    void VulkanSwapChain::createSyncObjects()
     {
         imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -623,7 +614,7 @@ namespace cy3d {
     * or to create texture samplers in the fragment shader.
     * These uniform values need to be specified during pipeline creation by creating a VkPipelineLayout object.
     */
-    void CySwapChain::createDefaultPipelineLayout()
+    void VulkanSwapChain::createDefaultPipelineLayout()
     {
         VkPipelineLayout out;
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -635,19 +626,19 @@ namespace cy3d {
         ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreatePipelineLayout(cyContext.getDevice()->device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) == VK_SUCCESS, "Failed to create pipeline layout");
     }
 
-    void CySwapChain::createDefaultPipeline()
+    void VulkanSwapChain::createDefaultPipeline()
     {
         PipelineConfigInfo pipelineConfig{};
-        CyPipeline::defaultPipelineConfigInfo(pipelineConfig, width(), height());
+        VulkanPipeline::defaultPipelineConfigInfo(pipelineConfig, width(), height());
         pipelineConfig.renderPass = getRenderPass();
         pipelineConfig.pipelineLayout = pipelineLayout;
-        cyPipeline = std::make_unique<CyPipeline>(cyContext, "src/resources/shaders/SimpleShader.vert.spv", "src/resources/shaders/SimpleShader.frag.spv", pipelineConfig);
+        cyPipeline = std::make_unique<VulkanPipeline>(cyContext, "src/resources/shaders/SimpleShader.vert.spv", "src/resources/shaders/SimpleShader.frag.spv", pipelineConfig);
     }
 
     /**
     * @brief Allocates and records the commands for each swap chain image.
     */
-    void CySwapChain::createCommandBuffers()
+    void VulkanSwapChain::createCommandBuffers()
     {
         commandBuffers.resize(imageCount());
 
@@ -665,6 +656,17 @@ namespace cy3d {
         allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
         ASSERT_ERROR(DEFAULT_LOGGABLE, vkAllocateCommandBuffers(cyContext.getDevice()->device(), &allocInfo, commandBuffers.data()) == VK_SUCCESS, "Failed to allocate command buffers");
+
+
+        std::vector<Vertex> vertices =
+        {
+        {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+        };
+        vertexBuffer->setData(static_cast<void*>(vertices.data()), sizeof(vertices[0]) * vertices.size());
+        VkBuffer vertexBuffers[] = { vertexBuffer->getVertexBuffer() };
+        VkDeviceSize offsets[] = { 0 };
 
         for (int i = 0; i < commandBuffers.size(); i++)
         {
@@ -716,7 +718,16 @@ namespace cy3d {
              * The second parameter specifies if the pipeline object is a graphics or compute pipeline.
              * We've now told Vulkan which operations to execute in the graphics pipeline and which attachment to use in the fragment shader,
             */
-            cyPipeline->bind(commandBuffers[i]);
+            cyPipeline->bind(commandBuffers[i]);       
+
+            /**
+             * The vkCmdBindVertexBuffers function is used to bind vertex buffers to bindings, like the 
+             * one we set up in the previous chapter. The first two parameters, besides the command buffer,
+             * specify the offset and number of bindings we're going to specify vertex buffers for. The last
+             * two parameters specify the array of vertex buffers to bind and the byte offsets to start reading 
+             * vertex data from.
+            */
+            vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
 
             /**
              * vkCmdDraw has the following parameters, aside from the command buffer:
@@ -726,7 +737,7 @@ namespace cy3d {
              * firstVertex: Used as an offset into the vertex buffer, defines the lowest value of gl_VertexIndex.
              * firstInstance: Used as an offset for instanced rendering, defines the lowest value of gl_InstanceIndex.
             */
-            vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+            vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 
             vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -739,7 +750,7 @@ namespace cy3d {
      * The format member specifies the color channels and types. For example, VK_FORMAT_B8G8R8A8_SRGB
      * means that we store the B, G, R and alpha channels in that order with an 8 bit unsigned integer for a total of 32 bits per pixel.
     */
-    VkSurfaceFormatKHR CySwapChain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+    VkSurfaceFormatKHR VulkanSwapChain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
     {
         for (const auto& availableFormat : availableFormats) 
         {
@@ -772,7 +783,7 @@ namespace cy3d {
      * NOTE: ONLY the VK_PRESENT_MODE_FIFO_KHR mode is guaranteed to be available.
      * 
     */
-    VkPresentModeKHR CySwapChain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+    VkPresentModeKHR VulkanSwapChain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
     {
         /**
          * Availible present modes are FIFO, Mailbox, and Immediate
@@ -813,7 +824,7 @@ namespace cy3d {
      *
      * The clamp function is used here to bound the values of width and height between the allowed minimum and maximum extents that are supported by the implementation.
     */
-    VkExtent2D CySwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
+    VkExtent2D VulkanSwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
     {
         if (capabilities.currentExtent.width != UINT32_MAX)
         {
@@ -828,7 +839,7 @@ namespace cy3d {
         }
     }
 
-    VkFormat CySwapChain::findDepthFormat()
+    VkFormat VulkanSwapChain::findDepthFormat()
     {
         return cyContext.getDevice()->findSupportedFormat(
             { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },

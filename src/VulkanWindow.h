@@ -14,7 +14,7 @@ namespace cy3d
 		WindowTraits(int&& w, int&& h, std::string&& name) : width(std::move(w)), height(std::move(h)), windowName(std::move(name)) {}
 	};
 
-	class CyWindow
+	class VulkanWindow
 	{
 	private:
 		//custom destructor for GLFWwindow ptr;
@@ -27,12 +27,12 @@ namespace cy3d
 		windowPtr window;
 
 	public:
-		CyWindow(WindowTraits);
-		~CyWindow();
+		VulkanWindow(WindowTraits);
+		~VulkanWindow();
 
 		//remove copy methods
-		CyWindow(const CyWindow&) = delete;
-		CyWindow& operator=(const CyWindow&) = delete;
+		VulkanWindow(const VulkanWindow&) = delete;
+		VulkanWindow& operator=(const VulkanWindow&) = delete;
 
 		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 		bool shouldClose() { return glfwWindowShouldClose(window.get()); }

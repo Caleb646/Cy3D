@@ -1,6 +1,6 @@
 #include "pch.h"
 
-#include "CyPipeline.h"
+#include "VulkanPipeline.h"
 #include "VulkanVertexBuffer.h"
 #include "VulkanContext.h"
 
@@ -8,29 +8,29 @@
 
 namespace cy3d
 {
-    CyPipeline::CyPipeline(VulkanContext& context, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config) : cyContext(context)
+    VulkanPipeline::VulkanPipeline(VulkanContext& context, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config) : cyContext(context)
     {
         createGraphicsPipeline(vertFilepath, fragFilepath, config); 
     }
 
-    CyPipeline::~CyPipeline()
+    VulkanPipeline::~VulkanPipeline()
     {
         cleanup();
     }
 
-    void CyPipeline::cleanup()
+    void VulkanPipeline::cleanup()
     {
         vkDestroyShaderModule(cyContext.getDevice()->device(), fragShaderModule, nullptr);
         vkDestroyShaderModule(cyContext.getDevice()->device(), vertShaderModule, nullptr);
         vkDestroyPipeline(cyContext.getDevice()->device(), graphicsPipeline, nullptr);
     }
 
-    void CyPipeline::bind(VkCommandBuffer commandBuffer)
+    void VulkanPipeline::bind(VkCommandBuffer commandBuffer)
     {
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
     }
 
-    void CyPipeline::createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo)
+    void VulkanPipeline::createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo)
     {
 
         ASSERT_ERROR(DEFAULT_LOGGABLE, configInfo.pipelineLayout != nullptr && configInfo.renderPass != nullptr, "");
@@ -79,19 +79,19 @@ namespace cy3d
          * 
         */
 
-        VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+       /* VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexBindingDescriptionCount = 0;
         vertexInputInfo.vertexAttributeDescriptionCount = 0;
         vertexInputInfo.pVertexBindingDescriptions = nullptr;
-        vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+        vertexInputInfo.pVertexAttributeDescriptions = nullptr;*/
 
-        //VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-        //vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        //vertexInputInfo.vertexBindingDescriptionCount = 1;
-        //vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-        //vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-        //vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+        VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+        vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        vertexInputInfo.vertexBindingDescriptionCount = 1;
+        vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+        vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+        vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
         VkGraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -122,7 +122,7 @@ namespace cy3d
      * @param code is a buffer with bytecode
      * @param shaderModule 
     */
-    void CyPipeline::createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule)
+    void VulkanPipeline::createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule)
     {
         VkShaderModuleCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -143,7 +143,7 @@ namespace cy3d
      * @param width is the width of the swapChainExtent not of the window
      * @param height is the height of the swapChainExtent not of the window
     */
-    void CyPipeline::defaultPipelineConfigInfo(PipelineConfigInfo& configInfo, uint32_t width, uint32_t height)
+    void VulkanPipeline::defaultPipelineConfigInfo(PipelineConfigInfo& configInfo, uint32_t width, uint32_t height)
     {
         configInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         configInfo.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -266,7 +266,7 @@ namespace cy3d
     * PRIVATE STATIC METHODS
     */
 
-    std::vector<char> CyPipeline::readFile(const std::string& filename)
+    std::vector<char> VulkanPipeline::readFile(const std::string& filename)
     {
         std::ifstream file{ filename, std::ios::ate | std::ios::binary };
         ASSERT_ERROR(DEFAULT_LOGGABLE, file.is_open() == true, "Failed to open file: " + filename);

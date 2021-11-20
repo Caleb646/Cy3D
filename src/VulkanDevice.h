@@ -2,11 +2,19 @@
 
 #include "pch.h"
 
-#include "CyWindow.h"
+#include "VulkanWindow.h"
 #include "Fwd.hpp"
 
 namespace cy3d
 {
+
+	struct BufferCreationAllocationInfo
+	{
+		VkDeviceSize size;
+		VkBufferUsageFlags usage;
+		VkMemoryPropertyFlags properties;
+	};
+
 	struct SwapChainSupportDetails
 	{
 		VkSurfaceCapabilitiesKHR capabilities;
@@ -22,7 +30,7 @@ namespace cy3d
 		bool isComplete() { return graphicsFamily.has_value() && presentFamily.has_value(); }
 	};
 
-	class CyDevice
+	class VulkanDevice
 	{
 
 	public:
@@ -41,7 +49,7 @@ namespace cy3d
 		 * will be destroyed when VkInstance is destroyed.
 		*/
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-		//CyWindow& window;
+		//VulkanWindow& window;
 
 		VulkanContext& cyContext;
 
@@ -86,15 +94,15 @@ namespace cy3d
 
 
 	public:
-		//CyDevice(CyWindow& window);
-		CyDevice(VulkanContext& context);
-		~CyDevice();
+		//VulkanDevice(VulkanWindow& window);
+		VulkanDevice(VulkanContext& context);
+		~VulkanDevice();
 
 		// Not copyable or movable
-		CyDevice(const CyDevice&) = delete;
-		void operator=(const CyDevice&) = delete;
-		CyDevice(CyDevice&&) = delete;
-		CyDevice& operator=(CyDevice&&) = delete;
+		VulkanDevice(const VulkanDevice&) = delete;
+		void operator=(const VulkanDevice&) = delete;
+		VulkanDevice(VulkanDevice&&) = delete;
+		VulkanDevice& operator=(VulkanDevice&&) = delete;
 
 		VkCommandPool getCommandPool() { return commandPool; }
 		VkDevice device() { return device_; }
@@ -108,7 +116,8 @@ namespace cy3d
 		VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
 		// Buffer Helper Functions
-		void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+		void createBuffer(BufferCreationAllocationInfo cyBufferInfo, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+		void fillBuffer(void* dataToCopy, VkDeviceSize size, VkDeviceMemory& bufferMemory);	
 		VkCommandBuffer beginSingleTimeCommands();
 		void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
