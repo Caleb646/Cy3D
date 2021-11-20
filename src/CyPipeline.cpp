@@ -1,12 +1,14 @@
 #include "pch.h"
 
 #include "CyPipeline.h"
+#include "VulkanVertexBuffer.h"
+#include "VulkanContext.h"
 
 #include <Logi/Logi.h>
 
 namespace cy3d
 {
-    CyPipeline::CyPipeline(CyDevice& d, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config) : cyDevice(d)
+    CyPipeline::CyPipeline(VulkanContext& context, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config) : cyContext(context)
     {
         createGraphicsPipeline(vertFilepath, fragFilepath, config); 
     }
@@ -18,9 +20,9 @@ namespace cy3d
 
     void CyPipeline::cleanup()
     {
-        vkDestroyShaderModule(cyDevice.device(), fragShaderModule, nullptr);
-        vkDestroyShaderModule(cyDevice.device(), vertShaderModule, nullptr);
-        vkDestroyPipeline(cyDevice.device(), graphicsPipeline, nullptr);
+        vkDestroyShaderModule(cyContext.getDevice()->device(), fragShaderModule, nullptr);
+        vkDestroyShaderModule(cyContext.getDevice()->device(), vertShaderModule, nullptr);
+        vkDestroyPipeline(cyContext.getDevice()->device(), graphicsPipeline, nullptr);
     }
 
     void CyPipeline::bind(VkCommandBuffer commandBuffer)
@@ -63,6 +65,10 @@ namespace cy3d
         shaderStages[1].pNext = nullptr;
         shaderStages[1].pSpecializationInfo = nullptr;
 
+
+
+        auto bindingDescription = Vertex::getBindingDescription();
+        auto attributeDescriptions = Vertex::getAttributeDescriptions();
         /**
          * The VkPipelineVertexInputStateCreateInfo structure describes the format of the vertex data that will be passed to the vertex shader. 
          * It describes this in roughly two ways:
@@ -72,12 +78,20 @@ namespace cy3d
          * Attribute descriptions: type of the attributes passed to the vertex shader, which binding to load them from and at which offset.
          * 
         */
+
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexBindingDescriptionCount = 0;
-        vertexInputInfo.pVertexBindingDescriptions = nullptr;  // Optional
         vertexInputInfo.vertexAttributeDescriptionCount = 0;
-        vertexInputInfo.pVertexAttributeDescriptions = nullptr;  // Optional
+        vertexInputInfo.pVertexBindingDescriptions = nullptr;
+        vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+
+        //VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+        //vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+        //vertexInputInfo.vertexBindingDescriptionCount = 1;
+        //vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+        //vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+        //vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
         VkGraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -100,7 +114,7 @@ namespace cy3d
         pipelineInfo.basePipelineIndex = -1;               // Optional
 
 
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateGraphicsPipelines(cyDevice.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) == VK_SUCCESS, "Failed to create graphics pipeline.");
+        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateGraphicsPipelines(cyContext.getDevice()->device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) == VK_SUCCESS, "Failed to create graphics pipeline.");
     }
 
     /**
@@ -116,7 +130,7 @@ namespace cy3d
         //std::vector ensures that the data satisfies the worst case alignment requirements.
         createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
         
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateShaderModule(cyDevice.device(), &createInfo, nullptr, shaderModule) == VK_SUCCESS, "Failed to create shader module.");
+        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateShaderModule(cyContext.getDevice()->device(), &createInfo, nullptr, shaderModule) == VK_SUCCESS, "Failed to create shader module.");
     }
 
     /*

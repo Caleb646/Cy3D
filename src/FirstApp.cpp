@@ -6,18 +6,21 @@
 
 namespace cy3d
 {
-	FirstApp::FirstApp() {}
+	FirstApp::FirstApp() 
+	{
+		VulkanContext::createDefaultContext(cyContext);
+	}
 
 	FirstApp::~FirstApp() {}
 
 	void FirstApp::run()
 	{
-		while (!cyWindow.shouldClose())
+		while (!cyContext.getWindow()->shouldClose())
 		{
 			glfwPollEvents();
 			drawFrame();
 		}
-		vkDeviceWaitIdle(cyDevice.device());
+		vkDeviceWaitIdle(cyContext.getDevice()->device());
 	}
 
 	/**
@@ -33,9 +36,9 @@ namespace cy3d
 	void FirstApp::drawFrame()
 	{
 		uint32_t imageIndex;
-		auto result = cySwapChain.acquireNextImage(&imageIndex);
+		auto result = cyContext.getSwapChain()->acquireNextImage(&imageIndex);
 		//ASSERT_ERROR(DEFAULT_LOGGABLE, result == VK_SUCCESS, "Failed to acquire swap chain image");
-		result = cySwapChain.submitCommandBuffers(&imageIndex);
+		result = cyContext.getSwapChain()->submitCommandBuffers(&imageIndex);
 		//ASSERT_ERROR(DEFAULT_LOGGABLE, result == VK_SUCCESS, "Failed to present swap chain image");
 	}
 }

@@ -1,6 +1,7 @@
 #include "pch.h"
 
 #include "CyDevice.h"
+#include "VulkanContext.h"
 
 #include <Logi/Logi.h>
 
@@ -37,7 +38,17 @@ namespace cy3d
 	}
 
 
-	CyDevice::CyDevice(CyWindow& w) : window(w)
+	//CyDevice::CyDevice(CyWindow& w) : window(w)
+	//{
+	//	createInstance(); //init vulkan and create an instance of it
+	//	setupDebugMessenger(); //setup validation layers.
+	//	createSurface(); //connection between the window and vulkan
+	//	pickPhysicalDevice(); //picks the gpu that the program will use
+	//	createLogicalDevice(); //describes what features of the physical device will be used.
+	//	createCommandPool();
+	//}
+
+	CyDevice::CyDevice(VulkanContext& context) : cyContext(context) 
 	{
 		createInstance(); //init vulkan and create an instance of it
 		setupDebugMessenger(); //setup validation layers.
@@ -108,7 +119,7 @@ namespace cy3d
 		//get the device count
 		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 		ASSERT_ERROR(DEFAULT_LOGGABLE, deviceCount != 0, "Failed to find GPUs with Vulkan support.");
-		std::cout << "Device count: " << deviceCount << std::endl;
+		//std::cout << "Device count: " << deviceCount << std::endl;
 		std::vector<VkPhysicalDevice> devices(deviceCount);
 		//place the available devices in the devices vector.
 		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
@@ -123,7 +134,7 @@ namespace cy3d
 		}
 		ASSERT_ERROR(DEFAULT_LOGGABLE, physicalDevice != VK_NULL_HANDLE, "Physical device cannot be null.");
 		vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-		std::cout << "physical device: " << properties.deviceName << std::endl;
+		//std::cout << "physical device: " << properties.deviceName << std::endl;
 	}
 
 	/**
@@ -219,7 +230,11 @@ namespace cy3d
 		ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateCommandPool(device_, &poolInfo, nullptr, &commandPool) == VK_SUCCESS, "Failed to create command pool.");
 	}
 
-	void CyDevice::createSurface() { window.createWindowSurface(instance, &surface_); }
+	void CyDevice::createSurface() 
+	{ 
+		cyContext.getWindow()->createWindowSurface(instance, &surface_);
+		//window.createWindowSurface(instance, &surface_); 
+	}
 
 	/**
 	 * @brief Returns true is the neccessary queues, extensions, and present modes are supported

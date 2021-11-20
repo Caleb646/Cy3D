@@ -19,6 +19,9 @@ namespace cy3d
 		ASSERT_ERROR(DEFAULT_LOGGABLE, glfwCreateWindowSurface(instance, window.get(), nullptr, surface) == VK_SUCCESS, "Failed to create window surface.");
 	}
 
+	/**
+	 * @brief Will block until the window is no longer minimized using glfwWaitEvents().
+	*/
 	void CyWindow::blockWhileWindowMinimized()
 	{
 		while (isWindowMinimized()) glfwWaitEvents();

@@ -178,6 +178,9 @@
     <ClCompile Include="src\FirstApp.cpp" />
     <ClCompile Include="src\CyWindow.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="src\VulkanVertexBuffer.cpp" />
+    <ClCompile Include="src\VulkanRenderer.cpp" />
+    <ClCompile Include="src\VulkanContext.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="deps\libraries\vulkan\dxcompiler.lib" />
@@ -258,6 +261,10 @@
     <ClInclude Include="src\CyPipeline.h" />
     <ClInclude Include="src\FirstApp.h" />
     <ClInclude Include="src\CyWindow.h" />
+    <ClInclude Include="src\Fwd.hpp" />
+    <ClInclude Include="src\VulkanVertexBuffer.h" />
+    <ClInclude Include="src\VulkanRenderer.h" />
+    <ClInclude Include="src\VulkanContext.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

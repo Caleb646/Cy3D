@@ -3,6 +3,7 @@
 #include "pch.h"
 
 #include "CyDevice.h"
+#include "Fwd.hpp"
 
 namespace cy3d
 {
@@ -51,13 +52,15 @@ namespace cy3d
 	class CyPipeline
 	{
 	private:
-		CyDevice& cyDevice;
+		//CyDevice& cyDevice;
+		VulkanContext& cyContext;
 		VkPipeline graphicsPipeline;
 		VkShaderModule vertShaderModule;
 		VkShaderModule fragShaderModule;
 
 	public:
-		CyPipeline(CyDevice& d, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config);
+		//CyPipeline(CyDevice& d, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config);
+		CyPipeline(VulkanContext& context, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config);
 		~CyPipeline();
 
 		//delete copy methods

@@ -4,16 +4,20 @@
 
 #include "CyDevice.h"
 #include "CyPipeline.h"
+#include "Fwd.hpp"
 
 
 namespace cy3d {
 
 
     /**
-     * @brief There are three types of settings to determine: Surface format (color depth), Presentation mode (conditions for "swapping" images to the screen)
+     * @brief The swap chain is essentially a queue of images that are waiting to be presented to the screen. 
+     * Our application will acquire such an image to draw to it, and then return it to the queue. 
+     
+     * There are three types of settings to determine for the swap chain: Surface format (color depth), 
+     * Presentation mode (conditions for "swapping" images to the screen)
      * and Swap extent (resolution of images in swap chain).
     */
-
     class CySwapChain {
 
     public:
@@ -23,7 +27,21 @@ namespace cy3d {
         VkFormat swapChainImageFormat;
         VkExtent2D swapChainExtent;
 
+        /**
+         * A framebuffer object references all of the VkImageView objects that represent the attachments. 
+         * In our case that will be only a single one: the color attachment. However, the image that we have 
+         * to use for the attachment depends on which image the swap chain returns when we retrieve one for presentation. 
+         * That means that we have to create a framebuffer for all of the images in the swap chain and use the one that 
+         * corresponds to the retrieved image at drawing time.
+        */
         std::vector<VkFramebuffer> swapChainFramebuffers;
+
+        /**
+         * Before we can finish creating the pipeline, we need to tell Vulkan about the framebuffer attachments 
+         * that will be used while rendering. We need to specify how many color and depth buffers there will be, 
+         * how many samples to use for each of them and how their contents should be handled throughout the rendering 
+         * operations. All of this information is wrapped in a render pass object.
+        */
         VkRenderPass renderPass;
 
         std::vector<VkImage> depthImages;
@@ -32,11 +50,18 @@ namespace cy3d {
         std::vector<VkImage> swapChainImages;
         std::vector<VkImageView> swapChainImageViews;
 
-        CyDevice& cyDevice;
-        CyWindow& cyWindow;
+        //CyDevice& cyDevice;
+        //CyWindow& cyWindow;
+
+        VulkanContext& cyContext;
+
+
         std::unique_ptr<CyPipeline> cyPipeline;
         VkPipelineLayout pipelineLayout;
 
+        /**
+         * Record a command buffer for every image in the swap chain.
+        */
         std::vector<VkCommandBuffer> commandBuffers;
 
         /**
@@ -72,7 +97,8 @@ namespace cy3d {
 
     public:
 
-        CySwapChain(CyDevice& d, CyWindow& w);
+        //CySwapChain(CyDevice& d, CyWindow& w);
+        CySwapChain(VulkanContext& context);
         ~CySwapChain();
 
         CySwapChain(const CySwapChain&) = delete;

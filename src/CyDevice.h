@@ -3,7 +3,7 @@
 #include "pch.h"
 
 #include "CyWindow.h"
-
+#include "Fwd.hpp"
 
 namespace cy3d
 {
@@ -41,7 +41,9 @@ namespace cy3d
 		 * will be destroyed when VkInstance is destroyed.
 		*/
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-		CyWindow& window;
+		//CyWindow& window;
+
+		VulkanContext& cyContext;
 
 		/**
 		 * Command pools manage the memory that is used to store the buffers and 
@@ -84,7 +86,8 @@ namespace cy3d
 
 
 	public:
-		CyDevice(CyWindow& window);
+		//CyDevice(CyWindow& window);
+		CyDevice(VulkanContext& context);
 		~CyDevice();
 
 		// Not copyable or movable

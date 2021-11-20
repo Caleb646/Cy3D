@@ -1,7 +1,7 @@
 #pragma once
 
 #include "pch.h"
-
+#include "Fwd.hpp"
 
 namespace cy3d
 {
@@ -36,11 +36,20 @@ namespace cy3d
 
 		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 		bool shouldClose() { return glfwWindowShouldClose(window.get()); }
+
+		/**
+		 * @brief Vulkan works with pixels, so the swap chain extent must be specified in pixels as well.
+		 * if you are using a high DPI display (like Apple's Retina display), screen coordinates don't correspond to pixels.
+		 * Instead, due to the higher pixel density, the resolution of the window in pixel will be larger than the resolution in
+		 * screen coordinates. So if Vulkan doesn't fix the swap extent for us, we can't just use the original {WIDTH, HEIGHT}.
+		 * Instead, we must use glfwGetFramebufferSize to query the resolution of the window in pixel before matching it against
+		 * the minimum and maximum image extent.
+		*/
 		VkExtent2D getExtent() { return { windowTraits.width, windowTraits.height }; }
 		void getWindowFrameBufferSize(int outWidth, int outHeight) { return glfwGetFramebufferSize(window.get(), &outWidth, &outHeight); }
 		bool isWindowFrameBufferResized() { return framebufferResized; }
 		bool isWindowMinimized() { return windowTraits.width == 0 || windowTraits.height == 0; }
-		void resetWindowFrameBufferResized() { framebufferResized = false; }
+		void resetWindowFrameBufferResizedFlag() { framebufferResized = false; }
 		void blockWhileWindowMinimized();
 
 
