@@ -64,7 +64,9 @@ namespace cy3d
 		~VulkanPipeline();
 
 		//delete copy methods
+		VulkanPipeline() = delete;
 		VulkanPipeline(const VulkanPipeline&) = delete;
+		VulkanPipeline(VulkanPipeline&&) = delete;
 		VulkanPipeline& operator=(const VulkanPipeline&) = delete;
 
 		void bind(VkCommandBuffer commandBuffer);

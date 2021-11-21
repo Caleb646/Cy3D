@@ -31,7 +31,9 @@ namespace cy3d
 		~VulkanWindow();
 
 		//remove copy methods
+		VulkanWindow() = delete;
 		VulkanWindow(const VulkanWindow&) = delete;
+		VulkanWindow(VulkanWindow&&) = delete;
 		VulkanWindow& operator=(const VulkanWindow&) = delete;
 
 		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);

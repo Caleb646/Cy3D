@@ -67,9 +67,13 @@ namespace cy3d
         VkBuffer vertexBuffer{ nullptr };
         VkDeviceMemory vertexBufferMemory{ nullptr };
         VulkanContext& cyContext;
+        VkDeviceSize _bufferSize;
+        //tracks if the buffer and buffer memory have been mapped
+        bool mapped{ false };
 
     public:
-        VulkanVertexBuffer(VulkanContext&);
+        //TODO add size, void * data, usage to constructor
+        VulkanVertexBuffer(VulkanContext&, VkDeviceSize s, void* data);
         ~VulkanVertexBuffer();
 
         //cannot be created without a context.
@@ -81,8 +85,13 @@ namespace cy3d
 
 
         void setData(void* data, VkDeviceSize size);
-        void setData(void* data, VkDeviceSize size, BufferCreationAllocationInfo bufferInfo);
-        
+        void setData(void* data, BufferCreationAllocationInfo bufferInfo);
+
+        void create(BufferCreationAllocationInfo bufferInfo);
+        void copyTo(VulkanVertexBuffer* destination, VkDeviceSize size);
+
+        VkDeviceSize bufferSize() { return _bufferSize; }
+
         VkBuffer getVertexBuffer() 
         { 
             ASSERT_ERROR(DEFAULT_LOGGABLE, vertexBuffer != nullptr, "Data has not been set. Buffer is null.");

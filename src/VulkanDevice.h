@@ -8,11 +8,78 @@
 namespace cy3d
 {
 
+	struct OffsetsInfo
+	{
+		void* data;
+		VkDeviceSize bufferSize;
+		VkDeviceSize offset;
+	};
+
 	struct BufferCreationAllocationInfo
 	{
-		VkDeviceSize size;
+		VkDeviceSize bufferSize;
 		VkBufferUsageFlags usage;
 		VkMemoryPropertyFlags properties;
+
+		/*
+		* Possible Usage bits:
+		* VK_BUFFER_USAGE_TRANSFER_SRC_BIT -> Buffer can be used as source in a memory transfer operation.
+		* VK_BUFFER_USAGE_TRANSFER_DST_BIT -> Buffer can be used as destination in a memory transfer operation.
+		* VK_BUFFER_USAGE_VERTEX_BUFFER_BIT -> Buffer is used for vertexs.
+		*/
+		static BufferCreationAllocationInfo createDefaultVertexIndexSharedBufferInfo(VkDeviceSize bufferSize)
+		{
+			return BufferCreationAllocationInfo{ bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
+		}
+
+
+		static BufferCreationAllocationInfo createDefaultStagingBufferInfo(VkDeviceSize bufferSize)
+		{
+			return BufferCreationAllocationInfo{ bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
+		}
+
+
+		/**
+		 * @brief Intended to work in tandem with a staging buffer so the first usage flag is set as
+		 * VK_BUFFER_USAGE_TRANSFER_DST_BIT.
+		*/
+		static BufferCreationAllocationInfo createDefaultDeviceOnlyIndexBufferInfo(VkDeviceSize bufferSize)
+		{
+			return BufferCreationAllocationInfo{ bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
+		}
+
+		/**
+		 * @brief Intended to work in tandem with a staging buffer so the first usage flag is set as
+		 * VK_BUFFER_USAGE_TRANSFER_DST_BIT.
+		*/
+		static BufferCreationAllocationInfo createDefaultDeviceOnlyVertexBufferInfo(VkDeviceSize bufferSize)
+		{
+			return BufferCreationAllocationInfo{ bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
+		}
+
+		/**
+		 * @brief Will create a vertex buffer info that can be written to by the CPU.
+		*/
+		static BufferCreationAllocationInfo createDefaultVertexBufferInfo(VkDeviceSize bufferSize)
+		{
+			return createGPUCPUCoherentBufferInfo(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+		}
+
+		/**
+		 * @brief Specify a buffer setup that can be accessed by the CPU and GPU.
+		*/
+		static BufferCreationAllocationInfo createGPUCPUCoherentBufferInfo(VkDeviceSize bufferSize, VkBufferUsageFlags usage)
+		{
+			return BufferCreationAllocationInfo{ bufferSize, usage, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT };
+		}
+
+		/**
+		 * @brief Specify a buffer setup that is intended to only be accessible by the GPU.
+		*/
+		static BufferCreationAllocationInfo createGPUOnlyBufferInfo(VkDeviceSize bufferSize, VkBufferUsageFlags usage)
+		{
+			return BufferCreationAllocationInfo{ bufferSize, usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT };
+		}
 	};
 
 	struct SwapChainSupportDetails
@@ -99,8 +166,8 @@ namespace cy3d
 		~VulkanDevice();
 
 		// Not copyable or movable
+		VulkanDevice() = delete;
 		VulkanDevice(const VulkanDevice&) = delete;
-		void operator=(const VulkanDevice&) = delete;
 		VulkanDevice(VulkanDevice&&) = delete;
 		VulkanDevice& operator=(VulkanDevice&&) = delete;
 
@@ -116,14 +183,21 @@ namespace cy3d
 		VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
 		// Buffer Helper Functions
-		void createBuffer(BufferCreationAllocationInfo cyBufferInfo, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-		void fillBuffer(void* dataToCopy, VkDeviceSize size, VkDeviceMemory& bufferMemory);	
+		void createBuffer(BufferCreationAllocationInfo cyBufferInfo, VkBuffer& buffer, VkDeviceMemory& bufferMemory, void* data = nullptr);
+		void fillBuffer(VkDeviceMemory& bufferMemory, VkDeviceSize bufferSize, const std::vector<OffsetsInfo>& offsets);
+		void fillBuffer(void* dataToCopy, VkDeviceMemory& bufferMemory, VkDeviceSize bufferSize);
 		VkCommandBuffer beginSingleTimeCommands();
 		void endSingleTimeCommands(VkCommandBuffer commandBuffer);
-		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+		void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize bufferSize);
 		void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount);
 
-		void createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);	
+		void createImageWithInfo(const VkImageCreateInfo& imageInfo, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+
+		/**
+		 * @brief Casting operator. When VulkanDevice is implicitly or explicity cast to VkDevice
+		 * this operator will handle it. No need to call device() to get VkDevice handle.
+		*/
+		operator VkDevice() { return device_; }
 
 	private:
 		void createInstance();

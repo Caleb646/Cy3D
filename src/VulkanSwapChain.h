@@ -5,6 +5,8 @@
 #include "VulkanDevice.h"
 #include "VulkanPipeline.h"
 #include "VulkanVertexBuffer.h"
+#include "VulkanIndexBuffer.h"
+#include "VulkanBuffer.h"
 #include "Fwd.hpp"
 
 
@@ -53,6 +55,9 @@ namespace cy3d {
 
         VulkanContext& cyContext;
         std::unique_ptr<VulkanVertexBuffer> vertexBuffer;
+        std::unique_ptr<VulkanIndexBuffer> indexBuffer;
+
+        std::unique_ptr<VulkanBuffer> omniBuffer;
 
 
         std::unique_ptr<VulkanPipeline> cyPipeline;
@@ -100,6 +105,8 @@ namespace cy3d {
         VulkanSwapChain(VulkanContext& context);
         ~VulkanSwapChain();
 
+        VulkanSwapChain() = delete;
+        VulkanSwapChain(VulkanSwapChain&&) = delete;
         VulkanSwapChain(const VulkanSwapChain&) = delete;
         void operator=(const VulkanSwapChain&) = delete;
 
@@ -132,6 +139,7 @@ namespace cy3d {
         void createImageViews();
         void createDepthResources();
         void createRenderPass();
+        void createIndexBuffers();
         void createVertexBuffers();
         void createFramebuffers();
         void createSyncObjects();

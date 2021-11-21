@@ -504,11 +504,11 @@ namespace cy3d
 		ASSERT_ERROR(DEFAULT_LOGGABLE, false, "Failed to find memory type.");
 	}
 
-	void VulkanDevice::createBuffer(BufferCreationAllocationInfo cyBufferInfo, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+	void VulkanDevice::createBuffer(BufferCreationAllocationInfo cyBufferInfo, VkBuffer& buffer, VkDeviceMemory& bufferMemory, void* data)
 	{ 
 		VkBufferCreateInfo bufferInfo{};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = cyBufferInfo.size;
+		bufferInfo.size = cyBufferInfo.bufferSize;
 		bufferInfo.usage = cyBufferInfo.usage;
 
 		/**
@@ -550,9 +550,38 @@ namespace cy3d
 		 * be divisible by memRequirements.alignment.
 		*/
 		vkBindBufferMemory(device_, buffer, bufferMemory, 0);
+
+		if (data != nullptr)
+		{
+			fillBuffer(data, bufferMemory, bufferInfo.size);
+		}
 	}
 
-	void VulkanDevice::fillBuffer(void* dataSource, VkDeviceSize size, VkDeviceMemory& bufferMemory)
+	void VulkanDevice::fillBuffer(VkDeviceMemory& bufferMemory, VkDeviceSize bufferSize, const std::vector<OffsetsInfo>& offsets)
+	{
+		void* dataDestination;
+
+		/**
+		 * This function allows us to access a region of the specified memory
+		 * resource defined by an offset and size. The offset and size here are 0 and bufferInfo.size.
+		 *
+		 * It is also possible to specify the special value VK_WHOLE_SIZE to map all of the memory.
+		 *
+		 * The last parameter specifies the output for the pointer to the mapped memory.
+		*/
+		vkMapMemory(device(), bufferMemory, 0, VK_WHOLE_SIZE, 0, &dataDestination);
+
+		uint8_t* ptr = static_cast<uint8_t*>(dataDestination);
+		for (auto& info : offsets)
+		{
+			ptr += info.offset;
+			memcpy(ptr, info.data, static_cast<std::size_t>(info.bufferSize));
+		}
+
+		vkUnmapMemory(device(), bufferMemory);
+	}
+
+	void VulkanDevice::fillBuffer(void* dataSource, VkDeviceMemory& bufferMemory, VkDeviceSize bufferSize)
 	{
 		void* dataDestination;
 
@@ -564,7 +593,7 @@ namespace cy3d
 		 * 
 		 * The last parameter specifies the output for the pointer to the mapped memory.
 		*/
-		vkMapMemory(device(), bufferMemory, 0, size, 0, &dataDestination);
+		vkMapMemory(device(), bufferMemory, 0, VK_WHOLE_SIZE, 0, &dataDestination);
 
 		/**
 		 * The driver may not immediately copy the 
@@ -578,7 +607,7 @@ namespace cy3d
 		 * Call vkFlushMappedMemoryRanges after writing to the mapped memory, and call 
 		 * vkInvalidateMappedMemoryRanges before reading from the mapped memory
 		*/
-		memcpy(dataDestination, dataSource, static_cast<std::size_t>(size));
+		memcpy(dataDestination, dataSource, static_cast<std::size_t>(bufferSize));
 		vkUnmapMemory(device(), bufferMemory);
 	}
 
@@ -611,7 +640,7 @@ namespace cy3d
 		submitInfo.pCommandBuffers = &commandBuffer;
 
 		vkQueueSubmit(graphicsQueue_, 1, &submitInfo, VK_NULL_HANDLE);
-		vkQueueWaitIdle(graphicsQueue_);
+		vkQueueWaitIdle(graphicsQueue_); //wait for the transfer queue to become idle.
 
 		vkFreeCommandBuffers(device_, commandPool, 1, &commandBuffer);
 	}

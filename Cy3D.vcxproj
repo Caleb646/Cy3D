@@ -182,6 +182,8 @@
     <ClCompile Include="src\VulkanRenderer.cpp" />
     <ClCompile Include="src\VulkanContext.cpp" />
     <ClCompile Include="src\Vulkan.cpp" />
+    <ClCompile Include="src\VulkanIndexBuffer.cpp" />
+    <ClCompile Include="src\VulkanBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="deps\libraries\vulkan\dxcompiler.lib" />
@@ -267,6 +269,8 @@
     <ClInclude Include="src\VulkanRenderer.h" />
     <ClInclude Include="src\VulkanContext.h" />
     <ClInclude Include="src\Vulkan.h" />
+    <ClInclude Include="src\VulkanIndexBuffer.h" />
+    <ClInclude Include="src\VulkanBuffer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

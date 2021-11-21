@@ -14,6 +14,7 @@ namespace cy3d {
         createImageViews();
         createRenderPass();
         createDepthResources();
+        createIndexBuffers();
         createVertexBuffers();
         createFramebuffers();
         createSyncObjects();
@@ -92,13 +93,12 @@ namespace cy3d {
         createRenderPass();
         createDepthResources();
         createFramebuffers();
-        //createSyncObjects();
 
         createDefaultPipelineLayout();
         createDefaultPipeline();
         createCommandBuffers();
 
-        //because sync objects are being reused the imagesInFlight to be reset.
+        //because sync objects are being reused the imagesInFlight need to be reset here.
         imagesInFlight.resize(imageCount(), VK_NULL_HANDLE);
     }
 
@@ -503,9 +503,55 @@ namespace cy3d {
         ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateRenderPass(cyContext.getDevice()->device(), &renderPassInfo, nullptr, &renderPass) == VK_SUCCESS, "Failed to create render pass");
     }
 
+    void VulkanSwapChain::createIndexBuffers()
+    {
+        //can use either uint16_t or uint32_t
+        //std::vector<uint16_t> indices =
+        //{
+        //    0, 1, 2, 2, 3, 0
+        //};
+
+        ////use reset here to ensure on recreation of the swap chain and of the vertex buffer that the previous index buffer is cleaned up
+        //indexBuffer.reset(new VulkanIndexBuffer(cyContext, sizeof(indices[0]) * indices.size(), static_cast<void*>(indices.data())));
+    }
+
     void VulkanSwapChain::createVertexBuffers()
     {
-        vertexBuffer = std::make_unique<VulkanVertexBuffer>(cyContext);
+
+        //std::vector<Vertex> vertices =
+        //{
+        //    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+        //    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+        //    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+        //    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+        //};
+
+        ////use reset here to ensure on recreation of the swap chain and of the vertex buffer that the previous vertex buffer is cleaned up
+        //vertexBuffer.reset(new VulkanVertexBuffer(cyContext, sizeof(vertices[0]) * vertices.size(), static_cast<void*>(vertices.data())));
+
+
+
+
+        std::vector<Vertex> vertices =
+        {
+            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+            {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+            {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+        };
+
+        std::vector<uint16_t> indices =
+        {
+            0, 1, 2, 2, 3, 0
+        };
+
+
+        if(omniBuffer.get() != nullptr) omniBuffer->~VulkanBuffer();
+
+        
+        VkDeviceSize vSize = sizeof(vertices[0]) * vertices.size();
+        VkDeviceSize iSize = sizeof(indices[0]) * indices.size();
+        omniBuffer.reset(new VulkanBuffer(cyContext, vSize, vertices.data(), iSize, indices.data()));
     }
 
     /**
@@ -616,7 +662,6 @@ namespace cy3d {
     */
     void VulkanSwapChain::createDefaultPipelineLayout()
     {
-        VkPipelineLayout out;
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = 0;
@@ -657,15 +702,11 @@ namespace cy3d {
 
         ASSERT_ERROR(DEFAULT_LOGGABLE, vkAllocateCommandBuffers(cyContext.getDevice()->device(), &allocInfo, commandBuffers.data()) == VK_SUCCESS, "Failed to allocate command buffers");
 
+       // VkBuffer vertexBuffers[] = { vertexBuffer->getVertexBuffer() };
+        //VkDeviceSize offsets[] = { 0 };
 
-        std::vector<Vertex> vertices =
-        {
-        {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-        {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-        {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
-        };
-        vertexBuffer->setData(static_cast<void*>(vertices.data()), sizeof(vertices[0]) * vertices.size());
-        VkBuffer vertexBuffers[] = { vertexBuffer->getVertexBuffer() };
+
+        VkBuffer vertexBuffers[] = { omniBuffer->getBuffer() };
         VkDeviceSize offsets[] = { 0 };
 
         for (int i = 0; i < commandBuffers.size(); i++)
@@ -729,6 +770,15 @@ namespace cy3d {
             */
             vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
 
+
+            /**
+             * Parameters other than the command buffer are the index buffer, a byte offset into it, and the type of index data. 
+             * The possible types are VK_INDEX_TYPE_UINT16 and VK_INDEX_TYPE_UINT32.
+            */
+            //vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer.get()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+
+            vkCmdBindIndexBuffer(commandBuffers[i], omniBuffer->getBuffer(), omniBuffer->offset(), VK_INDEX_TYPE_UINT16);
+
             /**
              * vkCmdDraw has the following parameters, aside from the command buffer:
              *
@@ -737,7 +787,9 @@ namespace cy3d {
              * firstVertex: Used as an offset into the vertex buffer, defines the lowest value of gl_VertexIndex.
              * firstInstance: Used as an offset for instanced rendering, defines the lowest value of gl_InstanceIndex.
             */
-            vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+            //vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertexBuffer.get()->size()), 1, 0, 0); 
+
+            vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(omniBuffer->count()), 1, 0, 0, 0);
 
             vkCmdEndRenderPass(commandBuffers[i]);
 
