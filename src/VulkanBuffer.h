@@ -64,8 +64,6 @@ namespace cy3d
             //create and copy data to the staging buffer
             cyContext.getDevice()->createBuffer(BufferCreationAllocationInfo::createDefaultStagingBufferInfo(bufferSize()), stagingBuffer, stagingBufferMemory);
 
-            //TODO HAVE a memory leak its prob due to this class.
-
             std::vector<OffsetsInfo> offsetInfo = {
                 {vData, vBuffSize, 0},
                 {iData, iBuffSize, vBuffSize}

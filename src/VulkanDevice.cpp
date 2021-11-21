@@ -572,8 +572,9 @@ namespace cy3d
 		vkMapMemory(device(), bufferMemory, 0, VK_WHOLE_SIZE, 0, &dataDestination);
 
 		uint8_t* ptr = static_cast<uint8_t*>(dataDestination);
-		for (auto& info : offsets)
+		for (const auto& info : offsets)
 		{
+			ASSERT_ERROR(DEFAULT_LOGGABLE, info.bufferSize + info.offset <= bufferSize, "Memory overflow.");
 			ptr += info.offset;
 			memcpy(ptr, info.data, static_cast<std::size_t>(info.bufferSize));
 		}
