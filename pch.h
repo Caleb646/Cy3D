@@ -18,3 +18,6 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
+#define VMA_IMPLEMENTATION
+#include "vma/vk_mem_alloc.h"

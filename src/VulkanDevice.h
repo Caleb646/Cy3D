@@ -109,13 +109,13 @@ namespace cy3d
 #endif
 
 	private:
-		VkInstance instance;
+		VkInstance _instance;
 		VkDebugUtilsMessengerEXT debugMessenger;
 		/**
 		 * The physical graphics card that will be used.
 		 * will be destroyed when VkInstance is destroyed.
 		*/
-		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+		VkPhysicalDevice _physicalDevice{ VK_NULL_HANDLE };
 		//VulkanWindow& window;
 
 		VulkanContext& cyContext;
@@ -129,7 +129,7 @@ namespace cy3d
 		/**
 		 * a pointer to store the logical device handle in
 		*/
-		VkDevice device_;
+		VkDevice _device;
 
 		/**
 		 * The VK_KHR_surface extension is an instance level extension and we've actually already enabled it, 
@@ -141,7 +141,7 @@ namespace cy3d
 		 * extension, which on Windows is called VK_KHR_win32_surface and is also automatically 
 		 * included in the list from glfwGetRequiredInstanceExtensions.
 		*/
-		VkSurfaceKHR surface_;
+		VkSurfaceKHR _surface;
 
 		/**
 		 * The queues are automatically created along with the logical device, but we don't have a handle to interface with them yet. 
@@ -172,14 +172,16 @@ namespace cy3d
 		VulkanDevice& operator=(VulkanDevice&&) = delete;
 
 		VkCommandPool getCommandPool() { return commandPool; }
-		VkDevice device() { return device_; }
-		VkSurfaceKHR surface() { return surface_; }
+		VkDevice device() { return _device; }
+		VkPhysicalDevice physicalDevice() { return _physicalDevice; }
+		VkSurfaceKHR surface() { return _surface; }
+		VkInstance instance() { return _instance; }
 		VkQueue graphicsQueue() { return graphicsQueue_; }
 		VkQueue presentQueue() { return presentQueue_; }
 
-		SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(physicalDevice); }
+		SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(_physicalDevice); }
 		uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-		QueueFamilyIndices findPhysicalQueueFamilies() { return findQueueFamilies(physicalDevice); }
+		QueueFamilyIndices findPhysicalQueueFamilies() { return findQueueFamilies(_physicalDevice); }
 		VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
 		// Buffer Helper Functions
@@ -197,7 +199,7 @@ namespace cy3d
 		 * @brief Casting operator. When VulkanDevice is implicitly or explicity cast to VkDevice
 		 * this operator will handle it. No need to call device() to get VkDevice handle.
 		*/
-		operator VkDevice() { return device_; }
+		operator VkDevice() { return _device; }
 
 	private:
 		void createInstance();
