@@ -10,7 +10,7 @@ namespace cy3d
 	VulkanAllocator::VulkanAllocator(VulkanContext& context) : cyContext(context)
 	{
 		VmaAllocatorCreateInfo allocatorInfo{};
-		allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
+		allocatorInfo.vulkanApiVersion = CY_VK_API_VERSION;
 		allocatorInfo.physicalDevice = cyContext.getDevice()->physicalDevice();
 		allocatorInfo.device = cyContext.getDevice()->device();
 		allocatorInfo.instance = cyContext.getDevice()->instance();

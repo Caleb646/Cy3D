@@ -1,6 +1,9 @@
 #pragma once
 #include "pch.h"
 
+#define VMA_IMPLEMENTATION
+#include "vma/vk_mem_alloc.h"
+
 #include "Fwd.hpp"
 
 namespace cy3d
@@ -9,7 +12,7 @@ namespace cy3d
 	{
 	private:
 		VulkanContext& cyContext;
-		VmaAllocator _allocator;
+		VmaAllocator _allocator{};
 
 
 	public:

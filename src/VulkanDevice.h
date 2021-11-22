@@ -108,6 +108,8 @@ namespace cy3d
 		const bool enableValidationLayers = true;
 #endif
 
+#define CY_VK_API_VERSION VK_API_VERSION_1_2
+
 	private:
 		VkInstance _instance;
 		VkDebugUtilsMessengerEXT debugMessenger;

@@ -67,10 +67,10 @@ namespace cy3d
 		VkApplicationInfo appInfo = {};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pApplicationName = "Cy3D";
-		appInfo.applicationVersion = VK_API_VERSION_1_2;
+		appInfo.applicationVersion = CY_VK_API_VERSION;
 		appInfo.pEngineName = "No Engine";
-		appInfo.engineVersion = VK_API_VERSION_1_2;
-		appInfo.apiVersion = VK_API_VERSION_1_2;
+		appInfo.engineVersion = CY_VK_API_VERSION;
+		appInfo.apiVersion = CY_VK_API_VERSION;
 
 		VkInstanceCreateInfo createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
