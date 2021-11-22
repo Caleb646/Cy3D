@@ -529,6 +529,9 @@ namespace cy3d {
         ////use reset here to ensure on recreation of the swap chain and of the vertex buffer that the previous vertex buffer is cleaned up
         //vertexBuffer.reset(new VulkanVertexBuffer(cyContext, sizeof(vertices[0]) * vertices.size(), static_cast<void*>(vertices.data())));
 
+
+
+
         std::vector<Vertex> vertices =
         {
             {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
@@ -542,6 +545,10 @@ namespace cy3d {
             0, 1, 2, 2, 3, 0
         };
 
+
+        if(omniBuffer.get() != nullptr) omniBuffer->~VulkanBuffer();
+
+        
         VkDeviceSize vSize = sizeof(vertices[0]) * vertices.size();
         VkDeviceSize iSize = sizeof(indices[0]) * indices.size();
         omniBuffer.reset(new VulkanBuffer(cyContext, vSize, vertices.data(), iSize, indices.data()));
@@ -695,10 +702,9 @@ namespace cy3d {
 
         ASSERT_ERROR(DEFAULT_LOGGABLE, vkAllocateCommandBuffers(cyContext.getDevice()->device(), &allocInfo, commandBuffers.data()) == VK_SUCCESS, "Failed to allocate command buffers");
 
-        //VkBuffer vertexBuffers[] = { vertexBuffer->getVertexBuffer() };
+       // VkBuffer vertexBuffers[] = { vertexBuffer->getVertexBuffer() };
         //VkDeviceSize offsets[] = { 0 };
 
-        createVertexBuffers();
 
         VkBuffer vertexBuffers[] = { omniBuffer->getBuffer() };
         VkDeviceSize offsets[] = { 0 };
@@ -781,7 +787,7 @@ namespace cy3d {
              * firstVertex: Used as an offset into the vertex buffer, defines the lowest value of gl_VertexIndex.
              * firstInstance: Used as an offset for instanced rendering, defines the lowest value of gl_InstanceIndex.
             */
-            //vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertexBuffer->bufferSize()), 1, 0, 0); 
+            //vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertexBuffer.get()->size()), 1, 0, 0); 
 
             vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(omniBuffer->count()), 1, 0, 0, 0);
 
