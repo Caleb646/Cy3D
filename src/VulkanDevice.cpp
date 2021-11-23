@@ -504,113 +504,6 @@ namespace cy3d
 		ASSERT_ERROR(DEFAULT_LOGGABLE, false, "Failed to find memory type.");
 	}
 
-	void VulkanDevice::createBuffer(BufferCreationAllocationInfo cyBufferInfo, VkBuffer& buffer, VkDeviceMemory& bufferMemory, void* data)
-	{ 
-		VkBufferCreateInfo bufferInfo{};
-		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = cyBufferInfo.bufferSize;
-		bufferInfo.usage = cyBufferInfo.usage;
-
-		/**
-		 * buffers can also be owned by a specific queue family or be 
-		 * shared between multiple at the same time. The buffer will only 
-		 * be used from the graphics queue, so we can stick to exclusive access.
-		*/
-		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-		ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateBuffer(cyContext.getDevice()->device(), &bufferInfo, nullptr, &buffer) == VK_SUCCESS, "Failed to create buffer.");
-
-		/**
-		 * The VkMemoryRequirements struct has three fields:
-
-		 * size: The size of the required amount of memory in bytes, may differ from bufferInfo.size.
-		 * 
-		 * alignment: The offset in bytes where the buffer begins in the allocated region of memory, 
-		 * depends on bufferInfo.usage and bufferInfo.flags.
-		 * 
-		 * memoryTypeBits: Bit field of the memory types that are suitable for the buffer.
-		*/
-		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(_device, buffer, &memRequirements);
-
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, cyBufferInfo.properties);
-		ASSERT_ERROR(DEFAULT_LOGGABLE, vkAllocateMemory(_device, &allocInfo, nullptr, &bufferMemory) == VK_SUCCESS, "Failed to allocate memory for buffer.");
-
-		/**
-		 * 
-		 * If memory allocation was successful, then we can now associate this memory 
-		 * with the buffer using vkBindBufferMemory:
-		 * 
-		 * The fourth param is the offset within the region of memory.
-		 * Since this memory is allocated specifically for this the vertex buffer, 
-		 * the offset is simply 0. If the offset is non-zero, then it is required to 
-		 * be divisible by memRequirements.alignment.
-		*/
-		vkBindBufferMemory(_device, buffer, bufferMemory, 0);
-
-		if (data != nullptr)
-		{
-			fillBuffer(data, bufferMemory, bufferInfo.size);
-		}
-	}
-
-	void VulkanDevice::fillBuffer(VkDeviceMemory& bufferMemory, VkDeviceSize bufferSize, const std::vector<OffsetsInfo>& offsets)
-	{
-		void* dataDestination;
-
-		/**
-		 * This function allows us to access a region of the specified memory
-		 * resource defined by an offset and size. The offset and size here are 0 and bufferInfo.size.
-		 *
-		 * It is also possible to specify the special value VK_WHOLE_SIZE to map all of the memory.
-		 *
-		 * The last parameter specifies the output for the pointer to the mapped memory.
-		*/
-		vkMapMemory(device(), bufferMemory, 0, VK_WHOLE_SIZE, 0, &dataDestination);
-
-		uint8_t* ptr = static_cast<uint8_t*>(dataDestination);
-		for (auto& info : offsets)
-		{
-			ptr += info.offset;
-			memcpy(ptr, info.data, static_cast<std::size_t>(info.bufferSize));
-		}
-
-		vkUnmapMemory(device(), bufferMemory);
-	}
-
-	void VulkanDevice::fillBuffer(void* dataSource, VkDeviceMemory& bufferMemory, VkDeviceSize bufferSize)
-	{
-		void* dataDestination;
-
-		/**
-		 * This function allows us to access a region of the specified memory 
-		 * resource defined by an offset and size. The offset and size here are 0 and bufferInfo.size.
-		 * 
-		 * It is also possible to specify the special value VK_WHOLE_SIZE to map all of the memory.
-		 * 
-		 * The last parameter specifies the output for the pointer to the mapped memory.
-		*/
-		vkMapMemory(device(), bufferMemory, 0, VK_WHOLE_SIZE, 0, &dataDestination);
-
-		/**
-		 * The driver may not immediately copy the 
-		 * data into the buffer memory, for example because of caching. It is also possible 
-		 * that writes to the buffer are not visible in the mapped memory yet. There are 
-		 * two ways to deal with that problem:
-
-		 * Use a memory heap that is host coherent, indicated with VK_MEMORY_PROPERTY_HOST_COHERENT_BIT.
-		 * Ensures that the mapped memory always matches the contents of the allocated memory.
-		 * 
-		 * Call vkFlushMappedMemoryRanges after writing to the mapped memory, and call 
-		 * vkInvalidateMappedMemoryRanges before reading from the mapped memory
-		*/
-		memcpy(dataDestination, dataSource, static_cast<std::size_t>(bufferSize));
-		vkUnmapMemory(device(), bufferMemory);
-	}
-
 	VkCommandBuffer VulkanDevice::beginSingleTimeCommands()
 	{
 		VkCommandBufferAllocateInfo allocInfo{};
@@ -643,19 +536,6 @@ namespace cy3d
 		vkQueueWaitIdle(graphicsQueue_); //wait for the transfer queue to become idle.
 
 		vkFreeCommandBuffers(_device, commandPool, 1, &commandBuffer);
-	}
-
-	void VulkanDevice::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
-	{
-		VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-
-		VkBufferCopy copyRegion{};
-		copyRegion.srcOffset = 0;  // Optional
-		copyRegion.dstOffset = 0;  // Optional
-		copyRegion.size = size;
-		vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-		endSingleTimeCommands(commandBuffer);
 	}
 
 	void VulkanDevice::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount)

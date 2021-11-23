@@ -11,6 +11,8 @@ namespace cy3d
 
 	class VulkanSwapChain;
 
+	class VulkanAllocator;
+
 	struct BufferCreationAllocationInfo;
 }
 

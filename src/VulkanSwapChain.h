@@ -54,8 +54,8 @@ namespace cy3d {
         std::vector<VkImageView> swapChainImageViews;
 
         VulkanContext& cyContext;
-        std::unique_ptr<VulkanVertexBuffer> vertexBuffer;
-        std::unique_ptr<VulkanIndexBuffer> indexBuffer;
+        //std::unique_ptr<VulkanVertexBuffer> vertexBuffer;
+        //std::unique_ptr<VulkanIndexBuffer> indexBuffer;
 
         std::unique_ptr<VulkanBuffer> omniBuffer;
 

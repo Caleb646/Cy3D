@@ -1,13 +1,12 @@
 #pragma once
 #include "pch.h"
 
-#include "Fwd.hpp"
+//#include "Fwd.hpp"
 #include <M3D/M3D.h>
-
 namespace cy3d
 {
-
-
+    //
+    //
     struct Vertex {
         m3d::Vec2f pos;
         m3d::Vec3f color;
@@ -55,52 +54,52 @@ namespace cy3d
             return attributeDescriptions;
         }
     };
-
-	/**
-	 * @brief 
-     * @note as long as the object this class belongs to doesnt outlive the Device class the 
-     * default destructor will work.
-	*/
-	class VulkanVertexBuffer
-	{
-    private:
-        VkBuffer vertexBuffer{ nullptr };
-        VkDeviceMemory vertexBufferMemory{ nullptr };
-        VulkanContext& cyContext;
-        VkDeviceSize _bufferSize;
-        //tracks if the buffer and buffer memory have been mapped
-        bool mapped{ false };
-
-    public:
-        //TODO add size, void * data, usage to constructor
-        VulkanVertexBuffer(VulkanContext&, VkDeviceSize s, void* data);
-        ~VulkanVertexBuffer();
-
-        //cannot be created without a context.
-        VulkanVertexBuffer() = delete;
-        //cannot be copied or reassigned.
-        VulkanVertexBuffer(const VulkanVertexBuffer&) = delete;
-        VulkanVertexBuffer(VulkanVertexBuffer&&) = delete;
-        VulkanVertexBuffer& operator=(const VulkanVertexBuffer&) = delete;
-
-
-        void setData(void* data, VkDeviceSize size);
-        void setData(void* data, BufferCreationAllocationInfo bufferInfo);
-
-        void create(BufferCreationAllocationInfo bufferInfo);
-        void copyTo(VulkanVertexBuffer* destination, VkDeviceSize size);
-
-        VkDeviceSize bufferSize() { return _bufferSize; }
-
-        VkBuffer getVertexBuffer() 
-        { 
-            ASSERT_ERROR(DEFAULT_LOGGABLE, vertexBuffer != nullptr, "Data has not been set. Buffer is null.");
-            return vertexBuffer;
-        }
-
-    private:
-        void cleanup();
-	};
 }
+//
+//	/**
+//	 * @brief 
+//     * @note as long as the object this class belongs to doesnt outlive the Device class the 
+//     * default destructor will work.
+//	*/
+//	class VulkanVertexBuffer
+//	{
+//    private:
+//        VkBuffer vertexBuffer{ nullptr };
+//        VkDeviceMemory vertexBufferMemory{ nullptr };
+//        VulkanContext& cyContext;
+//        VkDeviceSize _bufferSize;
+//        //tracks if the buffer and buffer memory have been mapped
+//        bool mapped{ false };
+//
+//    public:
+//        //TODO add size, void * data, usage to constructor
+//        VulkanVertexBuffer(VulkanContext&, VkDeviceSize s, void* data);
+//        ~VulkanVertexBuffer();
+//
+//        //cannot be created without a context.
+//        VulkanVertexBuffer() = delete;
+//        //cannot be copied or reassigned.
+//        VulkanVertexBuffer(const VulkanVertexBuffer&) = delete;
+//        VulkanVertexBuffer(VulkanVertexBuffer&&) = delete;
+//        VulkanVertexBuffer& operator=(const VulkanVertexBuffer&) = delete;
+//
+//
+//        void setData(void* data, VkDeviceSize size);
+//        void setData(void* data, BufferCreationAllocationInfo bufferInfo);
+//
+//        void create(BufferCreationAllocationInfo bufferInfo);
+//        void copyTo(VulkanVertexBuffer* destination, VkDeviceSize size);
+//
+//        VkDeviceSize bufferSize() { return _bufferSize; }
+//
+//        VkBuffer getVertexBuffer() 
+//        { 
+//            ASSERT_ERROR(DEFAULT_LOGGABLE, vertexBuffer != nullptr, "Data has not been set. Buffer is null.");
+//            return vertexBuffer;
+//        }
+//
+//    private:
+//        void cleanup();
+//	};
 
 

@@ -517,21 +517,6 @@ namespace cy3d {
 
     void VulkanSwapChain::createVertexBuffers()
     {
-
-        //std::vector<Vertex> vertices =
-        //{
-        //    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-        //    {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-        //    {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-        //    {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
-        //};
-
-        ////use reset here to ensure on recreation of the swap chain and of the vertex buffer that the previous vertex buffer is cleaned up
-        //vertexBuffer.reset(new VulkanVertexBuffer(cyContext, sizeof(vertices[0]) * vertices.size(), static_cast<void*>(vertices.data())));
-
-
-
-
         std::vector<Vertex> vertices =
         {
             {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
@@ -549,8 +534,12 @@ namespace cy3d {
         if(omniBuffer.get() != nullptr) omniBuffer->~VulkanBuffer();
 
         
+        
         VkDeviceSize vSize = sizeof(vertices[0]) * vertices.size();
         VkDeviceSize iSize = sizeof(indices[0]) * indices.size();
+
+        VulkanBuffer b(cyContext, vSize, vertices.data());
+
         omniBuffer.reset(new VulkanBuffer(cyContext, vSize, vertices.data(), iSize, indices.data()));
     }
 

@@ -23,8 +23,7 @@ namespace cy3d
 	{
 		if (_mapped)
 		{
-			vkDestroyBuffer(cyContext.getDevice()->device(), _buffer, nullptr);
-			vkFreeMemory(cyContext.getDevice()->device(), _bufferMemory, nullptr);					
+			cyContext.getAllocator()->destroyBuffer(_buffer, _bufferMemory);
 		}
 	}
 }

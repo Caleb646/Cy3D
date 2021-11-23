@@ -1,8 +1,6 @@
 #pragma once
 #include "pch.h"
 
-#include <Logi/Logi.h>
-
 #include "Fwd.hpp"
 #include "VulkanWindow.h"
 
@@ -18,6 +16,7 @@ namespace cy3d
 	private:
 		std::unique_ptr<VulkanWindow> cyWindow{ nullptr };
 		std::unique_ptr<VulkanDevice> cyDevice{ nullptr };
+		std::unique_ptr<VulkanAllocator> vulkanAllocator{ nullptr };
 		std::unique_ptr<VulkanSwapChain> cySwapChain{ nullptr };
 
 	public:
@@ -28,21 +27,10 @@ namespace cy3d
 		VulkanContext(VulkanContext&&) noexcept = delete;
 		VulkanContext& operator=(const VulkanContext&) = delete;
 		
-		VulkanWindow* getWindow() 
-		{ 
-			ASSERT_ERROR(DEFAULT_LOGGABLE, cyWindow.get() != nullptr, "Window ptr is null.");
-			return cyWindow.get();
-		}
-		VulkanDevice* getDevice() 
-		{ 
-			ASSERT_ERROR(DEFAULT_LOGGABLE, cyDevice.get() != nullptr, "Device ptr is null.");
-			return cyDevice.get();
-		}
-		VulkanSwapChain* getSwapChain()
-		{ 
-			ASSERT_ERROR(DEFAULT_LOGGABLE, cySwapChain.get() != nullptr, "SwapChain ptr is null.");
-			return cySwapChain.get();
-		}
+		VulkanWindow* getWindow();
+		VulkanDevice* getDevice();
+		VulkanAllocator* getAllocator();
+		VulkanSwapChain* getSwapChain();
 
 		/**
 		 * PUBLIC STATIC METHODS

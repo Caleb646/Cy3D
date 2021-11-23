@@ -74,6 +74,9 @@
     <ClCompile Include="src\VulkanAllocator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="deps\include\vma\vk_mem_alloc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="deps\libraries\vulkan\dxcompiler.lib" />

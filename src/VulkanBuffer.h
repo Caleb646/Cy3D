@@ -5,6 +5,7 @@
 
 #include "VulkanDevice.h"
 #include "VulkanContext.h"
+#include "VulkanAllocator.h"
 
 
 namespace cy3d
@@ -17,8 +18,11 @@ namespace cy3d
         using buffer_size_type = VkDeviceSize;
         using offset_type = VkDeviceSize;
 
-        VkBuffer _buffer{ nullptr };
-        VkDeviceMemory _bufferMemory{ nullptr };
+        using buffer_type = VkBuffer;
+        using buffer_memory_type = VmaAllocation;
+
+        buffer_type _buffer{ nullptr };
+        buffer_memory_type _bufferMemory{ nullptr };
         VulkanContext& cyContext;
 
         element_count_type _count;
@@ -36,20 +40,19 @@ namespace cy3d
             : 
             cyContext(context), _count(buffSize / sizeof(T)), _instanceCount(1), _bufferSize(buffSize), _offset(0)
         {
-            VkBuffer stagingBuffer;
-            VkDeviceMemory stagingBufferMemory;
+            buffer_type stagingBuffer{};
+            buffer_memory_type stagingBufferMemory{};
             //create and copy data to the staging buffer
-            cyContext.getDevice()->createBuffer(BufferCreationAllocationInfo::createDefaultStagingBufferInfo(bufferSize()), stagingBuffer, stagingBufferMemory, data);
+            cyContext.getAllocator()->createBuffer(BufferCreationAllocationInfo::createDefaultStagingBufferInfo(bufferSize()), stagingBuffer, stagingBufferMemory, data);
 
             //create the index buffer and map its memory
-            cyContext.getDevice()->createBuffer(BufferCreationAllocationInfo::createDefaultDeviceOnlyIndexBufferInfo(bufferSize()), _buffer, _bufferMemory);
+            cyContext.getAllocator()->createBuffer(BufferCreationAllocationInfo::createDefaultDeviceOnlyIndexBufferInfo(bufferSize()), _buffer, _bufferMemory);
 
             //transfer the data from the staging buffer to the vertex buffer.
-            cyContext.getDevice()->copyBuffer(stagingBuffer, _buffer, bufferSize());
+            cyContext.getAllocator()->copyBuffer(stagingBuffer, _buffer, bufferSize());
 
             //cleanup the staging the buffer.
-            vkDestroyBuffer(cyContext.getDevice()->device(), stagingBuffer, nullptr);
-            vkFreeMemory(cyContext.getDevice()->device(), stagingBufferMemory, nullptr);
+            cyContext.getAllocator()->destroyBuffer(stagingBuffer, stagingBufferMemory);
 
             _mapped = true;
         }
@@ -59,28 +62,25 @@ namespace cy3d
             :
             cyContext(context), _count(iBuffSize / sizeof(I)), _instanceCount(1), _bufferSize(vBuffSize + iBuffSize), _offset(vBuffSize)
         {
-            VkBuffer stagingBuffer;
-            VkDeviceMemory stagingBufferMemory;
+            buffer_type stagingBuffer{};
+            buffer_memory_type stagingBufferMemory{};
             //create and copy data to the staging buffer
-            cyContext.getDevice()->createBuffer(BufferCreationAllocationInfo::createDefaultStagingBufferInfo(bufferSize()), stagingBuffer, stagingBufferMemory);
-
-            //TODO HAVE a memory leak its prob due to this class.
+            VmaAllocationInfo allocInfo = cyContext.getAllocator()->createBuffer(BufferCreationAllocationInfo::createDefaultStagingBufferInfo(bufferSize()), stagingBuffer, stagingBufferMemory);
 
             std::vector<OffsetsInfo> offsetInfo = {
                 {vData, vBuffSize, 0},
                 {iData, iBuffSize, vBuffSize}
             };
-            cyContext.getDevice()->fillBuffer(stagingBufferMemory, bufferSize(), offsetInfo);
+            cyContext.getAllocator()->fillBuffer(allocInfo, stagingBufferMemory, bufferSize(), offsetInfo);
 
             //create the index buffer and map its memory
-            cyContext.getDevice()->createBuffer(BufferCreationAllocationInfo::createDefaultVertexIndexSharedBufferInfo(bufferSize()), _buffer, _bufferMemory);
+            cyContext.getAllocator()->createBuffer(BufferCreationAllocationInfo::createDefaultVertexIndexSharedBufferInfo(bufferSize()), _buffer, _bufferMemory);
 
             //transfer the data from the staging buffer to the vertex buffer.
-            cyContext.getDevice()->copyBuffer(stagingBuffer, _buffer, bufferSize());
+            cyContext.getAllocator()->copyBuffer(stagingBuffer, _buffer, bufferSize());
 
             //cleanup the staging the buffer.
-            vkDestroyBuffer(cyContext.getDevice()->device(), stagingBuffer, nullptr);
-            vkFreeMemory(cyContext.getDevice()->device(), stagingBufferMemory, nullptr);
+            cyContext.getAllocator()->destroyBuffer(stagingBuffer, stagingBufferMemory);
 
             _mapped = true;
         }
@@ -104,7 +104,7 @@ namespace cy3d
         buffer_size_type bufferSize() { return _bufferSize; }
         offset_type offset() { return _offset; }
 
-        VkBuffer getBuffer()
+        buffer_type getBuffer()
         {
             ASSERT_ERROR(DEFAULT_LOGGABLE, _buffer != nullptr, "Data has not been set. Buffer is null.");
             return _buffer;
