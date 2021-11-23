@@ -51,7 +51,7 @@ namespace cy3d
 		 * Command pools manage the memory that is used to store the buffers and 
 		 * command buffers are allocated from them.
 		*/
-		VkCommandPool commandPool;
+		VkCommandPool _commandPool;
 
 		/**
 		 * a pointer to store the logical device handle in
@@ -98,7 +98,7 @@ namespace cy3d
 		VulkanDevice(VulkanDevice&&) = delete;
 		VulkanDevice& operator=(VulkanDevice&&) = delete;
 
-		VkCommandPool getCommandPool() { return commandPool; }
+		VkCommandPool getCommandPool() { return _commandPool; }
 		VkDevice device() { return _device; }
 		VkPhysicalDevice physicalDevice() { return _physicalDevice; }
 		VkSurfaceKHR surface() { return _surface; }

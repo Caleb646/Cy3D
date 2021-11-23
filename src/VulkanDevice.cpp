@@ -49,7 +49,7 @@ namespace cy3d
 
 	VulkanDevice::~VulkanDevice()
 	{
-		vkDestroyCommandPool(_device, commandPool, nullptr);
+		vkDestroyCommandPool(_device, _commandPool, nullptr);
 		vkDestroyDevice(_device, nullptr);
 
 		if (enableValidationLayers) 
@@ -216,7 +216,7 @@ namespace cy3d
 		*/
 		poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-		ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateCommandPool(_device, &poolInfo, nullptr, &commandPool) == VK_SUCCESS, "Failed to create command pool.");
+		ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateCommandPool(_device, &poolInfo, nullptr, &_commandPool) == VK_SUCCESS, "Failed to create command pool.");
 	}
 
 	void VulkanDevice::createSurface() 
@@ -509,7 +509,7 @@ namespace cy3d
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = commandPool;
+		allocInfo.commandPool = _commandPool;
 		allocInfo.commandBufferCount = 1;
 
 		VkCommandBuffer commandBuffer;
@@ -535,7 +535,7 @@ namespace cy3d
 		vkQueueSubmit(graphicsQueue_, 1, &submitInfo, VK_NULL_HANDLE);
 		vkQueueWaitIdle(graphicsQueue_); //wait for the transfer queue to become idle.
 
-		vkFreeCommandBuffers(_device, commandPool, 1, &commandBuffer);
+		vkFreeCommandBuffers(_device, _commandPool, 1, &commandBuffer);
 	}
 
 	void VulkanDevice::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount)

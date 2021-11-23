@@ -538,7 +538,7 @@ namespace cy3d {
         VkDeviceSize vSize = sizeof(vertices[0]) * vertices.size();
         VkDeviceSize iSize = sizeof(indices[0]) * indices.size();
 
-        VulkanBuffer b(cyContext, vSize, vertices.data());
+        VulkanBuffer b(cyContext, vSize, vertices.data(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
         omniBuffer.reset(new VulkanBuffer(cyContext, vSize, vertices.data(), iSize, indices.data()));
     }

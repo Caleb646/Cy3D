@@ -48,7 +48,8 @@ namespace cy3d
 	void VulkanAllocator::fillBuffer(VmaAllocationInfo allocInfo, VmaAllocation& allocation, VkDeviceSize bufferSize, const std::vector<OffsetsInfo>& offsets, bool unmap)
 	{
 		//TODO if allocation is not visible to the host create a staging buffer and transfer data to it.
-		ASSERT_ERROR(DEFAULT_LOGGABLE, isHostVisible(allocInfo) == true, "Trying to transfer data to device memory.");
+		//like https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/memory_mapping.html
+		ASSERT_ERROR(DEFAULT_LOGGABLE, isHostVisible(allocInfo) == true, "Trying to map device memory.");
 
 		void* dataDestination;
 		vmaMapMemory(_allocator, allocation, &dataDestination);
@@ -60,10 +61,11 @@ namespace cy3d
 			memcpy(ptr, info.data, static_cast<std::size_t>(info.bufferSize));
 		}
 
-		if (unmap)
-		{
-			vmaUnmapMemory(_allocator, allocation);
-		}
+		//if (unmap)
+		//{
+		//want to unmap staging buffers.
+		vmaUnmapMemory(_allocator, allocation);
+		//}
 	}
 
 	void VulkanAllocator::copyBuffer(VkBuffer& srcBuffer, VkBuffer& dstBuffer, VkDeviceSize size)

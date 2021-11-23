@@ -36,7 +36,7 @@ namespace cy3d
     public:
 
         template<typename T>
-        VulkanBuffer(VulkanContext& context, buffer_size_type buffSize, T* data) 
+        VulkanBuffer(VulkanContext& context, buffer_size_type buffSize, T* data, VkBufferUsageFlags usage) 
             : 
             cyContext(context), _count(buffSize / sizeof(T)), _instanceCount(1), _bufferSize(buffSize), _offset(0)
         {
@@ -45,8 +45,8 @@ namespace cy3d
             //create and copy data to the staging buffer
             cyContext.getAllocator()->createBuffer(BufferCreationAllocationInfo::createDefaultStagingBufferInfo(bufferSize()), stagingBuffer, stagingBufferMemory, data);
 
-            //create the index buffer and map its memory
-            cyContext.getAllocator()->createBuffer(BufferCreationAllocationInfo::createDefaultDeviceOnlyIndexBufferInfo(bufferSize()), _buffer, _bufferMemory);
+            //create the index buffer and map its memory                                                                        //ensure that  transfer dst bit is set.
+            cyContext.getAllocator()->createBuffer(BufferCreationAllocationInfo::createGPUOnlyBufferInfo(bufferSize(), usage), _buffer, _bufferMemory);
 
             //transfer the data from the staging buffer to the vertex buffer.
             cyContext.getAllocator()->copyBuffer(stagingBuffer, _buffer, bufferSize());

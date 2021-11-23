@@ -29,7 +29,9 @@ namespace cy3d
 
 		static BufferCreationAllocationInfo createDefaultStagingBufferInfo(VkDeviceSize bufferSize)
 		{
-			return createGPUCPUCoherentBufferInfo(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+			//return createGPUCPUCoherentBufferInfo(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+
+			return createCPUOnlyBufferInfo(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 		}
 
 
@@ -37,7 +39,7 @@ namespace cy3d
 		 * @brief Intended to work in tandem with a staging buffer so the first usage flag is set as
 		 * VK_BUFFER_USAGE_TRANSFER_DST_BIT.
 		*/
-		static BufferCreationAllocationInfo createDefaultDeviceOnlyIndexBufferInfo(VkDeviceSize bufferSize)
+		static BufferCreationAllocationInfo createDefaultGPUOnlyIndexBufferInfo(VkDeviceSize bufferSize)
 		{
 			return createGPUOnlyBufferInfo(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 		}
@@ -51,7 +53,7 @@ namespace cy3d
 		 * @brief Intended to work in tandem with a staging buffer so the first usage flag is set as
 		 * VK_BUFFER_USAGE_TRANSFER_DST_BIT.
 		*/
-		static BufferCreationAllocationInfo createDefaultDeviceOnlyVertexBufferInfo(VkDeviceSize bufferSize)
+		static BufferCreationAllocationInfo createDefaultGPUOnlyVertexBufferInfo(VkDeviceSize bufferSize)
 		{
 			return createGPUOnlyBufferInfo(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 		}
@@ -85,9 +87,22 @@ namespace cy3d
 		static BufferCreationAllocationInfo createGPUOnlyBufferInfo(VkDeviceSize bufferSize, VkBufferUsageFlags usage)
 		{
 
-			BufferCreationAllocationInfo buffInfo = createBufferInfo(bufferSize, usage);
+			BufferCreationAllocationInfo buffInfo = createBufferInfo(bufferSize, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 			buffInfo.allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 			buffInfo.allocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+			return buffInfo;
+		}
+
+		/**
+		 * @brief Specify a buffer setup that is intended to only be accessible by the GPU.
+		*/
+		static BufferCreationAllocationInfo createCPUOnlyBufferInfo(VkDeviceSize bufferSize, VkBufferUsageFlags usage)
+		{
+
+			BufferCreationAllocationInfo buffInfo = createBufferInfo(bufferSize, usage);
+			buffInfo.allocCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+			//buffInfo.allocCreateInfo.requiredFlags = VK_MEMORY_;
 
 			return buffInfo;
 		}
