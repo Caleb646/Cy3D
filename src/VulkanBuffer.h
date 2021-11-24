@@ -12,15 +12,16 @@ namespace cy3d
 {
 	class VulkanBuffer
 	{
-    private:
+
+    public:
         using element_count_type = uint32_t;
         using instance_count_type = uint32_t;
         using buffer_size_type = VkDeviceSize;
         using offset_type = VkDeviceSize;
-
         using buffer_type = VkBuffer;
         using buffer_memory_type = VmaAllocation;
 
+    private:
         buffer_type _buffer{ nullptr };
         buffer_memory_type _bufferMemory{ nullptr };
         VulkanContext& cyContext;
@@ -34,6 +35,20 @@ namespace cy3d
         bool _mapped{ false };
 
     public:
+        VulkanBuffer(VulkanContext& context, BufferCreationAllocationInfo bufferInfo)
+            :
+            cyContext(context), _count(0), _instanceCount(1), _bufferSize(bufferInfo.bufferInfo.size), _offset(0)
+        {
+            cyContext.getAllocator()->createBuffer(bufferInfo, _buffer, _bufferMemory);
+        }
+
+        template<typename T>
+        VulkanBuffer(VulkanContext& context, BufferCreationAllocationInfo bufferInfo, T* data)
+            :
+            cyContext(context), _count(bufferInfo.bufferInfo.size / sizeof(T)), _instanceCount(1), _bufferSize(bufferInfo.bufferInfo.size), _offset(0)
+        {
+            cyContext.getAllocator()->createBuffer(bufferInfo, _buffer, _bufferMemory, { {data, bufferSize(), 0} });
+        }
 
         template<typename T>
         VulkanBuffer(VulkanContext& context, buffer_size_type buffSize, T* data, VkBufferUsageFlags usage) 
@@ -84,13 +99,17 @@ namespace cy3d
 
             _mapped = true;
         }
+
+        VulkanBuffer(VulkanBuffer&& other) noexcept : cyContext(other.cyContext), _buffer(std::move(_buffer)), _bufferMemory(std::move(other._bufferMemory)),
+            _count(other._count), _instanceCount(other._instanceCount), _bufferSize(other._bufferSize), _offset(other._offset) {}
+
         ~VulkanBuffer();
 
         //cannot be created without a context.
         VulkanBuffer() = delete;
         //cannot be copied or reassigned.
         VulkanBuffer(const VulkanBuffer&) = delete;
-        VulkanBuffer(VulkanBuffer&&) = delete;
+        //VulkanBuffer(VulkanBuffer&&) = delete;
         VulkanBuffer& operator=(const VulkanBuffer&) = delete;
 
         void setData(void* data, buffer_size_type size, offset_type offset);

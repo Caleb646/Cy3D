@@ -27,29 +27,37 @@ namespace cy3d
 	}
 
 
-	VmaAllocationInfo VulkanAllocator::createBuffer(BufferCreationAllocationInfo buffInfo, VkBuffer& buffer, VmaAllocation& allocation, void* data)
+	VmaAllocationInfo VulkanAllocator::createBuffer(BufferCreationAllocationInfo buffInfo, VkBuffer& buffer, VmaAllocation& allocation, const std::vector<OffsetsInfo>& offsets)
 	{
 		VmaAllocationInfo allocInfo;
 		ASSERT_ERROR(DEFAULT_LOGGABLE, vmaCreateBuffer(_allocator, &buffInfo.bufferInfo, &buffInfo.allocCreateInfo, &buffer, &allocation, &allocInfo) == VK_SUCCESS, "Failed to create buffer.");
 
-		if (data != nullptr)
+		if (offsets.size() > 0)
 		{
-			fillBuffer(allocInfo, allocation, buffInfo.bufferInfo.size, { {data, buffInfo.bufferInfo.size, 0} });
+			if (buffInfo.needStagingBuffer)
+			{
+				VkBuffer stagingBuffer;
+				VmaAllocation stagingMemory;
+				VmaAllocationInfo stagingAllocInfo;
+				BufferCreationAllocationInfo stagingBuffInfo = BufferCreationAllocationInfo::createDefaultStagingBufferInfo(buffInfo.bufferInfo.size);
+				vmaCreateBuffer(_allocator, &stagingBuffInfo.bufferInfo, &stagingBuffInfo.allocCreateInfo, &stagingBuffer, &stagingMemory, &stagingAllocInfo);
+				fillBuffer(stagingAllocInfo, stagingMemory, stagingBuffInfo.bufferInfo.size, offsets);
+				copyBuffer(stagingBuffer, buffer, stagingBuffInfo.bufferInfo.size);
+			}
+			else
+			{
+				fillBuffer(allocInfo, allocation, buffInfo.bufferInfo.size, offsets);
+			}
 		}
 
 		return allocInfo;
-	}
-
-	void VulkanAllocator::destroyBuffer(VkBuffer& buffer, VmaAllocation& allocation)
-	{
-		vmaDestroyBuffer(_allocator, buffer, allocation);
 	}
 
 	void VulkanAllocator::fillBuffer(VmaAllocationInfo allocInfo, VmaAllocation& allocation, VkDeviceSize bufferSize, const std::vector<OffsetsInfo>& offsets, bool unmap)
 	{
 		//TODO if allocation is not visible to the host create a staging buffer and transfer data to it.
 		//like https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/memory_mapping.html
-		ASSERT_ERROR(DEFAULT_LOGGABLE, isHostVisible(allocInfo) == true, "Trying to map device memory.");
+		ASSERT_ERROR(DEFAULT_LOGGABLE, isCPUVisible(allocInfo) == true, "Trying to map device memory.");
 
 		void* dataDestination;
 		vmaMapMemory(_allocator, allocation, &dataDestination);
@@ -81,7 +89,12 @@ namespace cy3d
 		cyContext.getDevice()->endSingleTimeCommands(commandBuffer);
 	}
 
-	bool VulkanAllocator::isHostVisible(VmaAllocationInfo allocInfo)
+	void VulkanAllocator::destroyBuffer(VkBuffer& buffer, VmaAllocation& allocation)
+	{
+		vmaDestroyBuffer(_allocator, buffer, allocation);
+	}
+
+	bool VulkanAllocator::isCPUVisible(VmaAllocationInfo allocInfo)
 	{
 		VkMemoryPropertyFlags memFlags;
 		vmaGetMemoryTypeProperties(_allocator, allocInfo.memoryType, &memFlags);

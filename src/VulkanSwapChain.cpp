@@ -573,6 +573,16 @@ namespace cy3d {
         }
     }
 
+    void VulkanSwapChain::createUniformBuffers()
+    {
+        uniformBuffers.resize(swapChainImages.size());
+        BufferCreationAllocationInfo uniformBuffInfo = BufferCreationAllocationInfo::createDefaultUniformBuffer(static_cast<VkDeviceSize>(sizeof(UniformBufferObject)));
+        for (size_t i = 0; i < swapChainImages.size(); i++)
+        {
+            uniformBuffers.push_back(std::move(VulkanBuffer(cyContext, uniformBuffInfo)));
+        }
+    }
+
     void VulkanSwapChain::createDepthResources() 
     {
         VkFormat depthFormat = findDepthFormat();
@@ -651,10 +661,26 @@ namespace cy3d {
     */
     void VulkanSwapChain::createDefaultPipelineLayout()
     {
+        VkDescriptorSetLayoutBinding uboLayoutBinding{};
+        uboLayoutBinding.binding = 0;
+        uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        uboLayoutBinding.descriptorCount = 1;
+        uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+
+        VkDescriptorSetLayoutCreateInfo layoutInfo{};
+        layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layoutInfo.bindingCount = 1;
+        layoutInfo.pBindings = &uboLayoutBinding;
+        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateDescriptorSetLayout(cyContext.getDevice()->device(), &layoutInfo, nullptr, &descriptorSetLayout) == VK_SUCCESS, "Failed to create descriptor set layout.");
+
+
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = 0;
-        pipelineLayoutInfo.pSetLayouts = nullptr;
+        pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
         pipelineLayoutInfo.pushConstantRangeCount = 0; //used to send data to shaders
         pipelineLayoutInfo.pPushConstantRanges = nullptr;
         ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreatePipelineLayout(cyContext.getDevice()->device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) == VK_SUCCESS, "Failed to create pipeline layout");

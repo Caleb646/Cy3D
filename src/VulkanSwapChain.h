@@ -1,6 +1,7 @@
 #pragma once
-
 #include "pch.h"
+
+#include <M3D/M3D.h>
 
 #include "VulkanDevice.h"
 #include "VulkanPipeline.h"
@@ -11,6 +12,16 @@
 
 
 namespace cy3d {
+
+
+    struct UniformBufferObject
+    {
+        m3d::Mat4f model;
+        m3d::Mat4f view;
+        m3d::Mat4f proj;
+    };
+    //TODO temporary
+
 
 
     /**
@@ -59,8 +70,11 @@ namespace cy3d {
 
         std::unique_ptr<VulkanBuffer> omniBuffer;
 
+        std::vector<VulkanBuffer> uniformBuffers;
+
 
         std::unique_ptr<VulkanPipeline> cyPipeline;
+        VkDescriptorSetLayout descriptorSetLayout;
         VkPipelineLayout pipelineLayout;
 
         /**
@@ -142,6 +156,7 @@ namespace cy3d {
         void createIndexBuffers();
         void createVertexBuffers();
         void createFramebuffers();
+        void createUniformBuffers();
         void createSyncObjects();
         void createDefaultPipelineLayout();
         void createDefaultPipeline();

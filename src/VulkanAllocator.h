@@ -17,8 +17,9 @@ namespace cy3d
 	struct BufferCreationAllocationInfo
 	{
 
-		VkBufferCreateInfo bufferInfo;
-		VmaAllocationCreateInfo allocCreateInfo;
+		VkBufferCreateInfo bufferInfo{};
+		VmaAllocationCreateInfo allocCreateInfo{};
+		bool needStagingBuffer{ false };
 
 		/*
 		* Possible Usage bits:
@@ -26,6 +27,11 @@ namespace cy3d
 		* VK_BUFFER_USAGE_TRANSFER_DST_BIT -> Buffer can be used as destination in a memory transfer operation.
 		* VK_BUFFER_USAGE_VERTEX_BUFFER_BIT -> Buffer is used for vertexs.
 		*/
+
+		static BufferCreationAllocationInfo createDefaultUniformBuffer(VkDeviceSize bufferSize)
+		{
+			return createCPUOnlyBufferInfo(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+		}
 
 		static BufferCreationAllocationInfo createDefaultStagingBufferInfo(VkDeviceSize bufferSize)
 		{
@@ -90,6 +96,7 @@ namespace cy3d
 			BufferCreationAllocationInfo buffInfo = createBufferInfo(bufferSize, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
 			buffInfo.allocCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 			buffInfo.allocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+			buffInfo.needStagingBuffer = true;
 
 			return buffInfo;
 		}
@@ -138,13 +145,12 @@ namespace cy3d
 		VulkanAllocator(VulkanAllocator&&) = delete;
 		VulkanAllocator& operator=(const VulkanAllocator&) = delete;
 
-		VmaAllocationInfo createBuffer(BufferCreationAllocationInfo buffInfo, VkBuffer& buffer, VmaAllocation& allocation, void* data = nullptr);
+		VmaAllocationInfo createBuffer(BufferCreationAllocationInfo buffInfo, VkBuffer& buffer, VmaAllocation& allocation, const std::vector<OffsetsInfo>& offsets = {});
 		void fillBuffer(VmaAllocationInfo allocInfo, VmaAllocation& allocation, VkDeviceSize bufferSize, const std::vector<OffsetsInfo>& offsets, bool unmap = true);
 		void copyBuffer(VkBuffer& srcBuffer, VkBuffer& dstBuffer, VkDeviceSize size);
-
 		void destroyBuffer(VkBuffer& buffer, VmaAllocation& allocation);
 
-		bool isHostVisible(VmaAllocationInfo allocInfo);
+		bool isCPUVisible(VmaAllocationInfo allocInfo);
 	};
 }
 
