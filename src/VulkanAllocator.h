@@ -19,6 +19,7 @@ namespace cy3d
 
 		VkBufferCreateInfo bufferInfo{};
 		VmaAllocationCreateInfo allocCreateInfo{};
+		VmaAllocationInfo allocInfo{};
 		bool needStagingBuffer{ false };
 
 		/*
@@ -131,6 +132,12 @@ namespace cy3d
 
 	class VulkanAllocator
 	{
+	public:
+		using buffer_type = VkBuffer;
+		using buffer_memory_type = VmaAllocation;
+		using buffer_info_type = BufferCreationAllocationInfo;
+		using offsets_type = const std::vector<OffsetsInfo>&;
+
 	private:
 		VulkanContext& cyContext;
 		VmaAllocator _allocator;
@@ -145,10 +152,10 @@ namespace cy3d
 		VulkanAllocator(VulkanAllocator&&) = delete;
 		VulkanAllocator& operator=(const VulkanAllocator&) = delete;
 
-		VmaAllocationInfo createBuffer(BufferCreationAllocationInfo buffInfo, VkBuffer& buffer, VmaAllocation& allocation, const std::vector<OffsetsInfo>& offsets = {});
-		void fillBuffer(VmaAllocationInfo allocInfo, VmaAllocation& allocation, VkDeviceSize bufferSize, const std::vector<OffsetsInfo>& offsets, bool unmap = true);
-		void copyBuffer(VkBuffer& srcBuffer, VkBuffer& dstBuffer, VkDeviceSize size);
-		void destroyBuffer(VkBuffer& buffer, VmaAllocation& allocation);
+		void createBuffer(buffer_info_type& buffInfo, buffer_type& buffer, buffer_memory_type& allocation, offsets_type offsets = {});
+		void fillBuffer(VmaAllocationInfo allocInfo, buffer_memory_type& allocation, VkDeviceSize bufferSize, offsets_type offsets, bool unmap = true);
+		void copyBuffer(buffer_type& srcBuffer, buffer_type& dstBuffer, VkDeviceSize size);
+		void destroyBuffer(buffer_type& buffer, buffer_memory_type& allocation);
 
 		bool isCPUVisible(VmaAllocationInfo allocInfo);
 	};

@@ -9,19 +9,9 @@ namespace cy3d
 		cleanup();
 	}
 
-	void VulkanBuffer::setData(void* data, buffer_size_type size, offset_type offset)
-	{
-
-	}
-
-	void VulkanBuffer::setData(void* data, BufferCreationAllocationInfo bufferInfo)
-	{
-
-	}
-
 	void VulkanBuffer::cleanup()
 	{
-		if (_mapped)
+		if (_buffer != nullptr && _bufferMemory != nullptr)
 		{
 			cyContext.getAllocator()->destroyBuffer(_buffer, _bufferMemory);
 		}

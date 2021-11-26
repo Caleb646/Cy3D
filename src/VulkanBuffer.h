@@ -18,12 +18,15 @@ namespace cy3d
         using instance_count_type = uint32_t;
         using buffer_size_type = VkDeviceSize;
         using offset_type = VkDeviceSize;
-        using buffer_type = VkBuffer;
-        using buffer_memory_type = VmaAllocation;
+        using buffer_type = typename VulkanAllocator::buffer_type;
+        using buffer_memory_type = typename VulkanAllocator::buffer_memory_type;
+        using buffer_info_type = BufferCreationAllocationInfo;
+        using offsets_type = typename VulkanAllocator::offsets_type;
 
     private:
         buffer_type _buffer{ nullptr };
         buffer_memory_type _bufferMemory{ nullptr };
+        buffer_info_type _bufferInfo;
         VulkanContext& cyContext;
 
         element_count_type _count;
@@ -35,42 +38,42 @@ namespace cy3d
         bool _mapped{ false };
 
     public:
-        VulkanBuffer(VulkanContext& context, BufferCreationAllocationInfo bufferInfo)
+        VulkanBuffer(VulkanContext& context, buffer_info_type bufferInfo, element_count_type count)
             :
-            cyContext(context), _count(0), _instanceCount(1), _bufferSize(bufferInfo.bufferInfo.size), _offset(0)
+            cyContext(context), _bufferInfo(bufferInfo), _count(count), _instanceCount(1), _bufferSize(bufferInfo.bufferInfo.size), _offset(0)
         {
-            cyContext.getAllocator()->createBuffer(bufferInfo, _buffer, _bufferMemory);
+            cyContext.getAllocator()->createBuffer(_bufferInfo, _buffer, _bufferMemory);
         }
 
         template<typename T>
-        VulkanBuffer(VulkanContext& context, BufferCreationAllocationInfo bufferInfo, T* data)
+        VulkanBuffer(VulkanContext& context, buffer_info_type bufferInfo, T* data)
             :
-            cyContext(context), _count(bufferInfo.bufferInfo.size / sizeof(T)), _instanceCount(1), _bufferSize(bufferInfo.bufferInfo.size), _offset(0)
+            cyContext(context), _bufferInfo(bufferInfo), _count(bufferInfo.bufferInfo.size / sizeof(T)), _instanceCount(1), _bufferSize(bufferInfo.bufferInfo.size), _offset(0)
         {
-            cyContext.getAllocator()->createBuffer(bufferInfo, _buffer, _bufferMemory, { {data, bufferSize(), 0} });
+            cyContext.getAllocator()->createBuffer(_bufferInfo, _buffer, _bufferMemory, { {data, _bufferSize, 0} });
         }
 
-        template<typename T>
-        VulkanBuffer(VulkanContext& context, buffer_size_type buffSize, T* data, VkBufferUsageFlags usage) 
-            : 
-            cyContext(context), _count(buffSize / sizeof(T)), _instanceCount(1), _bufferSize(buffSize), _offset(0)
-        {
-            buffer_type stagingBuffer{};
-            buffer_memory_type stagingBufferMemory{};
-            //create and copy data to the staging buffer
-            cyContext.getAllocator()->createBuffer(BufferCreationAllocationInfo::createDefaultStagingBufferInfo(bufferSize()), stagingBuffer, stagingBufferMemory, data);
+        //template<typename T>
+        //VulkanBuffer(VulkanContext& context, buffer_size_type buffSize, T* data, VkBufferUsageFlags usage) 
+        //    : 
+        //    cyContext(context), _count(buffSize / sizeof(T)), _instanceCount(1), _bufferSize(buffSize), _offset(0)
+        //{
+        //    buffer_type stagingBuffer{};
+        //    buffer_memory_type stagingBufferMemory{};
+        //    //create and copy data to the staging buffer
+        //    cyContext.getAllocator()->createBuffer(BufferCreationAllocationInfo::createDefaultStagingBufferInfo(bufferSize()), stagingBuffer, stagingBufferMemory, data);
 
-            //create the index buffer and map its memory                                                                        //ensure that  transfer dst bit is set.
-            cyContext.getAllocator()->createBuffer(BufferCreationAllocationInfo::createGPUOnlyBufferInfo(bufferSize(), usage), _buffer, _bufferMemory);
+        //    //create the index buffer and map its memory                                                                        //ensure that  transfer dst bit is set.
+        //    cyContext.getAllocator()->createBuffer(BufferCreationAllocationInfo::createGPUOnlyBufferInfo(bufferSize(), usage), _buffer, _bufferMemory);
 
-            //transfer the data from the staging buffer to the vertex buffer.
-            cyContext.getAllocator()->copyBuffer(stagingBuffer, _buffer, bufferSize());
+        //    //transfer the data from the staging buffer to the vertex buffer.
+        //    cyContext.getAllocator()->copyBuffer(stagingBuffer, _buffer, bufferSize());
 
-            //cleanup the staging the buffer.
-            cyContext.getAllocator()->destroyBuffer(stagingBuffer, stagingBufferMemory);
+        //    //cleanup the staging the buffer.
+        //    cyContext.getAllocator()->destroyBuffer(stagingBuffer, stagingBufferMemory);
 
-            _mapped = true;
-        }
+        //    _mapped = true;
+        //}
 
         template<typename V, typename I>
         VulkanBuffer(VulkanContext& context, buffer_size_type vBuffSize, V* vData, buffer_size_type iBuffSize, I* iData)
@@ -79,29 +82,31 @@ namespace cy3d
         {
             buffer_type stagingBuffer{};
             buffer_memory_type stagingBufferMemory{};
+            buffer_info_type buffInfo = buffer_info_type::createDefaultStagingBufferInfo(_bufferSize);
             //create and copy data to the staging buffer
-            VmaAllocationInfo allocInfo = cyContext.getAllocator()->createBuffer(BufferCreationAllocationInfo::createDefaultStagingBufferInfo(bufferSize()), stagingBuffer, stagingBufferMemory);
+            cyContext.getAllocator()->createBuffer(buffInfo, stagingBuffer, stagingBufferMemory);
 
             std::vector<OffsetsInfo> offsetInfo = {
                 {vData, vBuffSize, 0},
                 {iData, iBuffSize, vBuffSize}
             };
-            cyContext.getAllocator()->fillBuffer(allocInfo, stagingBufferMemory, bufferSize(), offsetInfo);
+            cyContext.getAllocator()->fillBuffer(buffInfo.allocInfo, stagingBufferMemory, _bufferSize, offsetInfo);
 
+            buffer_info_type thisBuffersInfo = buffer_info_type::createDefaultVertexIndexSharedBufferInfo(_bufferSize);
             //create the index buffer and map its memory
-            cyContext.getAllocator()->createBuffer(BufferCreationAllocationInfo::createDefaultVertexIndexSharedBufferInfo(bufferSize()), _buffer, _bufferMemory);
+            cyContext.getAllocator()->createBuffer(thisBuffersInfo, _buffer, _bufferMemory);
 
             //transfer the data from the staging buffer to the vertex buffer.
-            cyContext.getAllocator()->copyBuffer(stagingBuffer, _buffer, bufferSize());
+            cyContext.getAllocator()->copyBuffer(stagingBuffer, _buffer, _bufferSize);
 
             //cleanup the staging the buffer.
             cyContext.getAllocator()->destroyBuffer(stagingBuffer, stagingBufferMemory);
 
+            //store the buffers setup for later.
+            _bufferInfo = thisBuffersInfo;
+
             _mapped = true;
         }
-
-        VulkanBuffer(VulkanBuffer&& other) noexcept : cyContext(other.cyContext), _buffer(std::move(_buffer)), _bufferMemory(std::move(other._bufferMemory)),
-            _count(other._count), _instanceCount(other._instanceCount), _bufferSize(other._bufferSize), _offset(other._offset) {}
 
         ~VulkanBuffer();
 
@@ -109,18 +114,24 @@ namespace cy3d
         VulkanBuffer() = delete;
         //cannot be copied or reassigned.
         VulkanBuffer(const VulkanBuffer&) = delete;
-        //VulkanBuffer(VulkanBuffer&&) = delete;
+        VulkanBuffer(VulkanBuffer&&) = delete;
         VulkanBuffer& operator=(const VulkanBuffer&) = delete;
 
-        void setData(void* data, buffer_size_type size, offset_type offset);
-        void setData(void* data, BufferCreationAllocationInfo bufferInfo);
+        template<typename T>
+        void setData(T* data, offset_type offset)
+        {
+            ASSERT_ERROR(DEFAULT_LOGGABLE, _buffer != nullptr && _bufferMemory != nullptr, "Buffer has not been initialized.");
+            cyContext.getAllocator()->fillBuffer(_bufferInfo.allocInfo, _bufferMemory, _bufferInfo.bufferInfo.size, { {data, _bufferInfo.bufferInfo.size, 0} });
+        }
 
-        void create(BufferCreationAllocationInfo bufferInfo);
+        void setData(void* data, buffer_info_type bufferInfo);
+
+        void create(buffer_info_type bufferInfo);
         void copyTo(VulkanBuffer* destination, VkDeviceSize size);
 
         element_count_type count() { return _count; }
         instance_count_type instanceCount() { return _instanceCount; }
-        buffer_size_type bufferSize() { return _bufferSize; }
+        buffer_size_type bufferSize() { return _bufferInfo.bufferInfo.size; }
         offset_type offset() { return _offset; }
 
         buffer_type getBuffer()

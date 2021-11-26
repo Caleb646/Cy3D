@@ -27,10 +27,9 @@ namespace cy3d
 	}
 
 
-	VmaAllocationInfo VulkanAllocator::createBuffer(BufferCreationAllocationInfo buffInfo, VkBuffer& buffer, VmaAllocation& allocation, const std::vector<OffsetsInfo>& offsets)
+	void VulkanAllocator::createBuffer(buffer_info_type& buffInfo, buffer_type& buffer, buffer_memory_type& allocation, offsets_type offsets)
 	{
-		VmaAllocationInfo allocInfo;
-		ASSERT_ERROR(DEFAULT_LOGGABLE, vmaCreateBuffer(_allocator, &buffInfo.bufferInfo, &buffInfo.allocCreateInfo, &buffer, &allocation, &allocInfo) == VK_SUCCESS, "Failed to create buffer.");
+		ASSERT_ERROR(DEFAULT_LOGGABLE, vmaCreateBuffer(_allocator, &buffInfo.bufferInfo, &buffInfo.allocCreateInfo, &buffer, &allocation, &buffInfo.allocInfo) == VK_SUCCESS, "Failed to create buffer.");
 
 		if (offsets.size() > 0)
 		{
@@ -38,22 +37,21 @@ namespace cy3d
 			{
 				VkBuffer stagingBuffer;
 				VmaAllocation stagingMemory;
-				VmaAllocationInfo stagingAllocInfo;
 				BufferCreationAllocationInfo stagingBuffInfo = BufferCreationAllocationInfo::createDefaultStagingBufferInfo(buffInfo.bufferInfo.size);
-				vmaCreateBuffer(_allocator, &stagingBuffInfo.bufferInfo, &stagingBuffInfo.allocCreateInfo, &stagingBuffer, &stagingMemory, &stagingAllocInfo);
-				fillBuffer(stagingAllocInfo, stagingMemory, stagingBuffInfo.bufferInfo.size, offsets);
+				vmaCreateBuffer(_allocator, &stagingBuffInfo.bufferInfo, &stagingBuffInfo.allocCreateInfo, &stagingBuffer, &stagingMemory, &stagingBuffInfo.allocInfo);
+				fillBuffer(stagingBuffInfo.allocInfo, stagingMemory, stagingBuffInfo.bufferInfo.size, offsets);
 				copyBuffer(stagingBuffer, buffer, stagingBuffInfo.bufferInfo.size);
+				//cleanup staging buffer
+				destroyBuffer(stagingBuffer, stagingMemory);
 			}
 			else
 			{
-				fillBuffer(allocInfo, allocation, buffInfo.bufferInfo.size, offsets);
+				fillBuffer(buffInfo.allocInfo, allocation, buffInfo.bufferInfo.size, offsets);
 			}
 		}
-
-		return allocInfo;
 	}
 
-	void VulkanAllocator::fillBuffer(VmaAllocationInfo allocInfo, VmaAllocation& allocation, VkDeviceSize bufferSize, const std::vector<OffsetsInfo>& offsets, bool unmap)
+	void VulkanAllocator::fillBuffer(VmaAllocationInfo allocInfo, buffer_memory_type& allocation, VkDeviceSize bufferSize, offsets_type offsets, bool unmap)
 	{
 		//TODO if allocation is not visible to the host create a staging buffer and transfer data to it.
 		//like https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/memory_mapping.html

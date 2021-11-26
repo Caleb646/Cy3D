@@ -19,6 +19,19 @@ namespace cy3d {
         m3d::Mat4f model;
         m3d::Mat4f view;
         m3d::Mat4f proj;
+
+        void update(float width, float height)
+        {
+            static auto startTime = std::chrono::high_resolution_clock::now();
+            auto currentTime = std::chrono::high_resolution_clock::now();
+            float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+            
+            model.getRotatedZ(time * m3d::degreesToRadians(90.0f));
+            view = m3d::Mat4f::getLookAt({ 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 1.0f});
+            proj.getPerspectived(m3d::degreesToRadians(45.0f), width / height, 0.1f, 10.0f);
+            proj(1, 1) *= -1;
+
+        }
     };
     //TODO temporary
 
@@ -70,12 +83,15 @@ namespace cy3d {
 
         std::unique_ptr<VulkanBuffer> omniBuffer;
 
-        std::vector<VulkanBuffer> uniformBuffers;
+        std::vector<std::unique_ptr<VulkanBuffer>> uniformBuffers;
 
 
         std::unique_ptr<VulkanPipeline> cyPipeline;
-        VkDescriptorSetLayout descriptorSetLayout;
+        VkDescriptorSetLayout descriptorSetLayout; 
         VkPipelineLayout pipelineLayout;
+
+        VkDescriptorPool descriptorPool;
+        std::vector<VkDescriptorSet> descriptorSets;
 
         /**
          * Record a command buffer for every image in the swap chain.
@@ -158,6 +174,8 @@ namespace cy3d {
         void createFramebuffers();
         void createUniformBuffers();
         void createSyncObjects();
+        void createDescriptorPools();
+        void createDescriptorSets();
         void createDefaultPipelineLayout();
         void createDefaultPipeline();
         void createCommandBuffers();

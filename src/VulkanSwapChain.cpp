@@ -16,11 +16,17 @@ namespace cy3d {
         createDepthResources();
         createIndexBuffers();
         createVertexBuffers();
+        createUniformBuffers();
         createFramebuffers();
         createSyncObjects();
 
+
         createDefaultPipelineLayout();
         createDefaultPipeline();
+
+        createDescriptorPools();
+        createDescriptorSets();
+
         createCommandBuffers();
     }
 
@@ -28,6 +34,8 @@ namespace cy3d {
     {
         cleanup();
 
+        vkDestroyDescriptorSetLayout(cyContext.getDevice()->device(), descriptorSetLayout, nullptr);
+        vkDestroyDescriptorPool(cyContext.getDevice()->device(), descriptorPool, nullptr);
         // cleanup synchronization objects
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
@@ -92,10 +100,14 @@ namespace cy3d {
         createImageViews();
         createRenderPass();
         createDepthResources();
+        createUniformBuffers();
         createFramebuffers();
 
         createDefaultPipelineLayout();
         createDefaultPipeline();
+
+        createDescriptorSets();
+
         createCommandBuffers();
 
         //because sync objects are being reused the imagesInFlight need to be reset here.
@@ -159,6 +171,11 @@ namespace cy3d {
         }
         //Mark the image as now being in use by this frame
         imagesInFlight[*imageIndex] = inFlightFences[currentFrame];
+
+
+        UniformBufferObject ubo{};
+        ubo.update(swapChainExtent.width, swapChainExtent.height);
+        uniformBuffers[*imageIndex]->setData(&ubo, 0);
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -530,15 +547,8 @@ namespace cy3d {
             0, 1, 2, 2, 3, 0
         };
 
-
-        if(omniBuffer.get() != nullptr) omniBuffer->~VulkanBuffer();
-
-        
-        
         VkDeviceSize vSize = sizeof(vertices[0]) * vertices.size();
         VkDeviceSize iSize = sizeof(indices[0]) * indices.size();
-
-        VulkanBuffer b(cyContext, vSize, vertices.data(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
         omniBuffer.reset(new VulkanBuffer(cyContext, vSize, vertices.data(), iSize, indices.data()));
     }
@@ -575,11 +585,11 @@ namespace cy3d {
 
     void VulkanSwapChain::createUniformBuffers()
     {
-        uniformBuffers.resize(swapChainImages.size());
+        uniformBuffers.resize(imageCount());
         BufferCreationAllocationInfo uniformBuffInfo = BufferCreationAllocationInfo::createDefaultUniformBuffer(static_cast<VkDeviceSize>(sizeof(UniformBufferObject)));
-        for (size_t i = 0; i < swapChainImages.size(); i++)
+        for (size_t i = 0; i < imageCount(); i++)
         {
-            uniformBuffers.push_back(std::move(VulkanBuffer(cyContext, uniformBuffInfo)));
+            uniformBuffers[i].reset(new VulkanBuffer(cyContext, uniformBuffInfo, 1));
         }
     }
 
@@ -679,7 +689,7 @@ namespace cy3d {
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = 0;
+        pipelineLayoutInfo.setLayoutCount = 1;
         pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
         pipelineLayoutInfo.pushConstantRangeCount = 0; //used to send data to shaders
         pipelineLayoutInfo.pPushConstantRanges = nullptr;
@@ -693,6 +703,54 @@ namespace cy3d {
         pipelineConfig.renderPass = getRenderPass();
         pipelineConfig.pipelineLayout = pipelineLayout;
         cyPipeline = std::make_unique<VulkanPipeline>(cyContext, "src/resources/shaders/SimpleShader.vert.spv", "src/resources/shaders/SimpleShader.frag.spv", pipelineConfig);
+    }
+
+    void VulkanSwapChain::createDescriptorPools()
+    {
+        VkDescriptorPoolSize poolSize{};
+        poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        poolSize.descriptorCount = static_cast<uint32_t>(swapChainImages.size());
+
+        VkDescriptorPoolCreateInfo poolInfo{};
+        poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        poolInfo.poolSizeCount = 1;
+        poolInfo.pPoolSizes = &poolSize;
+        poolInfo.maxSets = static_cast<uint32_t>(swapChainImages.size());
+
+        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateDescriptorPool(cyContext.getDevice()->device(), &poolInfo, nullptr, &descriptorPool) == VK_SUCCESS, "Failed to create descriptor pool.");
+    }
+
+    void VulkanSwapChain::createDescriptorSets()
+    {
+        std::vector<VkDescriptorSetLayout> layouts(swapChainImages.size(), descriptorSetLayout);
+        VkDescriptorSetAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocInfo.descriptorPool = descriptorPool;
+        allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainImages.size());
+        allocInfo.pSetLayouts = layouts.data();
+
+        descriptorSets.resize(swapChainImages.size());
+        ASSERT_ERROR(DEFAULT_LOGGABLE, vkAllocateDescriptorSets(cyContext.getDevice()->device(), &allocInfo, descriptorSets.data()) == VK_SUCCESS, "Failed to allocate descriptor sets.");
+        for (size_t i = 0; i < swapChainImages.size(); i++) {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = uniformBuffers[i]->getBuffer();
+            bufferInfo.offset = 0;
+            bufferInfo.range = sizeof(UniformBufferObject);
+
+            VkWriteDescriptorSet descriptorWrite{};
+            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrite.dstSet = descriptorSets[i];
+            descriptorWrite.dstBinding = 0;
+            descriptorWrite.dstArrayElement = 0;
+            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrite.descriptorCount = 1;
+            descriptorWrite.pBufferInfo = &bufferInfo;
+            descriptorWrite.pImageInfo = nullptr; // Optional
+            descriptorWrite.pTexelBufferView = nullptr; // Optional
+
+            vkUpdateDescriptorSets(cyContext.getDevice()->device(), 1, &descriptorWrite, 0, nullptr);
+        }
+    
     }
 
     /**
@@ -803,6 +861,9 @@ namespace cy3d {
              * firstInstance: Used as an offset for instanced rendering, defines the lowest value of gl_InstanceIndex.
             */
             //vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertexBuffer.get()->size()), 1, 0, 0); 
+
+            vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
+
 
             vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(omniBuffer->count()), 1, 0, 0, 0);
 
