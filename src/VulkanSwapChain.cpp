@@ -2,6 +2,7 @@
 
 #include "VulkanSwapChain.h"
 #include "VulkanContext.h"
+#include "VulkanDescriptors.h"
 
 #include <Logi/Logi.h>
 
@@ -707,49 +708,71 @@ namespace cy3d {
 
     void VulkanSwapChain::createDescriptorPools()
     {
-        VkDescriptorPoolSize poolSize{};
-        poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        poolSize.descriptorCount = static_cast<uint32_t>(swapChainImages.size());
+        //VkDescriptorPoolSize poolSize{};
+        //poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        //poolSize.descriptorCount = static_cast<uint32_t>(imageCount());
 
-        VkDescriptorPoolCreateInfo poolInfo{};
-        poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        poolInfo.poolSizeCount = 1;
-        poolInfo.pPoolSizes = &poolSize;
-        poolInfo.maxSets = static_cast<uint32_t>(swapChainImages.size());
+        //VkDescriptorPoolCreateInfo poolInfo{};
+        //poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        //poolInfo.poolSizeCount = 1;
+        //poolInfo.pPoolSizes = &poolSize;
+        //poolInfo.maxSets = static_cast<uint32_t>(imageCount());
 
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateDescriptorPool(cyContext.getDevice()->device(), &poolInfo, nullptr, &descriptorPool) == VK_SUCCESS, "Failed to create descriptor pool.");
+        //ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateDescriptorPool(cyContext.getDevice()->device(), &poolInfo, nullptr, &descriptorPool) == VK_SUCCESS, "Failed to create descriptor pool.");
     }
 
     void VulkanSwapChain::createDescriptorSets()
     {
-        std::vector<VkDescriptorSetLayout> layouts(swapChainImages.size(), descriptorSetLayout);
-        VkDescriptorSetAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorPool = descriptorPool;
-        allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainImages.size());
-        allocInfo.pSetLayouts = layouts.data();
 
-        descriptorSets.resize(swapChainImages.size());
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkAllocateDescriptorSets(cyContext.getDevice()->device(), &allocInfo, descriptorSets.data()) == VK_SUCCESS, "Failed to allocate descriptor sets.");
-        for (size_t i = 0; i < swapChainImages.size(); i++) {
+        VkDescriptorSetLayoutBinding uboLayoutBinding{};
+        uboLayoutBinding.binding = 0;
+        uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        uboLayoutBinding.descriptorCount = 1;
+        uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+        VulkanDescriptorPool descPool(cyContext, { {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000} });
+        VulkanDescriptorSetLayout descLayout(cyContext, { {0, uboLayoutBinding} });
+        VulkanDescriptorSets descSets(cyContext, descPool, descLayout, imageCount());
+
+        for (std::size_t i = 0; i < imageCount(); i++)
+        {
             VkDescriptorBufferInfo bufferInfo{};
             bufferInfo.buffer = uniformBuffers[i]->getBuffer();
             bufferInfo.offset = 0;
             bufferInfo.range = sizeof(UniformBufferObject);
-
-            VkWriteDescriptorSet descriptorWrite{};
-            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrite.dstSet = descriptorSets[i];
-            descriptorWrite.dstBinding = 0;
-            descriptorWrite.dstArrayElement = 0;
-            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pBufferInfo = &bufferInfo;
-            descriptorWrite.pImageInfo = nullptr; // Optional
-            descriptorWrite.pTexelBufferView = nullptr; // Optional
-
-            vkUpdateDescriptorSets(cyContext.getDevice()->device(), 1, &descriptorWrite, 0, nullptr);
+            descSets.writeToBuffer(bufferInfo, i, 0);
         }
+
+        //std::vector<VkDescriptorSetLayout> layouts(imageCount(), descriptorSetLayout);
+        //VkDescriptorSetAllocateInfo allocInfo{};
+        //allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        //allocInfo.descriptorPool = descriptorPool;
+        //allocInfo.descriptorSetCount = static_cast<uint32_t>(imageCount());
+        //allocInfo.pSetLayouts = layouts.data();
+
+        //descriptorSets.resize(imageCount());
+        //ASSERT_ERROR(DEFAULT_LOGGABLE, vkAllocateDescriptorSets(cyContext.getDevice()->device(), &allocInfo, descriptorSets.data()) == VK_SUCCESS, "Failed to allocate descriptor sets.");
+        //for (size_t i = 0; i < imageCount(); i++) 
+        //{
+        //    VkDescriptorBufferInfo bufferInfo{};
+        //    bufferInfo.buffer = uniformBuffers[i]->getBuffer();
+        //    bufferInfo.offset = 0;
+        //    bufferInfo.range = sizeof(UniformBufferObject);
+
+        //    VkWriteDescriptorSet descriptorWrite{};
+        //    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        //    descriptorWrite.dstSet = descriptorSets[i];
+        //    descriptorWrite.dstBinding = 0;
+        //    descriptorWrite.dstArrayElement = 0;
+        //    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        //    descriptorWrite.descriptorCount = 1;
+        //    descriptorWrite.pBufferInfo = &bufferInfo;
+        //    descriptorWrite.pImageInfo = nullptr; // Optional
+        //    descriptorWrite.pTexelBufferView = nullptr; // Optional
+
+        //    vkUpdateDescriptorSets(cyContext.getDevice()->device(), 1, &descriptorWrite, 0, nullptr);
+        //}
     
     }
 

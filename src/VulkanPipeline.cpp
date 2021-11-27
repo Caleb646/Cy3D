@@ -1,7 +1,6 @@
 #include "pch.h"
 
 #include "VulkanPipeline.h"
-#include "VulkanVertexBuffer.h"
 #include "VulkanContext.h"
 
 #include <Logi/Logi.h>

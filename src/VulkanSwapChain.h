@@ -5,8 +5,6 @@
 
 #include "VulkanDevice.h"
 #include "VulkanPipeline.h"
-#include "VulkanVertexBuffer.h"
-#include "VulkanIndexBuffer.h"
 #include "VulkanBuffer.h"
 #include "Fwd.hpp"
 
