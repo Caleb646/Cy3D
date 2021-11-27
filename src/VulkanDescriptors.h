@@ -8,25 +8,15 @@
 
 namespace cy3d
 {
-	class VulkanDescriptorPool
-	{
-	public:
-		using pool_size_type = VkDescriptorPoolSize;
-
-	private:
-		uint32_t _maxSets{ 1000 };
-		VkDescriptorPoolCreateFlags _flags{};
-		VkDescriptorPool _pool;
-
-		VulkanContext& cyContext;
-
-	public:
-		VulkanDescriptorPool(VulkanContext&, const std::vector<pool_size_type>&);
-
-		VkDescriptorPool& getPool() { return _pool; }
-		void allocateDescriptorSets(VulkanDescriptorSetLayout& layout, VkDescriptorSet& set);
-	};
-
+	/**
+	 *
+	 *
+	 *
+	 * Descriptor Layouts
+	 *
+	 *
+	 *
+	*/
 	class VulkanDescriptorSetLayout
 	{
 	public:
@@ -41,33 +31,90 @@ namespace cy3d
 		VulkanContext& cyContext;
 
 	public:
-		VulkanDescriptorSetLayout(VulkanContext&, const layout_bindings_type&);
+		VulkanDescriptorSetLayout(VulkanContext&);
+		~VulkanDescriptorSetLayout();
 
-		VkDescriptorSetLayout& getLayout() { return _layout; }
-		layout_binding_type& getLayoutBinding(binding_type binding)
+		VulkanDescriptorSetLayout& addBinding(binding_type binding, VkDescriptorType descType, VkShaderStageFlags sFlags, uint32_t descCount = 1);
+		VulkanDescriptorSetLayout& build();
+
+		const VkDescriptorSetLayout& getLayout() const { return _layout; }
+		const layout_binding_type& getLayoutBinding(const binding_type binding) const
 		{
 			ASSERT_ERROR(DEFAULT_LOGGABLE, _bindings.count(binding) == 1, "Binding is not valid.");
-			return _bindings[binding];
+			return _bindings.at(binding);
 		}
 	};
 
+	/**
+	 *
+	 *
+	 *
+	 * Descriptor Pool
+	 *
+	 *
+	 *
+	*/
+	class VulkanDescriptorPool
+	{
+	public:
+		using pool_size_type = VkDescriptorPoolSize;
+
+	private:
+		uint32_t _maxSets{ 10 };
+		VkDescriptorPoolCreateFlags _flags{};
+		VkDescriptorPool _pool;
+
+		VulkanContext& cyContext;
+
+	public:
+		VulkanDescriptorPool(VulkanContext&, const std::vector<pool_size_type>&);
+		~VulkanDescriptorPool();
+
+		const VkDescriptorPool& getPool() const { return _pool; }
+		void allocateDescriptorSets(const VkDescriptorSetLayout* layouts, VkDescriptorSet* sets, uint32_t count) const;
+	};
+
+
+	/**
+	 *
+	 *
+	 *
+	 * Descriptor Sets
+	 *
+	 *
+	 *
+	*/
 	class VulkanDescriptorSets
 	{
 	public:
-		using sets_type = std::vector<VkDescriptorSet>;
+		using value_type = VkDescriptorSet;
+		using sets_type = std::vector<value_type>;
 		using iterator_type = sets_type::iterator;
 
 	private:
-		VulkanDescriptorPool& _pool;
-		VulkanDescriptorSetLayout& _layout;
+		const VulkanDescriptorPool* _pool;
+		const VulkanDescriptorSetLayout* _layout;
 		VulkanContext& cyContext;
 		uint32_t _count;
 		sets_type _sets;
 
 	public:
-		VulkanDescriptorSets(VulkanContext& context, VulkanDescriptorPool& pool, VulkanDescriptorSetLayout& layout, uint32_t count);
+		VulkanDescriptorSets(VulkanContext& context, const VulkanDescriptorPool* pool, const VulkanDescriptorSetLayout* layout, uint32_t count);
 
-		void writeToBuffer(VkDescriptorBufferInfo& bufferInfo, std::size_t index, VulkanDescriptorSetLayout::binding_type bindingIndex);
+		void writeToBuffer(const VkDescriptorBufferInfo& bufferInfo, std::size_t index, VulkanDescriptorSetLayout::binding_type bindingIndex);
+
+		value_type& at(std::size_t i)
+		{
+			ASSERT_ERROR(DEFAULT_LOGGABLE, i < _sets.size(), "Index is out of bounds.");
+			return _sets.at(i);
+		}
+
+
+		value_type& operator[](std::size_t i)
+		{
+			ASSERT_ERROR(DEFAULT_LOGGABLE, i < _sets.size(), "Index is out of bounds.");
+			return _sets[i];
+		}
 
 		iterator_type begin() { return _sets.begin(); }
 		iterator_type end() { return _sets.end(); }

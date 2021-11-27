@@ -2,6 +2,7 @@
 
 #include "VulkanPipeline.h"
 #include "VulkanContext.h"
+#include "VulkanBuffer.h"
 
 #include <Logi/Logi.h>
 

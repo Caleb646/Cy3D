@@ -2,6 +2,7 @@
 #include "pch.h"
 
 #include <Logi/Logi.h>
+#include <M3D/M3D.h>
 
 #include "VulkanDevice.h"
 #include "VulkanContext.h"
@@ -173,11 +174,14 @@ namespace cy3d
             cyContext.getAllocator()->fillBuffer(_bufferInfo.allocInfo, _bufferMemory, _bufferInfo.bufferInfo.size, { {data, _bufferInfo.bufferInfo.size, 0} });
         }
 
-        void setData(void* data, buffer_info_type bufferInfo);
-
-        void create(buffer_info_type bufferInfo);
-        void copyTo(VulkanBuffer* destination, VkDeviceSize size);
-
+        VkDescriptorBufferInfo descriptorBufferInfo(buffer_size_type buffSize = VK_WHOLE_SIZE, offset_type offset = 0)
+        {
+            VkDescriptorBufferInfo bufferInfo{};
+            bufferInfo.buffer = getBuffer();
+            bufferInfo.offset = 0;
+            bufferInfo.range = buffSize;
+            return bufferInfo;
+        }
         element_count_type count() { return _count; }
         instance_count_type instanceCount() { return _instanceCount; }
         buffer_size_type bufferSize() { return _bufferInfo.bufferInfo.size; }

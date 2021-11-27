@@ -6,6 +6,7 @@
 #include "VulkanDevice.h"
 #include "VulkanPipeline.h"
 #include "VulkanBuffer.h"
+#include "VulkanDescriptors.h"
 #include "Fwd.hpp"
 
 
@@ -28,7 +29,6 @@ namespace cy3d {
             view = m3d::Mat4f::getLookAt({ 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 1.0f});
             proj.getPerspectived(m3d::degreesToRadians(45.0f), width / height, 0.1f, 10.0f);
             proj(1, 1) *= -1;
-
         }
     };
     //TODO temporary
@@ -75,20 +75,20 @@ namespace cy3d {
         std::vector<VkImage> swapChainImages;
         std::vector<VkImageView> swapChainImageViews;
 
+
         VulkanContext& cyContext;
-        //std::unique_ptr<VulkanVertexBuffer> vertexBuffer;
-        //std::unique_ptr<VulkanIndexBuffer> indexBuffer;
 
         std::unique_ptr<VulkanBuffer> omniBuffer;
-
         std::vector<std::unique_ptr<VulkanBuffer>> uniformBuffers;
 
-
+        std::unique_ptr<VulkanDescriptorPool> _descPool;
+        std::unique_ptr<VulkanDescriptorSetLayout> _descLayout;
+        std::unique_ptr<VulkanDescriptorSets> _descSets;
         std::unique_ptr<VulkanPipeline> cyPipeline;
-        VkDescriptorSetLayout descriptorSetLayout; 
+        //VkDescriptorSetLayout descriptorSetLayout; 
         VkPipelineLayout pipelineLayout;
 
-        VkDescriptorPool descriptorPool;
+        //VkDescriptorPool descriptorPool;
         std::vector<VkDescriptorSet> descriptorSets;
 
         /**

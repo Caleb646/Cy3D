@@ -35,8 +35,8 @@ namespace cy3d {
     {
         cleanup();
 
-        vkDestroyDescriptorSetLayout(cyContext.getDevice()->device(), descriptorSetLayout, nullptr);
-        vkDestroyDescriptorPool(cyContext.getDevice()->device(), descriptorPool, nullptr);
+        //vkDestroyDescriptorSetLayout(cyContext.getDevice()->device(), descriptorSetLayout, nullptr);
+        //vkDestroyDescriptorPool(cyContext.getDevice()->device(), descriptorPool, nullptr);
         // cleanup synchronization objects
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
@@ -672,26 +672,29 @@ namespace cy3d {
     */
     void VulkanSwapChain::createDefaultPipelineLayout()
     {
-        VkDescriptorSetLayoutBinding uboLayoutBinding{};
-        uboLayoutBinding.binding = 0;
-        uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        uboLayoutBinding.descriptorCount = 1;
-        uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-        uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+        //VkDescriptorSetLayoutBinding uboLayoutBinding{};
+        //uboLayoutBinding.binding = 0;
+        //uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        //uboLayoutBinding.descriptorCount = 1;
+        //uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        //uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
 
 
-        VkDescriptorSetLayoutCreateInfo layoutInfo{};
-        layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        layoutInfo.bindingCount = 1;
-        layoutInfo.pBindings = &uboLayoutBinding;
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateDescriptorSetLayout(cyContext.getDevice()->device(), &layoutInfo, nullptr, &descriptorSetLayout) == VK_SUCCESS, "Failed to create descriptor set layout.");
+        //VkDescriptorSetLayoutCreateInfo layoutInfo{};
+        //layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        //layoutInfo.bindingCount = 1;
+        //layoutInfo.pBindings = &uboLayoutBinding;
+        //ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateDescriptorSetLayout(cyContext.getDevice()->device(), &layoutInfo, nullptr, &descriptorSetLayout) == VK_SUCCESS, "Failed to create descriptor set layout.");
+
+        _descLayout.reset(new VulkanDescriptorSetLayout(cyContext));
+        _descLayout->addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT).build();
 
 
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = 1;
-        pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+        pipelineLayoutInfo.pSetLayouts = &_descLayout->getLayout();
         pipelineLayoutInfo.pushConstantRangeCount = 0; //used to send data to shaders
         pipelineLayoutInfo.pPushConstantRanges = nullptr;
         ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreatePipelineLayout(cyContext.getDevice()->device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) == VK_SUCCESS, "Failed to create pipeline layout");
@@ -708,6 +711,9 @@ namespace cy3d {
 
     void VulkanSwapChain::createDescriptorPools()
     {
+
+        _descPool.reset(new VulkanDescriptorPool(cyContext, { {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 100 } }));
+
         //VkDescriptorPoolSize poolSize{};
         //poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         //poolSize.descriptorCount = static_cast<uint32_t>(imageCount());
@@ -724,24 +730,16 @@ namespace cy3d {
     void VulkanSwapChain::createDescriptorSets()
     {
 
-        VkDescriptorSetLayoutBinding uboLayoutBinding{};
-        uboLayoutBinding.binding = 0;
-        uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        uboLayoutBinding.descriptorCount = 1;
-        uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-        uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
 
-        VulkanDescriptorPool descPool(cyContext, { {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000} });
-        VulkanDescriptorSetLayout descLayout(cyContext, { {0, uboLayoutBinding} });
-        VulkanDescriptorSets descSets(cyContext, descPool, descLayout, imageCount());
+        _descSets.reset(new VulkanDescriptorSets(cyContext, _descPool.get(), _descLayout.get(), imageCount()));
 
         for (std::size_t i = 0; i < imageCount(); i++)
         {
-            VkDescriptorBufferInfo bufferInfo{};
-            bufferInfo.buffer = uniformBuffers[i]->getBuffer();
-            bufferInfo.offset = 0;
-            bufferInfo.range = sizeof(UniformBufferObject);
-            descSets.writeToBuffer(bufferInfo, i, 0);
+            //VkDescriptorBufferInfo bufferInfo{};
+            //bufferInfo.buffer = uniformBuffers[i]->getBuffer();
+            //bufferInfo.offset = 0;
+            //bufferInfo.range = sizeof(UniformBufferObject);
+            _descSets->writeToBuffer(uniformBuffers[i]->descriptorBufferInfo(), i, 0);
         }
 
         //std::vector<VkDescriptorSetLayout> layouts(imageCount(), descriptorSetLayout);
@@ -885,7 +883,7 @@ namespace cy3d {
             */
             //vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertexBuffer.get()->size()), 1, 0, 0); 
 
-            vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
+            vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &_descSets->at(i), 0, nullptr);
 
 
             vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(omniBuffer->count()), 1, 0, 0, 0);
