@@ -62,13 +62,17 @@ namespace cy3d
 	private:
 		uint32_t _maxSets{ 10 };
 		VkDescriptorPoolCreateFlags _flags{};
-		VkDescriptorPool _pool;
+		VkDescriptorPool _pool{ nullptr };
 
 		VulkanContext& cyContext;
 
 	public:
 		VulkanDescriptorPool(VulkanContext&, const std::vector<pool_size_type>&);
 		~VulkanDescriptorPool();
+
+		void cleanup();
+		void freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const;
+		void resetDescriptors();
 
 		const VkDescriptorPool& getPool() const { return _pool; }
 		void allocateDescriptorSets(const VkDescriptorSetLayout* layouts, VkDescriptorSet* sets, uint32_t count) const;
@@ -89,6 +93,7 @@ namespace cy3d
 	public:
 		using value_type = VkDescriptorSet;
 		using sets_type = std::vector<value_type>;
+		using writes_type = std::vector<VkWriteDescriptorSet>;
 		using iterator_type = sets_type::iterator;
 
 	private:
@@ -97,11 +102,14 @@ namespace cy3d
 		VulkanContext& cyContext;
 		uint32_t _count;
 		sets_type _sets;
+		writes_type _writes;
 
 	public:
 		VulkanDescriptorSets(VulkanContext& context, const VulkanDescriptorPool* pool, const VulkanDescriptorSetLayout* layout, uint32_t count);
 
-		void writeToBuffer(const VkDescriptorBufferInfo& bufferInfo, std::size_t index, VulkanDescriptorSetLayout::binding_type bindingIndex);
+		VulkanDescriptorSets& writeBufferToSet(const VkDescriptorBufferInfo& info, std::size_t index, VulkanDescriptorSetLayout::binding_type bindingIndex);
+		VulkanDescriptorSets& writeImageToSet(const VkDescriptorImageInfo& info, std::size_t index, VulkanDescriptorSetLayout::binding_type bindingIndex);
+		VulkanDescriptorSets& updateSets();
 
 		value_type& at(std::size_t i)
 		{

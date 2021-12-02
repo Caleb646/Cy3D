@@ -77,7 +77,25 @@ namespace cy3d
 
     VulkanDescriptorPool::~VulkanDescriptorPool()
     {
-        vkDestroyDescriptorPool(cyContext.getDevice()->device(), _pool, nullptr);
+        cleanup();
+    }
+
+    void VulkanDescriptorPool::cleanup()
+    {
+        if (_pool != nullptr)
+        {
+            vkDestroyDescriptorPool(cyContext.getDevice()->device(), _pool, nullptr);
+        }
+    }
+
+    void VulkanDescriptorPool::freeDescriptors(std::vector<VkDescriptorSet>& descriptors) const
+    {
+        vkFreeDescriptorSets(cyContext.getDevice()->device(), _pool, static_cast<uint32_t>(descriptors.size()), descriptors.data());
+    }
+
+    void VulkanDescriptorPool::resetDescriptors()
+    {
+        vkResetDescriptorPool(cyContext.getDevice()->device(), _pool, 0);
     }
 
     void VulkanDescriptorPool::allocateDescriptorSets(const VkDescriptorSetLayout* layouts, VkDescriptorSet* sets, uint32_t count) const
@@ -108,7 +126,7 @@ namespace cy3d
         _pool->allocateDescriptorSets(layouts.data(), _sets.data(), _count);
     }
 
-    void VulkanDescriptorSets::writeToBuffer(const VkDescriptorBufferInfo& bufferInfo, std::size_t index, VulkanDescriptorSetLayout::binding_type bindingIndex)
+    VulkanDescriptorSets& VulkanDescriptorSets::writeBufferToSet(const VkDescriptorBufferInfo& info, std::size_t index, VulkanDescriptorSetLayout::binding_type bindingIndex)
     {
         VkWriteDescriptorSet descriptorWrite{};
         descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -117,10 +135,33 @@ namespace cy3d
         descriptorWrite.dstArrayElement = 0;
         descriptorWrite.descriptorType = _layout->getLayoutBinding(bindingIndex).descriptorType;
         descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pBufferInfo = &bufferInfo;
+        descriptorWrite.pBufferInfo = &info;
         descriptorWrite.pImageInfo = nullptr; // Optional
         descriptorWrite.pTexelBufferView = nullptr; // Optional
+        _writes.push_back(descriptorWrite);
+        return *this;
+    }
 
-        vkUpdateDescriptorSets(cyContext.getDevice()->device(), 1, &descriptorWrite, 0, nullptr);
+    VulkanDescriptorSets& VulkanDescriptorSets::writeImageToSet(const VkDescriptorImageInfo& info, std::size_t index, VulkanDescriptorSetLayout::binding_type bindingIndex)
+    {
+        VkWriteDescriptorSet descriptorWrite{};
+        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet = _sets[index];
+        descriptorWrite.dstBinding = bindingIndex;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType = _layout->getLayoutBinding(bindingIndex).descriptorType;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pBufferInfo = nullptr;
+        descriptorWrite.pImageInfo = &info; // Optional
+        descriptorWrite.pTexelBufferView = nullptr; // Optional
+        _writes.push_back(descriptorWrite);
+        return *this;
+    }
+
+    VulkanDescriptorSets& VulkanDescriptorSets::updateSets()
+    {
+        vkUpdateDescriptorSets(cyContext.getDevice()->device(), static_cast<uint32_t>(_writes.size()), _writes.data(), 0, nullptr);
+        _writes.clear();
+        return *this;
     }
 }

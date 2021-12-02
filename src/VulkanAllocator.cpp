@@ -35,9 +35,9 @@ namespace cy3d
 		{
 			if (buffInfo.needStagingBuffer)
 			{
-				VkBuffer stagingBuffer;
-				VmaAllocation stagingMemory;
-				BufferCreationAllocationInfo stagingBuffInfo = BufferCreationAllocationInfo::createDefaultStagingBufferInfo(buffInfo.bufferInfo.size);
+				buffer_type stagingBuffer;
+				buffer_memory_type stagingMemory;
+				buffer_info_type stagingBuffInfo = buffer_info_type::createDefaultStagingBufferInfo(buffInfo.bufferInfo.size);
 				vmaCreateBuffer(_allocator, &stagingBuffInfo.bufferInfo, &stagingBuffInfo.allocCreateInfo, &stagingBuffer, &stagingMemory, &stagingBuffInfo.allocInfo);
 				fillBuffer(stagingBuffInfo.allocInfo, stagingMemory, stagingBuffInfo.bufferInfo.size, offsets);
 				copyBuffer(stagingBuffer, buffer, stagingBuffInfo.bufferInfo.size);
@@ -97,5 +97,36 @@ namespace cy3d
 		VkMemoryPropertyFlags memFlags;
 		vmaGetMemoryTypeProperties(_allocator, allocInfo.memoryType, &memFlags);
 		return (memFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) != 0;
+	}
+
+	void VulkanAllocator::createImage(image_info_type& imageInfo, image_type& image, image_memory_type& allocation, void* data)
+	{
+		ASSERT_ERROR(DEFAULT_LOGGABLE, vmaCreateImage(_allocator, &imageInfo.imageCreateInfo, &imageInfo.allocCreateInfo, &image, &allocation, &imageInfo.allocInfo) == VK_SUCCESS, "Failed to create image.");
+	}
+	void VulkanAllocator::copyBufferToImage(buffer_type& srcBuffer, image_type& dstImage, const image_info_type& imageInfo)
+	{
+		VkCommandBuffer commandBuffer = cyContext.getDevice()->beginSingleTimeCommands();
+
+		VkBufferImageCopy region{};
+		region.bufferOffset = 0;
+		region.bufferRowLength = 0;
+		region.bufferImageHeight = 0;
+
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.mipLevel = 0;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = 1;
+
+		region.imageOffset = { 0, 0, 0 };
+		region.imageExtent = imageInfo.imageCreateInfo.extent;
+
+		vkCmdCopyBufferToImage(commandBuffer, srcBuffer, dstImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+		cyContext.getDevice()->endSingleTimeCommands(commandBuffer);
+	}
+
+	void VulkanAllocator::destroyImage(image_type& image, image_memory_type& allocation)
+	{
+		vmaDestroyImage(_allocator, image, allocation);
 	}
 }

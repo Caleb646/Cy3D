@@ -7,6 +7,7 @@
 #include "VulkanPipeline.h"
 #include "VulkanBuffer.h"
 #include "VulkanDescriptors.h"
+#include "VulkanTexture.h"
 #include "Fwd.hpp"
 
 
@@ -78,6 +79,7 @@ namespace cy3d {
 
         VulkanContext& cyContext;
 
+        std::unique_ptr<VulkanTexture> texture;
         std::unique_ptr<VulkanBuffer> omniBuffer;
         std::vector<std::unique_ptr<VulkanBuffer>> uniformBuffers;
 

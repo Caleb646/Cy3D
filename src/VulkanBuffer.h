@@ -15,6 +15,7 @@ namespace cy3d
     struct Vertex {
         m3d::Vec2f pos;
         m3d::Vec3f color;
+        m3d::Vec2f texCoord;
 
         /**
          * @brief A vertex binding describes at which rate to load data from memory throughout the vertices.
@@ -37,7 +38,7 @@ namespace cy3d
 
         static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions()
         {
-            std::vector<VkVertexInputAttributeDescription> attributeDescriptions{ 2 };
+            std::vector<VkVertexInputAttributeDescription> attributeDescriptions{ 3 };
             attributeDescriptions[0].binding = 0; //The binding parameter tells Vulkan from which binding the per-vertex data comes. 
             attributeDescriptions[0].location = 0; //The location parameter references the location directive of the input in the vertex shader.
 
@@ -55,6 +56,10 @@ namespace cy3d
             attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
             attributeDescriptions[1].offset = offsetof(Vertex, color);
 
+            attributeDescriptions[2].binding = 0;
+            attributeDescriptions[2].location = 2;
+            attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+            attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
 
             return attributeDescriptions;
         }
