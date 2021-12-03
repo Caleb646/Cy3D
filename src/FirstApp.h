@@ -5,6 +5,7 @@
 #include "VulkanWindow.h"
 #include "VulkanDevice.h"
 #include "VulkanSwapChain.h"
+#include "VulkanRenderer.h"
 #include "VulkanContext.h"
 
 namespace cy3d

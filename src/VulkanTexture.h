@@ -5,7 +5,7 @@
 
 #include "VulkanContext.h"
 #include "VulkanAllocator.h"
-#include "VulkanImageBuffer.h"
+#include "VulkanImage.h"
 #include "VulkanDevice.h"
 
 namespace cy3d
@@ -72,8 +72,7 @@ namespace cy3d
 		using image_view_type = VkImageView;
 	private:
 		std::string _path;
-		image_view_type _textureImageView;
-		std::unique_ptr<VulkanImageBuffer> _texture{ nullptr };
+		std::unique_ptr<VulkanImage> _texture{ nullptr };
 		std::unique_ptr<VulkanSampler> _sampler;
 		VulkanContext& cyContext;
 
@@ -86,7 +85,7 @@ namespace cy3d
 		{
 			VkDescriptorImageInfo imageInfo{};
 			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageInfo.imageView = _textureImageView;
+			imageInfo.imageView = _texture->getImageView();
 			imageInfo.sampler = _sampler->getSampler();
 			return imageInfo;
 		}

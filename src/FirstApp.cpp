@@ -35,11 +35,10 @@ namespace cy3d
 	*/
 	void FirstApp::drawFrame()
 	{
-		uint32_t imageIndex;
-		auto result = cyContext.getSwapChain()->acquireNextImage(&imageIndex);
-		//ASSERT_ERROR(DEFAULT_LOGGABLE, result == VK_SUCCESS, "Failed to acquire swap chain image");
-		result = cyContext.getSwapChain()->submitCommandBuffers(&imageIndex);
-		//ASSERT_ERROR(DEFAULT_LOGGABLE, result == VK_SUCCESS, "Failed to present swap chain image");
+		cyContext.getVulkanRenderer()->beginFrame();
+		cyContext.getVulkanRenderer()->beginRenderPass();
+		cyContext.getVulkanRenderer()->endRenderPass();
+		cyContext.getVulkanRenderer()->endFrame();
 	}
 }
 

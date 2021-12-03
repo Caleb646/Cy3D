@@ -74,7 +74,7 @@
     <ClCompile Include="src\VulkanDescriptors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VulkanImageBuffer.cpp">
+    <ClCompile Include="src\VulkanImage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\VulkanTexture.cpp">
@@ -185,7 +185,7 @@
     <ClInclude Include="src\VulkanDescriptors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\VulkanImageBuffer.h">
+    <ClInclude Include="src\VulkanImage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\VulkanTexture.h">

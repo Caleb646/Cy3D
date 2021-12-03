@@ -13,22 +13,10 @@ namespace cy3d {
     {
         createSwapChain();
         createImageViews();
-        createRenderPass();
         createDepthResources();
-        createIndexBuffers();
-        createVertexBuffers();
-        createUniformBuffers();
+        createRenderPass();
         createFramebuffers();
         createSyncObjects();
-
-
-        createDefaultPipelineLayout();
-        createDefaultPipeline();
-
-        createDescriptorPools();
-        createDescriptorSets();
-
-        createCommandBuffers();
     }
 
     VulkanSwapChain::~VulkanSwapChain()
@@ -52,25 +40,12 @@ namespace cy3d {
     */
     void VulkanSwapChain::cleanup()
     {
-        for (int i = 0; i < depthImages.size(); i++)
-        {
-            vkDestroyImageView(cyContext.getDevice()->device(), depthImageViews[i], nullptr);
-            vkDestroyImage(cyContext.getDevice()->device(), depthImages[i], nullptr);
-            vkFreeMemory(cyContext.getDevice()->device(), depthImageMemorys[i], nullptr);
-        }
+        vkDestroyRenderPass(cyContext.getDevice()->device(), _renderPass, nullptr);
 
         for (size_t i = 0; i < swapChainFramebuffers.size(); i++)
         {
             vkDestroyFramebuffer(cyContext.getDevice()->device(), swapChainFramebuffers[i], nullptr);
         }
-        vkFreeCommandBuffers(cyContext.getDevice()->device(), cyContext.getDevice()->getCommandPool(), static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
-
-        //let std::unique_ptr cleanup the cyPipeline.
-        _descPool->resetDescriptors();
-
-        vkDestroyPipelineLayout(cyContext.getDevice()->device(), pipelineLayout, nullptr);
-        vkDestroyRenderPass(cyContext.getDevice()->device(), renderPass, nullptr);
-
         for (size_t i = 0; i < swapChainImageViews.size(); i++)
         {
             vkDestroyImageView(cyContext.getDevice()->device(), swapChainImageViews[i], nullptr);
@@ -87,30 +62,15 @@ namespace cy3d {
      * @brief Recreates the swap chain. Will first block until the window is not minimized, then will block until the device is idle
      * and, then begin cleaning up and recreating the swap chain with the new window extent.
     */
-    void VulkanSwapChain::recreate()
+    void VulkanSwapChain::reCreate()
     {
-        //if window is currently minimized block
-        cyContext.getWindow()->blockWhileWindowMinimized();
-
-        //make sure nothing is currently being used 
-        //before cleaning up.
-        vkDeviceWaitIdle(cyContext.getDevice()->device());
-
         cleanup();
 
         createSwapChain();
         createImageViews();
         createRenderPass();
         createDepthResources();
-        createUniformBuffers();
         createFramebuffers();
-
-        createDefaultPipelineLayout();
-        createDefaultPipeline();
-
-        createDescriptorSets();
-
-        createCommandBuffers();
 
         //because sync objects are being reused the imagesInFlight need to be reset here.
         imagesInFlight.resize(imageCount(), VK_NULL_HANDLE);
@@ -122,7 +82,7 @@ namespace cy3d {
          * The vkWaitForFences function takes an array of fences and waits for either any or all of them to be signaled before returning. 
          * The VK_TRUE we pass here indicates that we want to wait for all fences
         */
-        vkWaitForFences(cyContext.getDevice()->device(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+        vkWaitForFences(cyContext.getDevice()->device(), 1, &inFlightFences[cyContext.getCurrentFrameIndex()], VK_TRUE, UINT64_MAX);
 
         /**
          * Acquire an image from the swap chain.
@@ -138,33 +98,17 @@ namespace cy3d {
          * The index refers to the VkImage in our swapChainImages array.
         */
         VkResult result = vkAcquireNextImageKHR(cyContext.getDevice()->device(), swapChain, UINT64_MAX,
-            imageAvailableSemaphores[currentFrame],  //must be a not signaled semaphore
+            imageAvailableSemaphores[cyContext.getCurrentFrameIndex()],  //must be a not signaled semaphore
             VK_NULL_HANDLE, imageIndex);
-
-        /**
-         * If the swap chain turns out to be out of date when attempting to acquire an image, 
-         * then it is no longer possible to present to it. Therefore we should immediately recreate 
-         * the swap chain and try again in the next drawFrame call. 
-        */
-        if (result == VK_ERROR_OUT_OF_DATE_KHR)
-        {
-            recreate();
-            return result;
-        }
-        else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) 
-        {
-            throw std::runtime_error("failed to acquire swap chain image!");
-        }
-
         return result;
     }
 
     void VulkanSwapChain::resetFences(std::size_t frameNumber)
     {
-        vkResetFences(cyContext.getDevice()->device(), 1, &inFlightFences[currentFrame]);
+        vkResetFences(cyContext.getDevice()->device(), 1, &inFlightFences[cyContext.getCurrentFrameIndex()]);
     }
 
-    VkResult VulkanSwapChain::submitCommandBuffers(uint32_t* imageIndex)
+    VkResult VulkanSwapChain::submitCommandBuffers(const VkCommandBuffer* cmdBuffer, uint32_t* imageIndex)
     {
         //Check if a previous frame is using this image (i.e. there is its fence to wait on)
         if (imagesInFlight[*imageIndex] != VK_NULL_HANDLE)
@@ -172,17 +116,17 @@ namespace cy3d {
             vkWaitForFences(cyContext.getDevice()->device(), 1, &imagesInFlight[*imageIndex], VK_TRUE, UINT64_MAX);
         }
         //Mark the image as now being in use by this frame
-        imagesInFlight[*imageIndex] = inFlightFences[currentFrame];
+        imagesInFlight[*imageIndex] = inFlightFences[cyContext.getCurrentFrameIndex()];
 
 
-        UniformBufferObject ubo{};
-        ubo.update(swapChainExtent.width, swapChainExtent.height);
-        uniformBuffers[*imageIndex]->setData(&ubo, 0);
+        //UniformBufferObject ubo{};
+        //ubo.update(swapChainExtent.width, swapChainExtent.height);
+        //uniformBuffers[*imageIndex]->setData(&ubo, 0);
 
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-        VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
+        VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[cyContext.getCurrentFrameIndex()] };
         VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
         //These three parameters specify which semaphores to wait on before execution begins and in which stage(s) of the pipeline to wait. 
         submitInfo.waitSemaphoreCount = 1;
@@ -191,14 +135,14 @@ namespace cy3d {
 
         //These two parameters specify which command buffers to actually submit for execution
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffers[*imageIndex];
+        submitInfo.pCommandBuffers = cmdBuffer; //&cmdBuffers[*imageIndex];
 
         //The signalSemaphoreCount and pSignalSemaphores parameters specify which semaphores to signal once the command buffer(s) have finished execution
-        VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
+        VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[cyContext.getCurrentFrameIndex()] };
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        resetFences(currentFrame);
+        resetFences(cyContext.getCurrentFrameIndex());
 
         /**
          * The function takes an array of VkSubmitInfo structures as argument for efficiency when the 
@@ -207,7 +151,7 @@ namespace cy3d {
          * The vkQueueSubmit call includes an optional parameter to pass a fence that should be signaled when the command buffer finishes executing. 
          * We can use this to signal that a frame has finished.
         */
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkQueueSubmit(cyContext.getDevice()->graphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]) == VK_SUCCESS, "Failed to submit draw command buffer");
+        ASSERT_ERROR(DEFAULT_LOGGABLE, vkQueueSubmit(cyContext.getDevice()->graphicsQueue(), 1, &submitInfo, inFlightFences[cyContext.getCurrentFrameIndex()]) == VK_SUCCESS, "Failed to submit draw command buffer");
 
 
         /**
@@ -229,27 +173,7 @@ namespace cy3d {
         presentInfo.pImageIndices = imageIndex;
 
         //The vkQueuePresentKHR function submits the request to present an image to the swap chain.
-        auto result = vkQueuePresentKHR(cyContext.getDevice()->presentQueue(), &presentInfo);
-
-        /**
-         * If the swap chain turns out to be out of date when attempting to acquire an image,
-         * then it is no longer possible to present to it. Therefore we should immediately recreate
-         * the swap chain and try again in the next drawFrame call.
-        */
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || cyContext.getWindow()->isWindowFrameBufferResized()) 
-        {
-            cyContext.getWindow()->resetWindowFrameBufferResizedFlag();
-            recreate();
-            return result;
-        }
-        else if (result != VK_SUCCESS) 
-        {
-            throw std::runtime_error("failed to present swap chain image!");
-        }
-
-        currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-
-        return result;
+        return vkQueuePresentKHR(cyContext.getDevice()->presentQueue(), &presentInfo);
     }
 
     void VulkanSwapChain::createSwapChain()
@@ -404,162 +328,6 @@ namespace cy3d {
         }
     }
 
-    void VulkanSwapChain::createRenderPass() 
-    {
-        /**
-         * Creates a blueprint to be used for the framebuffer
-        */
-        VkAttachmentDescription depthAttachment{};
-        depthAttachment.format = findDepthFormat();
-        depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-        depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-        depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-        VkAttachmentReference depthAttachmentRef{};
-        depthAttachmentRef.attachment = 1;
-        depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-        VkAttachmentDescription colorAttachment{};
-        //The format of the color attachment should match the format of the swap chain images
-        colorAttachment.format = getSwapChainImageFormat();
-        colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-
-        /**
-         * The loadOp and storeOp determine what to do with the data in the attachment before rendering and after rendering. We have the following choices for loadOp:
-         * VK_ATTACHMENT_LOAD_OP_LOAD: Preserve the existing contents of the attachment
-         * VK_ATTACHMENT_LOAD_OP_CLEAR: Clear the values to a constant at the start
-         * VK_ATTACHMENT_LOAD_OP_DONT_CARE: Existing contents are undefined; we don't care about them
-         * 
-         * In our case we're going to use the clear operation to clear the framebuffer to black before drawing a new frame. There are only two possibilities for the storeOp:
-         * VK_ATTACHMENT_STORE_OP_STORE: Rendered contents will be stored in memory and can be read later
-         * VK_ATTACHMENT_STORE_OP_DONT_CARE: Contents of the framebuffer will be undefined after the rendering operation
-        */
-        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-        colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-        colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-
-        /**
-         * Textures and framebuffers in Vulkan are represented by VkImage objects with a certain pixel format, 
-         * however the layout of the pixels in memory can change based on what you're trying to do with an image.
-         * 
-         * Some of the most common layouts are:
-         * VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL: Images used as color attachment
-         * VK_IMAGE_LAYOUT_PRESENT_SRC_KHR: Images to be presented in the swap chain
-         * VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL: Images to be used as destination for a memory copy operation
-        */
-        colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-
-        /**
-         * A single render pass can consist of multiple subpasses. Subpasses are subsequent rendering operations that depend on 
-         * the contents of framebuffers in previous passes, for example a sequence of post-processing effects that are applied one after another.
-        */
-        VkAttachmentReference colorAttachmentRef{};
-        /**
-         * The attachment parameter specifies which attachment to reference by its index in the attachment descriptions array. 
-         * Our array consists of a single VkAttachmentDescription, so its index is 0. The layout specifies which layout we would like the 
-         * attachment to have during a subpass that uses this reference. 
-        */
-        colorAttachmentRef.attachment = 0;
-        colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-
-        VkSubpassDescription subpass{};
-        /**
-         * The index of the attachment in this array is directly referenced from the fragment shader with the layout(location = 0) out vec4 outColor directive!
-         * The following other types of attachments can be referenced by a subpass:
-         * 
-         * pInputAttachments: Attachments that are read from a shader
-         * pResolveAttachments: Attachments used for multisampling color attachments
-         * pDepthStencilAttachment: Attachment for depth and stencil data
-         * pPreserveAttachments: Attachments that are not used by this subpass, but for which the data must be preserved 
-        */
-        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass.colorAttachmentCount = 1;
-        subpass.pColorAttachments = &colorAttachmentRef;
-        subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-        VkSubpassDependency dependency{};
-        /**
-         * he special value VK_SUBPASS_EXTERNAL refers to the implicit subpass before or after the render pass depending on whether 
-         * it is specified in srcSubpass or dstSubpass. The index 0 refers to our subpass, which is the first and only one. The dstSubpass must 
-         * always be higher than srcSubpass to prevent cycles in the dependency graph (unless one of the subpasses is VK_SUBPASS_EXTERNAL).
-        */
-        dependency.dstSubpass = 0;
-        dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-        /**
-         * The next two fields specify the operations to wait on and the stages in which these operations occur. 
-         * We need to wait for the swap chain to finish reading from the image before we can access it. This can 
-         * be accomplished by waiting on the color attachment output stage itself.
-        */
-        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        
-        dependency.srcAccessMask = 0;
-        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-
-
-        /**
-         * The render pass object can then be created by filling in the VkRenderPassCreateInfo structure with an array of 
-         * attachments and subpasses. The VkAttachmentReference objects reference attachments using the indices of this array.
-        */
-        std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
-        VkRenderPassCreateInfo renderPassInfo = {};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-        renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-        renderPassInfo.pAttachments = attachments.data();
-        renderPassInfo.subpassCount = 1;
-        renderPassInfo.pSubpasses = &subpass;
-        renderPassInfo.dependencyCount = 1;
-        renderPassInfo.pDependencies = &dependency;
-
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateRenderPass(cyContext.getDevice()->device(), &renderPassInfo, nullptr, &renderPass) == VK_SUCCESS, "Failed to create render pass");
-    }
-
-    void VulkanSwapChain::createIndexBuffers()
-    {
-        //can use either uint16_t or uint32_t
-        //std::vector<uint16_t> indices =
-        //{
-        //    0, 1, 2, 2, 3, 0
-        //};
-
-        ////use reset here to ensure on recreation of the swap chain and of the vertex buffer that the previous index buffer is cleaned up
-        //indexBuffer.reset(new VulkanIndexBuffer(cyContext, sizeof(indices[0]) * indices.size(), static_cast<void*>(indices.data())));
-    }
-
-    void VulkanSwapChain::createVertexBuffers()
-    {
-        std::vector<Vertex> vertices =
-        {
-            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-            {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-            {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-            {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-
-            {{-0.25f, 0.75f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-            {{-0.75f, 0.25f}, {1.0f, 0.0f, 1.0f}, {0.5f, 1.0f}},
-            {{-0.5f, 0.25f}, {1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}}
-        };
-
-        std::vector<uint16_t> indices =
-        {
-            0, 1, 2, 2, 3, 0, 3, 4, 5, 5, 6
-        };
-
-        VkDeviceSize vSize = sizeof(vertices[0]) * vertices.size();
-        VkDeviceSize iSize = sizeof(indices[0]) * indices.size();
-
-        omniBuffer.reset(new VulkanBuffer(cyContext, vSize, vertices.data(), iSize, indices.data()));
-    }
-
     /**
      * @brief The attachments specified during render pass creation are bound by wrapping them into a VkFramebuffer object. 
      * A framebuffer object references all of the VkImageView objects that represent the attachments.
@@ -569,12 +337,12 @@ namespace cy3d {
         swapChainFramebuffers.resize(imageCount());
         for (size_t i = 0; i < imageCount(); i++) 
         {
-            std::array<VkImageView, 2> attachments = { swapChainImageViews[i], depthImageViews[i] };
+            std::array<VkImageView, 2> attachments = { swapChainImageViews[i],  depthImages[i]->getImageView() };
 
             VkExtent2D swapChainExtent = getSwapChainExtent();
             VkFramebufferCreateInfo framebufferInfo = {};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-            framebufferInfo.renderPass = renderPass;
+            framebufferInfo.renderPass = getRenderPass();
 
             /**
              * The attachmentCount and pAttachments parameters specify the VkImageView objects that should be bound to the 
@@ -590,28 +358,24 @@ namespace cy3d {
         }
     }
 
-    void VulkanSwapChain::createUniformBuffers()
-    {
-        uniformBuffers.resize(imageCount());
-        BufferCreationAllocationInfo uniformBuffInfo = BufferCreationAllocationInfo::createDefaultUniformBuffer(static_cast<VkDeviceSize>(sizeof(UniformBufferObject)));
-        for (size_t i = 0; i < imageCount(); i++)
-        {
-            uniformBuffers[i].reset(new VulkanBuffer(cyContext, uniformBuffInfo, 1));
-        }
-    }
-
     void VulkanSwapChain::createDepthResources() 
     {
-        VkFormat depthFormat = findDepthFormat();
+        VkFormat depthFormat = cyContext.getDevice()->findDepthFormat();
         VkExtent2D swapChainExtent = getSwapChainExtent();
 
+        uint32_t w = getWidth();
+        uint32_t h = getHeight();
+
         depthImages.resize(imageCount());
-        depthImageMemorys.resize(imageCount());
-        depthImageViews.resize(imageCount());
+        //depthImageMemorys.resize(imageCount());
+        //depthImageViews.resize(imageCount());
 
         for (int i = 0; i < depthImages.size(); i++) 
         {
-            VkImageCreateInfo imageInfo{};
+
+            depthImages[i] = VulkanImage::createDepthImage(cyContext, w, h);
+
+           /* VkImageCreateInfo imageInfo{};
             imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
             imageInfo.imageType = VK_IMAGE_TYPE_2D;
             imageInfo.extent.width = swapChainExtent.width;
@@ -639,8 +403,126 @@ namespace cy3d {
             viewInfo.subresourceRange.levelCount = 1;
             viewInfo.subresourceRange.baseArrayLayer = 0;
             viewInfo.subresourceRange.layerCount = 1;
-            ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateImageView(cyContext.getDevice()->device(), &viewInfo, nullptr, &depthImageViews[i]) == VK_SUCCESS, "Failed to create texture image view");
+            ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateImageView(cyContext.getDevice()->device(), &viewInfo, nullptr, &depthImageViews[i]) == VK_SUCCESS, "Failed to create texture image view");*/
         }
+    }
+
+    void VulkanSwapChain::createRenderPass()
+    {
+        /**
+         * Creates a blueprint to be used for the framebuffer
+        */
+        VkAttachmentDescription depthAttachment{};
+        depthAttachment.format = cyContext.getDevice()->findDepthFormat();
+        depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+        VkAttachmentReference depthAttachmentRef{};
+        depthAttachmentRef.attachment = 1;
+        depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+        VkAttachmentDescription colorAttachment{};
+        //The format of the color attachment should match the format of the swap chain images
+        colorAttachment.format = getSwapChainImageFormat();
+        colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+
+        /**
+         * The loadOp and storeOp determine what to do with the data in the attachment before rendering and after rendering. We have the following choices for loadOp:
+         * VK_ATTACHMENT_LOAD_OP_LOAD: Preserve the existing contents of the attachment
+         * VK_ATTACHMENT_LOAD_OP_CLEAR: Clear the values to a constant at the start
+         * VK_ATTACHMENT_LOAD_OP_DONT_CARE: Existing contents are undefined; we don't care about them
+         *
+         * In our case we're going to use the clear operation to clear the framebuffer to black before drawing a new frame. There are only two possibilities for the storeOp:
+         * VK_ATTACHMENT_STORE_OP_STORE: Rendered contents will be stored in memory and can be read later
+         * VK_ATTACHMENT_STORE_OP_DONT_CARE: Contents of the framebuffer will be undefined after the rendering operation
+        */
+        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+
+        /**
+         * Textures and framebuffers in Vulkan are represented by VkImage objects with a certain pixel format,
+         * however the layout of the pixels in memory can change based on what you're trying to do with an image.
+         *
+         * Some of the most common layouts are:
+         * VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL: Images used as color attachment
+         * VK_IMAGE_LAYOUT_PRESENT_SRC_KHR: Images to be presented in the swap chain
+         * VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL: Images to be used as destination for a memory copy operation
+        */
+        colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+
+        /**
+         * A single render pass can consist of multiple subpasses. Subpasses are subsequent rendering operations that depend on
+         * the contents of framebuffers in previous passes, for example a sequence of post-processing effects that are applied one after another.
+        */
+        VkAttachmentReference colorAttachmentRef{};
+        /**
+         * The attachment parameter specifies which attachment to reference by its index in the attachment descriptions array.
+         * Our array consists of a single VkAttachmentDescription, so its index is 0. The layout specifies which layout we would like the
+         * attachment to have during a subpass that uses this reference.
+        */
+        colorAttachmentRef.attachment = 0;
+        colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+
+        VkSubpassDescription subpass{};
+        /**
+         * The index of the attachment in this array is directly referenced from the fragment shader with the layout(location = 0) out vec4 outColor directive!
+         * The following other types of attachments can be referenced by a subpass:
+         *
+         * pInputAttachments: Attachments that are read from a shader
+         * pResolveAttachments: Attachments used for multisampling color attachments
+         * pDepthStencilAttachment: Attachment for depth and stencil data
+         * pPreserveAttachments: Attachments that are not used by this subpass, but for which the data must be preserved
+        */
+        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        subpass.colorAttachmentCount = 1;
+        subpass.pColorAttachments = &colorAttachmentRef;
+        subpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+        VkSubpassDependency dependency{};
+        /**
+         * he special value VK_SUBPASS_EXTERNAL refers to the implicit subpass before or after the render pass depending on whether
+         * it is specified in srcSubpass or dstSubpass. The index 0 refers to our subpass, which is the first and only one. The dstSubpass must
+         * always be higher than srcSubpass to prevent cycles in the dependency graph (unless one of the subpasses is VK_SUBPASS_EXTERNAL).
+        */
+        dependency.dstSubpass = 0;
+        dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+        /**
+         * The next two fields specify the operations to wait on and the stages in which these operations occur.
+         * We need to wait for the swap chain to finish reading from the image before we can access it. This can
+         * be accomplished by waiting on the color attachment output stage itself.
+        */
+        dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+        dependency.srcAccessMask = 0;
+        dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+
+        /**
+         * The render pass object can then be created by filling in the VkRenderPassCreateInfo structure with an array of
+         * attachments and subpasses. The VkAttachmentReference objects reference attachments using the indices of this array.
+        */
+        std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
+        VkRenderPassCreateInfo renderPassInfo = {};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+        renderPassInfo.pAttachments = attachments.data();
+        renderPassInfo.subpassCount = 1;
+        renderPassInfo.pSubpasses = &subpass;
+        renderPassInfo.dependencyCount = 1;
+        renderPassInfo.pDependencies = &dependency;
+
+        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateRenderPass(cyContext.getDevice()->device(), &renderPassInfo, nullptr, &_renderPass) == VK_SUCCESS, "Failed to create render pass");
     }
 
     void VulkanSwapChain::createSyncObjects()
@@ -676,187 +558,7 @@ namespace cy3d {
     * or to create texture samplers in the fragment shader.
     * These uniform values need to be specified during pipeline creation by creating a VkPipelineLayout object.
     */
-    void VulkanSwapChain::createDefaultPipelineLayout()
-    {
-        //VkDescriptorSetLayoutBinding uboLayoutBinding{};
-        //uboLayoutBinding.binding = 0;
-        //uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        //uboLayoutBinding.descriptorCount = 1;
-        //uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-        //uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
-
-
-        //VkDescriptorSetLayoutCreateInfo layoutInfo{};
-        //layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        //layoutInfo.bindingCount = 1;
-        //layoutInfo.pBindings = &uboLayoutBinding;
-        //ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateDescriptorSetLayout(cyContext.getDevice()->device(), &layoutInfo, nullptr, &descriptorSetLayout) == VK_SUCCESS, "Failed to create descriptor set layout.");
-
-        _descLayout.reset(new VulkanDescriptorSetLayout(cyContext));
-        _descLayout->
-             addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-            .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-            .build();
-
-
-
-        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = 1;
-        pipelineLayoutInfo.pSetLayouts = &_descLayout->getLayout();
-        pipelineLayoutInfo.pushConstantRangeCount = 0; //used to send data to shaders
-        pipelineLayoutInfo.pPushConstantRanges = nullptr;
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreatePipelineLayout(cyContext.getDevice()->device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) == VK_SUCCESS, "Failed to create pipeline layout");
-    }
-
-    void VulkanSwapChain::createDefaultPipeline()
-    {
-        PipelineConfigInfo pipelineConfig{};
-        VulkanPipeline::defaultPipelineConfigInfo(pipelineConfig, width(), height());
-        pipelineConfig.renderPass = getRenderPass();
-        pipelineConfig.pipelineLayout = pipelineLayout;
-        cyPipeline = std::make_unique<VulkanPipeline>(cyContext, "src/resources/shaders/SimpleShader.vert.spv", "src/resources/shaders/SimpleShader.frag.spv", pipelineConfig);
-    }
-
-    void VulkanSwapChain::createDescriptorPools()
-    {
-        uint32_t images = static_cast<uint32_t>(swapChainImages.size());
-        _descPool.reset(new VulkanDescriptorPool(cyContext, {  { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, images }, { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, images } } ));
-    }
-
-    void VulkanSwapChain::createDescriptorSets()
-    {
-
-        texture.reset(new VulkanTexture(cyContext, "src/resources/textures/viking_room.png"));
-        _descSets.reset(new VulkanDescriptorSets(cyContext, _descPool.get(), _descLayout.get(), imageCount()));
-
-        for (std::size_t i = 0; i < imageCount(); i++)
-        {
-            _descSets->writeBufferToSet(uniformBuffers[i]->descriptorBufferInfo(), i, 0);
-            _descSets->writeImageToSet(texture->descriptorImageInfo(), i, 1);
-        }
-        _descSets->updateSets();  
-    }
-
-    /**
-    * @brief Allocates and records the commands for each swap chain image.
-    */
-    void VulkanSwapChain::createCommandBuffers()
-    {
-        commandBuffers.resize(imageCount());
-
-        VkCommandBufferAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-
-        /**
-         * The level parameter specifies if the allocated command buffers are primary or secondary command buffers.
-
-         * VK_COMMAND_BUFFER_LEVEL_PRIMARY: Can be submitted to a queue for execution, but cannot be called from other command buffers.
-         * VK_COMMAND_BUFFER_LEVEL_SECONDARY: Cannot be submitted directly, but can be called from primary command buffers.
-        */
-        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = cyContext.getDevice()->getCommandPool();
-        allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
-
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkAllocateCommandBuffers(cyContext.getDevice()->device(), &allocInfo, commandBuffers.data()) == VK_SUCCESS, "Failed to allocate command buffers");
-
-       // VkBuffer vertexBuffers[] = { vertexBuffer->getVertexBuffer() };
-        //VkDeviceSize offsets[] = { 0 };
-
-
-        VkBuffer vertexBuffers[] = { omniBuffer->getBuffer() };
-        VkDeviceSize offsets[] = { 0 };
-
-        for (int i = 0; i < commandBuffers.size(); i++)
-        {
-            VkCommandBufferBeginInfo beginInfo{};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-            /**
-             * The flags parameter specifies how we're going to use the command buffer. The following values are available:
-
-             * VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT: The command buffer will be rerecorded right after executing it once.
-             * VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT: This is a secondary command buffer that will be entirely within a single render pass.
-             * VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT: The command buffer can be resubmitted while it is also already pending execution.
-            */
-            beginInfo.flags = 0; // Optional
-
-            /**
-             * The pInheritanceInfo parameter is only relevant for secondary command buffers.
-             * It specifies which state to inherit from the calling primary command buffers.
-            */
-            beginInfo.pInheritanceInfo = nullptr; // Optional
-
-            /**
-             * If the command buffer was already recorded once, then a call to vkBeginCommandBuffer will implicitly reset it.
-             * It's not possible to append commands to a buffer at a later time.
-            */
-            ASSERT_ERROR(DEFAULT_LOGGABLE, vkBeginCommandBuffer(commandBuffers[i], &beginInfo) == VK_SUCCESS, "Failed  to begin recording command buffer");
-
-            VkRenderPassBeginInfo renderPassInfo{};
-            renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderPassInfo.renderPass = getRenderPass();
-            renderPassInfo.framebuffer = getFrameBuffer(i);
-
-            /**
-             * The render area defines where shader loads and stores will take place. The pixels outside this region
-             * will have undefined values. It should match the size of the attachments for best performance.
-            */
-            renderPassInfo.renderArea.offset = { 0, 0 };
-            renderPassInfo.renderArea.extent = getSwapChainExtent();
-
-            std::array<VkClearValue, 2> clearValues{};
-            clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f };
-            clearValues[1].depthStencil = { 1.0f, 0 };
-            renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-            renderPassInfo.pClearValues = clearValues.data();
-
-            vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-            /**
-             * The second parameter specifies if the pipeline object is a graphics or compute pipeline.
-             * We've now told Vulkan which operations to execute in the graphics pipeline and which attachment to use in the fragment shader,
-            */
-            cyPipeline->bind(commandBuffers[i]);       
-
-            /**
-             * The vkCmdBindVertexBuffers function is used to bind vertex buffers to bindings, like the 
-             * one we set up in the previous chapter. The first two parameters, besides the command buffer,
-             * specify the offset and number of bindings we're going to specify vertex buffers for. The last
-             * two parameters specify the array of vertex buffers to bind and the byte offsets to start reading 
-             * vertex data from.
-            */
-            vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-
-
-            /**
-             * Parameters other than the command buffer are the index buffer, a byte offset into it, and the type of index data. 
-             * The possible types are VK_INDEX_TYPE_UINT16 and VK_INDEX_TYPE_UINT32.
-            */
-            //vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer.get()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
-
-            vkCmdBindIndexBuffer(commandBuffers[i], omniBuffer->getBuffer(), omniBuffer->offset(), VK_INDEX_TYPE_UINT16);
-
-            /**
-             * vkCmdDraw has the following parameters, aside from the command buffer:
-             *
-             * vertexCount: Even though we don't have a vertex buffer, we technically still have 3 vertices to draw.
-             * instanceCount: Used for instanced rendering, use 1 if you're not doing that.
-             * firstVertex: Used as an offset into the vertex buffer, defines the lowest value of gl_VertexIndex.
-             * firstInstance: Used as an offset for instanced rendering, defines the lowest value of gl_InstanceIndex.
-            */
-            //vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertexBuffer.get()->size()), 1, 0, 0); 
-
-            vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &_descSets->at(i), 0, nullptr);
-
-
-            vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(omniBuffer->count()), 1, 0, 0, 0);
-
-            vkCmdEndRenderPass(commandBuffers[i]);
-
-            ASSERT_ERROR(DEFAULT_LOGGABLE, vkEndCommandBuffer(commandBuffers[i]) == VK_SUCCESS, "Failed to record command buffer.");
-        }
-    }
+  
 
     /**
      * @brief Each VkSurfaceFormatKHR entry contains a format and a colorSpace member.
@@ -951,13 +653,4 @@ namespace cy3d {
             return actualExtent;
         }
     }
-
-    VkFormat VulkanSwapChain::findDepthFormat()
-    {
-        return cyContext.getDevice()->findSupportedFormat(
-            { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-            VK_IMAGE_TILING_OPTIMAL,
-            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-    }
-
 }

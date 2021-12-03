@@ -3,7 +3,6 @@
 #include <stb_image/stb_image.h>
 
 #include "VulkanTexture.h"
-#include "VulkanDevice.h"
 
 
 namespace cy3d
@@ -57,13 +56,13 @@ namespace cy3d
         ASSERT_ERROR(DEFAULT_LOGGABLE, pixels != nullptr, "Texture failed to load.");
 
         //create info needed for image buffer creation
-        VulkanImageBuffer::image_info_type imageInfo = VulkanImageBuffer::image_info_type::createDefaultImage(texWidth, texHeight, imageSize);
-        _texture.reset(new VulkanImageBuffer(context, imageInfo, pixels));
+        ImageInfo baseInfo{ VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT, texWidth, texHeight, imageSize };
+        VulkanImage::image_info_type imageInfo = VulkanImage::image_info_type::createDefaultImageInfo(baseInfo);
+        _texture.reset(new VulkanImage(context, imageInfo, pixels));
 
         //cleanup pixel array.
         stbi_image_free(pixels);
-        //create image view to access the image
-        _textureImageView = cyContext.getDevice()->createImageView(_texture->getImage(), VK_FORMAT_R8G8B8A8_SRGB);
+
         //create texture sampler
         _sampler.reset(new VulkanSampler(cyContext));
 
@@ -76,9 +75,6 @@ namespace cy3d
 
     void VulkanTexture::cleanup()
     {
-        if (_texture != nullptr)
-        {
-            vkDestroyImageView(cyContext.getDevice()->device(), _textureImageView, nullptr);
-        }
+
     }
 }

@@ -103,6 +103,7 @@ namespace cy3d
 	{
 		ASSERT_ERROR(DEFAULT_LOGGABLE, vmaCreateImage(_allocator, &imageInfo.imageCreateInfo, &imageInfo.allocCreateInfo, &image, &allocation, &imageInfo.allocInfo) == VK_SUCCESS, "Failed to create image.");
 	}
+
 	void VulkanAllocator::copyBufferToImage(buffer_type& srcBuffer, image_type& dstImage, const image_info_type& imageInfo)
 	{
 		VkCommandBuffer commandBuffer = cyContext.getDevice()->beginSingleTimeCommands();

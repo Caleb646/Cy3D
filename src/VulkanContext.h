@@ -14,10 +14,12 @@ namespace cy3d
 	class VulkanContext
 	{
 	private:
+		std::size_t currentFrameIndex{ 0 };
 		std::unique_ptr<VulkanWindow> cyWindow{ nullptr };
 		std::unique_ptr<VulkanDevice> cyDevice{ nullptr };
 		std::unique_ptr<VulkanAllocator> vulkanAllocator{ nullptr };
 		std::unique_ptr<VulkanSwapChain> cySwapChain{ nullptr };
+		std::unique_ptr<VulkanRenderer> vulkanRenderer{ nullptr };
 
 	public:
 		VulkanContext() = default;
@@ -27,10 +29,13 @@ namespace cy3d
 		VulkanContext(VulkanContext&&) noexcept = delete;
 		VulkanContext& operator=(const VulkanContext&) = delete;
 		
+
+		std::size_t& getCurrentFrameIndex();
 		VulkanWindow* getWindow();
 		VulkanDevice* getDevice();
 		VulkanAllocator* getAllocator();
 		VulkanSwapChain* getSwapChain();
+		VulkanRenderer* getVulkanRenderer();
 
 		/**
 		 * PUBLIC STATIC METHODS

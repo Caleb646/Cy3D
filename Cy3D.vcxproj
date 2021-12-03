@@ -186,7 +186,7 @@
     <ClCompile Include="src\VulkanBuffer.cpp" />
     <ClCompile Include="src\VulkanAllocator.cpp" />
     <ClCompile Include="src\VulkanDescriptors.cpp" />
-    <ClCompile Include="src\VulkanImageBuffer.cpp" />
+    <ClCompile Include="src\VulkanImage.cpp" />
     <ClCompile Include="src\VulkanTexture.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -275,7 +275,7 @@
     <ClInclude Include="src\VulkanBuffer.h" />
     <ClInclude Include="src\VulkanAllocator.h" />
     <ClInclude Include="src\VulkanDescriptors.h" />
-    <ClInclude Include="src\VulkanImageBuffer.h" />
+    <ClInclude Include="src\VulkanImage.h" />
     <ClInclude Include="src\VulkanTexture.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

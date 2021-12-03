@@ -8,10 +8,16 @@
 #include "VulkanDevice.h"
 #include "VulkanAllocator.h"
 #include "VulkanSwapChain.h"
+#include "VulkanRenderer.h"
 
 
 namespace cy3d
 {
+	std::size_t& VulkanContext::getCurrentFrameIndex()
+	{
+		return currentFrameIndex;
+	}
+
 	VulkanWindow* VulkanContext::getWindow()
 	{
 		ASSERT_ERROR(DEFAULT_LOGGABLE, cyWindow.get() != nullptr, "Window ptr is null.");
@@ -36,6 +42,12 @@ namespace cy3d
 		return cySwapChain.get();
 	}
 
+	VulkanRenderer* VulkanContext::getVulkanRenderer()
+	{
+		ASSERT_ERROR(DEFAULT_LOGGABLE, vulkanRenderer.get() != nullptr, "VulkanRenderer ptr is null.");
+		return vulkanRenderer.get();
+	}
+
 	/**
 	 * PUBLIC STATIC METHODS
 	*/
@@ -45,5 +57,6 @@ namespace cy3d
 		emptyContext.cyDevice.reset(new VulkanDevice(emptyContext));
 		emptyContext.vulkanAllocator.reset(new VulkanAllocator(emptyContext));
 		emptyContext.cySwapChain.reset(new VulkanSwapChain(emptyContext));
+		emptyContext.vulkanRenderer.reset(new VulkanRenderer(emptyContext));
 	}
 }

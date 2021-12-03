@@ -13,7 +13,7 @@ namespace cy3d
 {
 
     struct Vertex {
-        m3d::Vec2f pos;
+        m3d::Vec3f pos;
         m3d::Vec3f color;
         m3d::Vec2f texCoord;
 
@@ -48,7 +48,7 @@ namespace cy3d
              * vec3: VK_FORMAT_R32G32B32_SFLOAT
              * vec4: VK_FORMAT_R32G32B32A32_SFLOAT
             */
-            attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT; //The format parameter describes the type of data for the attribute.
+            attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT; //The format parameter describes the type of data for the attribute.
             attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
             attributeDescriptions[1].binding = 0;

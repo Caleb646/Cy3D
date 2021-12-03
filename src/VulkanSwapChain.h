@@ -6,6 +6,7 @@
 #include "VulkanDevice.h"
 #include "VulkanPipeline.h"
 #include "VulkanBuffer.h"
+#include "VulkanImage.h"
 #include "VulkanDescriptors.h"
 #include "VulkanTexture.h"
 #include "Fwd.hpp"
@@ -54,6 +55,14 @@ namespace cy3d {
         VkExtent2D swapChainExtent;
 
         /**
+         * Before we can finish creating the pipeline, we need to tell Vulkan about the framebuffer attachments
+         * that will be used while rendering. We need to specify how many color and depth buffers there will be,
+         * how many samples to use for each of them and how their contents should be handled throughout the rendering
+         * operations. All of this information is wrapped in a render pass object.
+        */
+        VkRenderPass _renderPass;
+
+        /**
          * A framebuffer object references all of the VkImageView objects that represent the attachments. 
          * In our case that will be only a single one: the color attachment. However, the image that we have 
          * to use for the attachment depends on which image the swap chain returns when we retrieve one for presentation. 
@@ -62,41 +71,12 @@ namespace cy3d {
         */
         std::vector<VkFramebuffer> swapChainFramebuffers;
 
-        /**
-         * Before we can finish creating the pipeline, we need to tell Vulkan about the framebuffer attachments 
-         * that will be used while rendering. We need to specify how many color and depth buffers there will be, 
-         * how many samples to use for each of them and how their contents should be handled throughout the rendering 
-         * operations. All of this information is wrapped in a render pass object.
-        */
-        VkRenderPass renderPass;
+        std::vector<std::unique_ptr<VulkanImage>> depthImages;
 
-        std::vector<VkImage> depthImages;
-        std::vector<VkDeviceMemory> depthImageMemorys;
-        std::vector<VkImageView> depthImageViews;
         std::vector<VkImage> swapChainImages;
         std::vector<VkImageView> swapChainImageViews;
 
-
         VulkanContext& cyContext;
-
-        std::unique_ptr<VulkanTexture> texture;
-        std::unique_ptr<VulkanBuffer> omniBuffer;
-        std::vector<std::unique_ptr<VulkanBuffer>> uniformBuffers;
-
-        std::unique_ptr<VulkanDescriptorPool> _descPool;
-        std::unique_ptr<VulkanDescriptorSetLayout> _descLayout;
-        std::unique_ptr<VulkanDescriptorSets> _descSets;
-        std::unique_ptr<VulkanPipeline> cyPipeline;
-        //VkDescriptorSetLayout descriptorSetLayout; 
-        VkPipelineLayout pipelineLayout;
-
-        //VkDescriptorPool descriptorPool;
-        std::vector<VkDescriptorSet> descriptorSets;
-
-        /**
-         * Record a command buffer for every image in the swap chain.
-        */
-        std::vector<VkCommandBuffer> commandBuffers;
 
         /**
          * Vulkan works with pixels, so the swap chain extent must be specified in pixels as well. 
@@ -126,14 +106,13 @@ namespace cy3d {
         */
         std::vector<VkFence> imagesInFlight;
 
-        //To use the right pair of semaphores every time, we need to keep track of the current frame
-        std::size_t currentFrame = 0;
-
     public:
 
         //VulkanSwapChain(VulkanDevice& d, VulkanWindow& w);
         VulkanSwapChain(VulkanContext& context);
         ~VulkanSwapChain();
+
+        void reCreate();
 
         VulkanSwapChain() = delete;
         VulkanSwapChain(VulkanSwapChain&&) = delete;
@@ -141,7 +120,6 @@ namespace cy3d {
         void operator=(const VulkanSwapChain&) = delete;
 
         VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
-        VkRenderPass getRenderPass() { return renderPass; }
         VkImageView getImageView(int index) { return swapChainImageViews[index]; }
 
         /**
@@ -151,34 +129,24 @@ namespace cy3d {
         std::size_t imageCount() { return swapChainImages.size(); }
         VkFormat getSwapChainImageFormat() { return swapChainImageFormat; }
         VkExtent2D getSwapChainExtent() { return swapChainExtent; }
-        uint32_t width() { return swapChainExtent.width; }
-        uint32_t height() { return swapChainExtent.height; }
+        uint32_t getWidth() { return swapChainExtent.width; }
+        uint32_t getHeight() { return swapChainExtent.height; }
+        VkRenderPass& getRenderPass() { return _renderPass; }
 
         float extentAspectRatio() { return static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height); }
-        VkFormat findDepthFormat();
         void resetFences(std::size_t frameNumber);
         VkResult acquireNextImage(uint32_t* imageIndex);
-        VkResult submitCommandBuffers(uint32_t* imageIndex);
+        VkResult submitCommandBuffers(const VkCommandBuffer* buffers, uint32_t* imageIndex);
 
     private:
-
-        void cleanup();
-        void recreate();
+        void cleanup();  
 
         void createSwapChain();
         void createImageViews();
         void createDepthResources();
         void createRenderPass();
-        void createIndexBuffers();
-        void createVertexBuffers();
         void createFramebuffers();
-        void createUniformBuffers();
         void createSyncObjects();
-        void createDescriptorPools();
-        void createDescriptorSets();
-        void createDefaultPipelineLayout();
-        void createDefaultPipeline();
-        void createCommandBuffers();
 
         // Helper functions
         VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);

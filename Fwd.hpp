@@ -13,6 +13,8 @@ namespace cy3d
 
 	class VulkanAllocator;
 
+	class VulkanRenderer;
+
 	struct BufferCreationAllocationInfo;
 }
 
