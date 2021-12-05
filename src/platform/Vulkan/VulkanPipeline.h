@@ -3,10 +3,26 @@
 #include "pch.h"
 
 #include "VulkanDevice.h"
+#include "VulkanDescriptors.h"
 #include "Fwd.hpp"
 
 namespace cy3d
 {
+
+	struct PipelineLayoutConfigInfo
+	{
+		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+
+		PipelineLayoutConfigInfo(VkDescriptorSetLayout* layout)
+		{
+			pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+			pipelineLayoutInfo.setLayoutCount = 1;
+			pipelineLayoutInfo.pSetLayouts = layout;
+			pipelineLayoutInfo.pushConstantRangeCount = 0; //used to send data to shaders
+			pipelineLayoutInfo.pPushConstantRanges = nullptr;
+		}
+	};
+
 	struct PipelineConfigInfo
 	{
 		PipelineConfigInfo() = default;
@@ -54,13 +70,13 @@ namespace cy3d
 	private:
 		//VulkanDevice& cyDevice;
 		VulkanContext& cyContext;
-		VkPipeline graphicsPipeline;
-		VkShaderModule vertShaderModule;
-		VkShaderModule fragShaderModule;
+		VkPipeline graphicsPipeline{ nullptr };
+		VkPipelineLayout _pipelineLayout{ nullptr };
+		VkShaderModule vertShaderModule{ nullptr };
+		VkShaderModule fragShaderModule{ nullptr };
 
 	public:
-		//VulkanPipeline(VulkanDevice& d, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config);
-		VulkanPipeline(VulkanContext& context, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config);
+		VulkanPipeline(VulkanContext& context, PipelineConfigInfo& config, PipelineLayoutConfigInfo& layoutInfo);
 		~VulkanPipeline();
 
 		//delete copy methods
@@ -71,17 +87,17 @@ namespace cy3d
 
 		void bind(VkCommandBuffer commandBuffer);
 		VkPipeline getGraphicsPipeline() { return graphicsPipeline; }
+		VkPipelineLayout getPipelineLayout() { return _pipelineLayout; }
 		/*
 		* PUBLIC STATIC METHODS
 		*/
 		static void defaultPipelineConfigInfo(PipelineConfigInfo& configInfo, uint32_t width, uint32_t height);
-		static void defaultPipelineLayout(VkPipelineLayout& defaultLayout);
 
 	private:
 
 		void cleanup();
 
-		void createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config);
+		void createGraphicsPipeline(PipelineConfigInfo& config, PipelineLayoutConfigInfo& layoutInfo);
 		void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
 
 		/*

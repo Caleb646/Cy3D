@@ -26,7 +26,7 @@ namespace cy3d
             commandBuffers.data()
         );
 
-        _descPool->resetDescriptors();
+        //_descPool->resetDescriptors();
 
         vkDestroyPipelineLayout(cyContext.getDevice()->device(), _pipelineLayout, nullptr);
     }
@@ -90,6 +90,7 @@ namespace cy3d
             cyContext.getWindow()->resetWindowFrameBufferResizedFlag();
             recreateSwapChain();
         }
+
         else
         {
             ASSERT_ERROR(DEFAULT_LOGGABLE, res == VK_SUCCESS, "Failed to present swap chain image.");
@@ -147,6 +148,7 @@ namespace cy3d
             * We've now told Vulkan which operations to execute in the graphics pipeline and which attachment to use in the fragment shader,
         */
         _cyPipeline->bind(getCurrentCommandBuffer());
+        vkCmdBindDescriptorSets(getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, _cyPipeline->getPipelineLayout(), 0, 1, &_descSets->at(cyContext.getCurrentFrameIndex()), 0, nullptr);
 
         /**
             * The vkCmdBindVertexBuffers function is used to bind vertex buffers to bindings, like the
@@ -176,7 +178,7 @@ namespace cy3d
         */
         //vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertexBuffer.get()->size()), 1, 0, 0); 
 
-        vkCmdBindDescriptorSets(getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descSets->at(cyContext.getCurrentFrameIndex()), 0, nullptr);
+        
 
 
         vkCmdDrawIndexed(getCurrentCommandBuffer(), static_cast<uint32_t>(_omniBuffer->count()), 1, 0, 0, 0);
@@ -203,8 +205,9 @@ namespace cy3d
 	{
 		createUniformBuffers();
 		createDefaultPipelineLayout();
-		createDefaultPipeline();
+		
 		createDescriptorPools();
+        createDefaultPipeline();
 		createDescriptorSets();
 
         createTestVertices();
@@ -230,25 +233,32 @@ namespace cy3d
             .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
             .build();
 
-        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = 1;
-        pipelineLayoutInfo.pSetLayouts = &_descLayout->getLayout();
-        pipelineLayoutInfo.pushConstantRangeCount = 0; //used to send data to shaders
-        pipelineLayoutInfo.pPushConstantRanges = nullptr;
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreatePipelineLayout(cyContext.getDevice()->device(), &pipelineLayoutInfo, nullptr, &_pipelineLayout) == VK_SUCCESS, "Failed to create pipeline layout");
-
+        //VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+        //pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        //pipelineLayoutInfo.setLayoutCount = 1;
+        //pipelineLayoutInfo.pSetLayouts = &_descLayout->getLayout();
+        //pipelineLayoutInfo.pushConstantRangeCount = 0; //used to send data to shaders
+        //pipelineLayoutInfo.pPushConstantRanges = nullptr;
+        //ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreatePipelineLayout(cyContext.getDevice()->device(), &pipelineLayoutInfo, nullptr, &_pipelineLayout) == VK_SUCCESS, "Failed to create pipeline layout");
 	}
 	void VulkanRenderer::createDefaultPipeline()
 	{
-        PipelineConfigInfo pipelineConfig{};
-        auto width = cyContext.getSwapChain()->getWidth();
-        auto height = cyContext.getSwapChain()->getHeight();
-        VulkanPipeline::defaultPipelineConfigInfo(pipelineConfig, width, height);
+        //PipelineConfigInfo pipelineConfig{};
+        //auto width = cyContext.getSwapChain()->getWidth();
+        //auto height = cyContext.getSwapChain()->getHeight();
+        //VulkanPipeline::defaultPipelineConfigInfo(pipelineConfig, width, height);
 
+
+        //set up pipeline
+        PipelineConfigInfo pipelineConfig{};
+        VulkanPipeline::defaultPipelineConfigInfo(pipelineConfig, cyContext.getWindowWidth(), cyContext.getWindowHeight());
         pipelineConfig.renderPass = cyContext.getSwapChain()->getRenderPass();
-        pipelineConfig.pipelineLayout = getPipelineLayout();
-        _cyPipeline.reset(new VulkanPipeline(cyContext, "src/resources/shaders/SimpleShader.vert.spv", "src/resources/shaders/SimpleShader.frag.spv", pipelineConfig));
+        PipelineLayoutConfigInfo layoutInfo(&_descLayout->getLayout());
+        _cyPipeline.reset(new VulkanPipeline(cyContext, pipelineConfig, layoutInfo));
+
+        //pipelineConfig.renderPass = cyContext.getSwapChain()->getRenderPass();
+        //pipelineConfig.pipelineLayout = getPipelineLayout();
+        //_cyPipeline.reset(new VulkanPipeline(cyContext, pipelineConfig));
 	}
 
 	void VulkanRenderer::createDescriptorPools()
@@ -437,10 +447,9 @@ namespace cy3d
 
         cleanup();
 
-        createDefaultPipelineLayout();
         createDefaultPipeline();
-        createDescriptorSets();
         createCommandBuffers();
 
+        _needsResize = true;
     }
 }

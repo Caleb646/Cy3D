@@ -174,20 +174,21 @@
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\VulkanSwapChain.cpp" />
-    <ClCompile Include="src\VulkanDevice.cpp" />
-    <ClCompile Include="src\VulkanPipeline.cpp" />
-    <ClCompile Include="src\FirstApp.cpp" />
-    <ClCompile Include="src\VulkanWindow.cpp" />
+    <ClCompile Include="src\SceneRenderer.cpp" />
+    <ClCompile Include="src\platform\Vulkan\VulkanSwapChain.cpp" />
+    <ClCompile Include="src\platform\Vulkan\VulkanDevice.cpp" />
+    <ClCompile Include="src\platform\Vulkan\VulkanPipeline.cpp" />
+    <ClCompile Include="src\platform\Vulkan\FirstApp.cpp" />
+    <ClCompile Include="src\platform\Vulkan\VulkanWindow.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="src\VulkanRenderer.cpp" />
-    <ClCompile Include="src\VulkanContext.cpp" />
-    <ClCompile Include="src\Vulkan.cpp" />
-    <ClCompile Include="src\VulkanBuffer.cpp" />
-    <ClCompile Include="src\VulkanAllocator.cpp" />
-    <ClCompile Include="src\VulkanDescriptors.cpp" />
-    <ClCompile Include="src\VulkanImage.cpp" />
-    <ClCompile Include="src\VulkanTexture.cpp" />
+    <ClCompile Include="src\platform\Vulkan\VulkanRenderer.cpp" />
+    <ClCompile Include="src\platform\Vulkan\VulkanContext.cpp" />
+    <ClCompile Include="src\platform\Vulkan\Vulkan.cpp" />
+    <ClCompile Include="src\platform\Vulkan\VulkanBuffer.cpp" />
+    <ClCompile Include="src\platform\Vulkan\VulkanAllocator.cpp" />
+    <ClCompile Include="src\platform\Vulkan\VulkanDescriptors.cpp" />
+    <ClCompile Include="src\platform\Vulkan\VulkanImage.cpp" />
+    <ClCompile Include="src\platform\Vulkan\VulkanTexture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="deps\libraries\vulkan\dxcompiler.lib" />
@@ -263,20 +264,21 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
-    <ClInclude Include="src\VulkanSwapChain.h" />
-    <ClInclude Include="src\VulkanDevice.h" />
-    <ClInclude Include="src\VulkanPipeline.h" />
-    <ClInclude Include="src\FirstApp.h" />
-    <ClInclude Include="src\VulkanWindow.h" />
+    <ClInclude Include="src\SceneRenderer.h" />
+    <ClInclude Include="src\platform\Vulkan\VulkanSwapChain.h" />
+    <ClInclude Include="src\platform\Vulkan\VulkanDevice.h" />
+    <ClInclude Include="src\platform\Vulkan\VulkanPipeline.h" />
+    <ClInclude Include="src\platform\Vulkan\FirstApp.h" />
+    <ClInclude Include="src\platform\Vulkan\VulkanWindow.h" />
     <ClInclude Include="Fwd.hpp" />
-    <ClInclude Include="src\VulkanRenderer.h" />
-    <ClInclude Include="src\VulkanContext.h" />
-    <ClInclude Include="src\Vulkan.h" />
-    <ClInclude Include="src\VulkanBuffer.h" />
-    <ClInclude Include="src\VulkanAllocator.h" />
-    <ClInclude Include="src\VulkanDescriptors.h" />
-    <ClInclude Include="src\VulkanImage.h" />
-    <ClInclude Include="src\VulkanTexture.h" />
+    <ClInclude Include="src\platform\Vulkan\VulkanRenderer.h" />
+    <ClInclude Include="src\platform\Vulkan\VulkanContext.h" />
+    <ClInclude Include="src\platform\Vulkan\Vulkan.h" />
+    <ClInclude Include="src\platform\Vulkan\VulkanBuffer.h" />
+    <ClInclude Include="src\platform\Vulkan\VulkanAllocator.h" />
+    <ClInclude Include="src\platform\Vulkan\VulkanDescriptors.h" />
+    <ClInclude Include="src\platform\Vulkan\VulkanImage.h" />
+    <ClInclude Include="src\platform\Vulkan\VulkanTexture.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

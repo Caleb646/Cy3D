@@ -35,52 +35,55 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VulkanWindow.cpp">
+    <ClCompile Include="src\platform\Vulkan\VulkanWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\FirstApp.cpp">
+    <ClCompile Include="src\platform\Vulkan\FirstApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VulkanPipeline.cpp">
+    <ClCompile Include="src\platform\Vulkan\VulkanPipeline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VulkanDevice.cpp">
+    <ClCompile Include="src\platform\Vulkan\VulkanDevice.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VulkanSwapChain.cpp">
+    <ClCompile Include="src\platform\Vulkan\VulkanSwapChain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VulkanRenderer.cpp">
+    <ClCompile Include="src\platform\Vulkan\VulkanRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VulkanContext.cpp">
+    <ClCompile Include="src\platform\Vulkan\VulkanContext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Vulkan.cpp">
+    <ClCompile Include="src\platform\Vulkan\Vulkan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VulkanBuffer.cpp">
+    <ClCompile Include="src\platform\Vulkan\VulkanBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VulkanAllocator.cpp">
+    <ClCompile Include="src\platform\Vulkan\VulkanAllocator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="deps\include\vma\vk_mem_alloc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VulkanDescriptors.cpp">
+    <ClCompile Include="src\platform\Vulkan\VulkanDescriptors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VulkanImage.cpp">
+    <ClCompile Include="src\platform\Vulkan\VulkanImage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\VulkanTexture.cpp">
+    <ClCompile Include="src\platform\Vulkan\VulkanTexture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="deps\include\stb_image\stb_image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SceneRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -146,49 +149,52 @@
     <Library Include="deps\libraries\vulkan\vulkan-1.lib" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\VulkanWindow.h">
+    <ClInclude Include="src\platform\Vulkan\VulkanWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\FirstApp.h">
+    <ClInclude Include="src\platform\Vulkan\FirstApp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\VulkanPipeline.h">
+    <ClInclude Include="src\platform\Vulkan\VulkanPipeline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\VulkanDevice.h">
+    <ClInclude Include="src\platform\Vulkan\VulkanDevice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\VulkanSwapChain.h">
+    <ClInclude Include="src\platform\Vulkan\VulkanSwapChain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\VulkanRenderer.h">
+    <ClInclude Include="src\platform\Vulkan\VulkanRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\VulkanContext.h">
+    <ClInclude Include="src\platform\Vulkan\VulkanContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Fwd.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Vulkan.h">
+    <ClInclude Include="src\platform\Vulkan\Vulkan.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\VulkanBuffer.h">
+    <ClInclude Include="src\platform\Vulkan\VulkanBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\VulkanAllocator.h">
+    <ClInclude Include="src\platform\Vulkan\VulkanAllocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\VulkanDescriptors.h">
+    <ClInclude Include="src\platform\Vulkan\VulkanDescriptors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\VulkanImage.h">
+    <ClInclude Include="src\platform\Vulkan\VulkanImage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\VulkanTexture.h">
+    <ClInclude Include="src\platform\Vulkan\VulkanTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SceneRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

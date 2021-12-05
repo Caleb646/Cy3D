@@ -8,9 +8,13 @@
 
 namespace cy3d
 {
-    VulkanPipeline::VulkanPipeline(VulkanContext& context, const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& config) : cyContext(context)
+
+    constexpr auto DEFAULT_VERT_SHADER_PATH = "src/resources/shaders/SimpleShader.vert.spv";
+    constexpr auto DEFAULT_FRAG_SHADER_PATH = "src/resources/shaders/SimpleShader.frag.spv";
+
+    VulkanPipeline::VulkanPipeline(VulkanContext& context, PipelineConfigInfo& config, PipelineLayoutConfigInfo& layoutInfo) : cyContext(context)
     {
-        createGraphicsPipeline(vertFilepath, fragFilepath, config); 
+        createGraphicsPipeline(config, layoutInfo); 
     }
 
     VulkanPipeline::~VulkanPipeline()
@@ -20,9 +24,22 @@ namespace cy3d
 
     void VulkanPipeline::cleanup()
     {
-        vkDestroyShaderModule(cyContext.getDevice()->device(), fragShaderModule, nullptr);
-        vkDestroyShaderModule(cyContext.getDevice()->device(), vertShaderModule, nullptr);
-        vkDestroyPipeline(cyContext.getDevice()->device(), graphicsPipeline, nullptr);
+        if (vertShaderModule != nullptr)
+        {
+            vkDestroyShaderModule(cyContext.getDevice()->device(), fragShaderModule, nullptr);
+        }
+        if (fragShaderModule != nullptr)
+        {
+            vkDestroyShaderModule(cyContext.getDevice()->device(), vertShaderModule, nullptr);
+        }
+        if (graphicsPipeline != nullptr)
+        {
+            vkDestroyPipeline(cyContext.getDevice()->device(), graphicsPipeline, nullptr);
+        } 
+        if (_pipelineLayout != nullptr)
+        {
+            vkDestroyPipelineLayout(cyContext.getDevice()->device(), _pipelineLayout, nullptr);
+        }
     }
 
     void VulkanPipeline::bind(VkCommandBuffer commandBuffer)
@@ -30,13 +47,16 @@ namespace cy3d
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
     }
 
-    void VulkanPipeline::createGraphicsPipeline(const std::string& vertFilepath, const std::string& fragFilepath, const PipelineConfigInfo& configInfo)
+    void VulkanPipeline::createGraphicsPipeline(PipelineConfigInfo& configInfo, PipelineLayoutConfigInfo& layoutInfo)
     {
 
-        ASSERT_ERROR(DEFAULT_LOGGABLE, configInfo.pipelineLayout != nullptr && configInfo.renderPass != nullptr, "");
 
-        auto vertCode = readFile(vertFilepath);
-        auto fragCode = readFile(fragFilepath);
+        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreatePipelineLayout(cyContext.getDevice()->device(), &layoutInfo.pipelineLayoutInfo, nullptr, &_pipelineLayout) == VK_SUCCESS, "Failed to create pipeline layout");
+
+        ASSERT_ERROR(DEFAULT_LOGGABLE, configInfo.renderPass != nullptr, "Did not include a valid renderpass in Pipeline Config Info.");
+
+        auto vertCode = readFile(DEFAULT_VERT_SHADER_PATH);
+        auto fragCode = readFile(DEFAULT_FRAG_SHADER_PATH);
 
         createShaderModule(vertCode, &vertShaderModule);
         createShaderModule(fragCode, &fragShaderModule);
@@ -106,7 +126,7 @@ namespace cy3d
         pipelineInfo.pDynamicState = nullptr;  // Optional
         pipelineInfo.pDepthStencilState = &configInfo.depthStencilInfo;
 
-        pipelineInfo.layout = configInfo.pipelineLayout;
+        pipelineInfo.layout = _pipelineLayout;
         pipelineInfo.renderPass = configInfo.renderPass;
         pipelineInfo.subpass = configInfo.subpass;
 

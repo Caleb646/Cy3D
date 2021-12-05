@@ -18,6 +18,24 @@ namespace cy3d
 		return currentFrameIndex;
 	}
 
+	uint32_t VulkanContext::getWindowWidth()
+	{
+		ASSERT_ERROR(DEFAULT_LOGGABLE, cySwapChain.get() != nullptr, "SwapChain ptr is null.");
+		return cySwapChain->getWidth();
+	}
+
+	uint32_t VulkanContext::getWindowHeight()
+	{
+		ASSERT_ERROR(DEFAULT_LOGGABLE, cySwapChain.get() != nullptr, "SwapChain ptr is null.");
+		return cySwapChain->getHeight();
+	}
+
+	auto VulkanContext::getWindowExtent()
+	{
+		ASSERT_ERROR(DEFAULT_LOGGABLE, cySwapChain.get() != nullptr, "SwapChain ptr is null.");
+		return cySwapChain->getSwapChainExtent();
+	}
+
 	VulkanWindow* VulkanContext::getWindow()
 	{
 		ASSERT_ERROR(DEFAULT_LOGGABLE, cyWindow.get() != nullptr, "Window ptr is null.");

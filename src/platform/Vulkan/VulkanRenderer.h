@@ -37,6 +37,7 @@ namespace cy3d
 
 		uint32_t currentImageIndex{};
 		bool isFrameStarted{ false };
+		bool _needsResize{ false };
 
 
 	public:
@@ -48,6 +49,8 @@ namespace cy3d
 		void beginRenderPass();
 		void endRenderPass();
 
+		void resetNeedsResize() { _needsResize = false; }
+		bool needsResize() { return _needsResize; }
 		VkCommandBuffer& getCurrentCommandBuffer()
 		{
 			ASSERT_ERROR(DEFAULT_LOGGABLE, isFrameStarted == true, "Cannot get a framebuffer when a frame hasnt begin.");

@@ -1,8 +1,9 @@
 #include "pch.h"
 
-#include "src/FirstApp.h"
+#include "src/platform/Vulkan/FirstApp.h"
 
 int main() {
+
     cy3d::FirstApp app{};
 
     try
@@ -15,5 +16,4 @@ int main() {
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
-    return 0;
 }

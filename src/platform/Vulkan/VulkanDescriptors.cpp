@@ -24,7 +24,7 @@ namespace cy3d
         vkDestroyDescriptorSetLayout(cyContext.getDevice()->device(), _layout, nullptr);
     }
 
-    VulkanDescriptorSetLayout& VulkanDescriptorSetLayout::addBinding(binding_type binding, VkDescriptorType descType, VkShaderStageFlags sFlags, uint32_t descCount)
+    VulkanDescriptorSetLayout& VulkanDescriptorSetLayout::addBinding(uint32_t binding, VkDescriptorType descType, VkShaderStageFlags sFlags, uint32_t descCount)
     {
         ASSERT_ERROR(DEFAULT_LOGGABLE, _bindings.count(binding) == 0, "Binding already exists.");
 
@@ -42,7 +42,7 @@ namespace cy3d
 
     VulkanDescriptorSetLayout& VulkanDescriptorSetLayout::build()
     {
-        std::vector<layout_binding_type> layouts;
+        std::vector<VkDescriptorSetLayoutBinding> layouts;
         for (auto& indexLayout : _bindings) layouts.push_back(indexLayout.second);
 
         VkDescriptorSetLayoutCreateInfo layoutInfo{};
@@ -126,7 +126,7 @@ namespace cy3d
         _pool->allocateDescriptorSets(layouts.data(), _sets.data(), _count);
     }
 
-    VulkanDescriptorSets& VulkanDescriptorSets::writeBufferToSet(const VkDescriptorBufferInfo& info, std::size_t index, VulkanDescriptorSetLayout::binding_type bindingIndex)
+    VulkanDescriptorSets& VulkanDescriptorSets::writeBufferToSet(const VkDescriptorBufferInfo& info, std::size_t index, uint32_t bindingIndex)
     {
         VkWriteDescriptorSet descriptorWrite{};
         descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -136,13 +136,13 @@ namespace cy3d
         descriptorWrite.descriptorType = _layout->getLayoutBinding(bindingIndex).descriptorType;
         descriptorWrite.descriptorCount = 1;
         descriptorWrite.pBufferInfo = &info;
-        descriptorWrite.pImageInfo = nullptr; // Optional
-        descriptorWrite.pTexelBufferView = nullptr; // Optional
+        descriptorWrite.pImageInfo = nullptr;
+        descriptorWrite.pTexelBufferView = nullptr;
         _writes.push_back(descriptorWrite);
         return *this;
     }
 
-    VulkanDescriptorSets& VulkanDescriptorSets::writeImageToSet(const VkDescriptorImageInfo& info, std::size_t index, VulkanDescriptorSetLayout::binding_type bindingIndex)
+    VulkanDescriptorSets& VulkanDescriptorSets::writeImageToSet(const VkDescriptorImageInfo& info, std::size_t index, uint32_t bindingIndex)
     {
         VkWriteDescriptorSet descriptorWrite{};
         descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -152,8 +152,8 @@ namespace cy3d
         descriptorWrite.descriptorType = _layout->getLayoutBinding(bindingIndex).descriptorType;
         descriptorWrite.descriptorCount = 1;
         descriptorWrite.pBufferInfo = nullptr;
-        descriptorWrite.pImageInfo = &info; // Optional
-        descriptorWrite.pTexelBufferView = nullptr; // Optional
+        descriptorWrite.pImageInfo = &info;
+        descriptorWrite.pTexelBufferView = nullptr;
         _writes.push_back(descriptorWrite);
         return *this;
     }

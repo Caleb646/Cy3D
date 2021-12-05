@@ -20,9 +20,7 @@ namespace cy3d
 	class VulkanDescriptorSetLayout
 	{
 	public:
-		using binding_type = uint32_t;
-		using layout_binding_type = VkDescriptorSetLayoutBinding;
-		using layout_bindings_type = std::unordered_map<binding_type, layout_binding_type>;
+		using layout_bindings_type = std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding>;
 
 	private:
 		VkDescriptorSetLayout _layout{};
@@ -34,11 +32,12 @@ namespace cy3d
 		VulkanDescriptorSetLayout(VulkanContext&);
 		~VulkanDescriptorSetLayout();
 
-		VulkanDescriptorSetLayout& addBinding(binding_type binding, VkDescriptorType descType, VkShaderStageFlags sFlags, uint32_t descCount = 1);
+		VulkanDescriptorSetLayout& addBinding(uint32_t binding, VkDescriptorType descType, VkShaderStageFlags sFlags, uint32_t descCount = 1);
 		VulkanDescriptorSetLayout& build();
 
-		const VkDescriptorSetLayout& getLayout() const { return _layout; }
-		const layout_binding_type& getLayoutBinding(const binding_type binding) const
+		VkDescriptorSetLayout& getLayout() { return _layout; }
+		const VkDescriptorSetLayout& getLayout() const { return _layout; }	
+		const VkDescriptorSetLayoutBinding& getLayoutBinding(const uint32_t binding) const
 		{
 			ASSERT_ERROR(DEFAULT_LOGGABLE, _bindings.count(binding) == 1, "Binding is not valid.");
 			return _bindings.at(binding);
@@ -107,8 +106,8 @@ namespace cy3d
 	public:
 		VulkanDescriptorSets(VulkanContext& context, const VulkanDescriptorPool* pool, const VulkanDescriptorSetLayout* layout, uint32_t count);
 
-		VulkanDescriptorSets& writeBufferToSet(const VkDescriptorBufferInfo& info, std::size_t index, VulkanDescriptorSetLayout::binding_type bindingIndex);
-		VulkanDescriptorSets& writeImageToSet(const VkDescriptorImageInfo& info, std::size_t index, VulkanDescriptorSetLayout::binding_type bindingIndex);
+		VulkanDescriptorSets& writeBufferToSet(const VkDescriptorBufferInfo& info, std::size_t index, uint32_t bindingIndex);
+		VulkanDescriptorSets& writeImageToSet(const VkDescriptorImageInfo& info, std::size_t index, uint32_t bindingIndex);
 		VulkanDescriptorSets& updateSets();
 
 		value_type& at(std::size_t i)

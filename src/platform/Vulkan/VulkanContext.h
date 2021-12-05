@@ -31,6 +31,9 @@ namespace cy3d
 		
 
 		std::size_t& getCurrentFrameIndex();
+		uint32_t getWindowWidth();
+		uint32_t getWindowHeight();
+		auto getWindowExtent();
 		VulkanWindow* getWindow();
 		VulkanDevice* getDevice();
 		VulkanAllocator* getAllocator();
