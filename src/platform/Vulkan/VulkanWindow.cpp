@@ -26,7 +26,7 @@ namespace cy3d
 		{
 			for (auto& func : keyboardInputListeners)
 			{
-				func(keyboardEvent, deltaTime);
+				func.second(keyboardEvent, deltaTime);
 			}
 		}
 
@@ -34,12 +34,36 @@ namespace cy3d
 		{
 			for (auto& func : mouseInputListeners)
 			{
-				func(mouseEvent, deltaTime);
+				func.second(mouseEvent, deltaTime);
 			}
 		}
 
 		keyboardInputEvents.clear();
 		mouseInputEvents.clear();
+	}
+
+	VulkanWindow::listener_id VulkanWindow::registerKeyboardListener(keyboard_input_callback&& cb)
+	{
+		keyboardInputListeners[listenersCount] = std::move(cb);
+		return listenersCount++;
+	}
+
+	VulkanWindow::listener_id VulkanWindow::registerMouseListener(mouse_input_callback&& cb)
+	{
+		mouseInputListeners[listenersCount] = std::move(cb);
+		return listenersCount++;
+	}
+
+	void VulkanWindow::removeKeyboardListener(listener_id id)
+	{
+		ASSERT_ERROR(DEFAULT_LOGGABLE, keyboardInputListeners.count(id) != 0, "Not a valid listener id.");
+		keyboardInputListeners.erase(id);
+	}
+
+	void VulkanWindow::removeMouseListener(listener_id id)
+	{
+		ASSERT_ERROR(DEFAULT_LOGGABLE, mouseInputListeners.count(id) != 0, "Not a valid listener id.");
+		mouseInputListeners.erase(id);
 	}
 
 	void VulkanWindow::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface)
@@ -73,14 +97,16 @@ namespace cy3d
 		glfwSetFramebufferSizeCallback(window.get(), framebufferResizeCallback);
 	}
 
-	void VulkanWindow::addKeyboardInputEvent(KeyBoardInputEvent&& e)
+	void VulkanWindow::addKeyboardInputEvent(KeyBoardInputEvent e)
 	{
-		keyboardInputEvents.push_back(std::move(e));
+		//keyboardInputEvents.push_back(std::move(e));
+		keyboardInputEvents.push_back(e);
 	}
 
-	void VulkanWindow::addMouseInputEvent(MouseInputEvent&& e)
+	void VulkanWindow::addMouseInputEvent(MouseInputEvent e)
 	{
-		mouseInputEvents.push_back(std::move(e));
+		//mouseInputEvents.push_back(std::move(e));
+		mouseInputEvents.push_back(e);
 	}
 
 	/**
@@ -93,13 +119,13 @@ namespace cy3d
 	void VulkanWindow::keyboardInputCallback(window_type* window, int key, int scancode, int action, int mods)
 	{
 		auto cyWin = reinterpret_cast<VulkanWindow*>(glfwGetWindowUserPointer(window));
-		cyWin->addKeyboardInputEvent(KeyBoardInputEvent{ cyWin->getNativeWindow(), key, scancode, action, mods });
+		cyWin->addKeyboardInputEvent(KeyBoardInputEvent{ key, scancode, action, mods });
 	}
 
 	void VulkanWindow::mouseInputCallback(window_type* window, double xpos, double ypos)
 	{
-		auto cyWin = reinterpret_cast<VulkanWindow*>(glfwGetWindowUserPointer(window));
-		cyWin->addMouseInputEvent(MouseInputEvent{ cyWin->getNativeWindow(), xpos, ypos });
+		auto cyWin = reinterpret_cast<VulkanWindow*>(glfwGetWindowUserPointer(window)); 
+		cyWin->addMouseInputEvent(MouseInputEvent{ xpos, ypos });
 	}
 
 	void VulkanWindow::framebufferResizeCallback(window_type* window, int width, int height)

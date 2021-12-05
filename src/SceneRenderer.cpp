@@ -14,7 +14,7 @@ namespace cy3d
 	{
 	}
 
-	void SceneRenderer::beginScene(const Camera& camera)
+	void SceneRenderer::beginScene(std::shared_ptr<Camera> camera)
 	{
 
 		ASSERT_ERROR(DEFAULT_LOGGABLE, isSceneStart() == false, "Cannot start a scene that has not been ended.");

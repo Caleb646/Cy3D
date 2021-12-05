@@ -16,19 +16,27 @@ namespace cy3d
 
 	struct KeyBoardInputEvent
 	{
-		VulkanWindow::window_type* window;
+		//VulkanWindow::window_type* window;
 		int key;
 		int scancode; 
 		int action;
 		int mods;
+
+		//KeyBoardInputEvent(VulkanWindow::window_type* w, int k, int s, int a, int m) :
+		//	window(w), key(k), scancode(s), action(a), mods(m) {}
 	};
 
 	struct MouseInputEvent
 	{
-		VulkanWindow::window_type* window;
+		//VulkanWindow::window_type* window;
 		double xpos;
 		double ypos;
+
+		//MouseInputEvent(VulkanWindow::window_type* w, double x, double y) :
+		//	window(w), xpos(x), ypos(y) {}
 	};
+
+	static uint32_t listenersCount = 0;
 
 	class VulkanWindow
 	{
@@ -36,10 +44,13 @@ namespace cy3d
 	public:
 		using window_type = GLFWwindow;
 		//using keyboard_input_callback = void(*)(KeyBoardInputEvent&, double deltaTime);
-		//using mouse_input_callback = void(*)(MouseInputEvent&, double deltaTime);
-
+		//using mouse_input_callback = void(*)(MouseInputEvent&, double deltaTime);		
 		using keyboard_input_callback = std::function<void(KeyBoardInputEvent&, double deltaTime)>;
 		using mouse_input_callback = std::function<void(MouseInputEvent&, double deltaTime)>;
+
+		using listener_id = uint32_t;
+		template<typename T>
+		using listener_container = std::unordered_map<listener_id, T>;
 
 	private:
 		//custom destructor for GLFWwindow ptr;
@@ -51,9 +62,9 @@ namespace cy3d
 		WindowTraits windowTraits;
 		windowPtr window;
 
-		std::vector<keyboard_input_callback> keyboardInputListeners;
+		listener_container<keyboard_input_callback> keyboardInputListeners;
 		std::vector<KeyBoardInputEvent> keyboardInputEvents;
-		std::vector<mouse_input_callback> mouseInputListeners;
+		listener_container<mouse_input_callback> mouseInputListeners;
 		std::vector<MouseInputEvent> mouseInputEvents;
 
 	public:
@@ -67,6 +78,10 @@ namespace cy3d
 		VulkanWindow& operator=(const VulkanWindow&) = delete;
 
 		void processInput(double deltaTime);
+		listener_id registerKeyboardListener(keyboard_input_callback&& cb);
+		listener_id registerMouseListener(mouse_input_callback&& cb);
+		void removeKeyboardListener(listener_id id);
+		void removeMouseListener(listener_id id);
 
 		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 		bool shouldClose() { return glfwWindowShouldClose(window.get()); }
@@ -91,8 +106,8 @@ namespace cy3d
 	private:
 		void resetWidthHeight(uint32_t w, uint32_t h) { windowTraits.width = w; windowTraits.height = h; }
 		void init();
-		void addKeyboardInputEvent(KeyBoardInputEvent&& e);
-		void addMouseInputEvent(MouseInputEvent&& e);
+		void addKeyboardInputEvent(KeyBoardInputEvent e);
+		void addMouseInputEvent(MouseInputEvent e);
 
 		/**
 		 * PRIVATE STATIC METHODS

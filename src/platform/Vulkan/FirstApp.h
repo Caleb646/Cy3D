@@ -7,7 +7,8 @@
 #include "VulkanSwapChain.h"
 #include "VulkanRenderer.h"
 #include "VulkanContext.h"
-#include "../Cy3D/src/SceneRenderer.h"
+#include "src/SceneRenderer.h"
+#include "src/Camera.h"
 
 namespace cy3d
 {
@@ -20,6 +21,7 @@ namespace cy3d
 		//VulkanSwapChain cySwapChain{ cyDevice, cyWindow };
 		VulkanContext cyContext; 
 		std::unique_ptr<SceneRenderer> sceneRenderer;
+		std::shared_ptr<Camera> camera;
 
 	public:
 		FirstApp();

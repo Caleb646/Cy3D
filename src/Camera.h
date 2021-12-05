@@ -1,6 +1,7 @@
 #pragma once
 
 #include "src/platform/Vulkan/VulkanWindow.h"
+#include "src/platform/Vulkan/VulkanContext.h"
 
 #include <M3D/M3D.h>
 
@@ -31,6 +32,9 @@ namespace cy3d
         float mouseSensitivity = SENSITIVITY;
         float zoom = ZOOM;
 
+        float lastX{};
+        float lastY{};
+
          m3d::Vec3f pos;
          m3d::Vec3f lookDir;
          m3d::Vec3f cUp;
@@ -39,13 +43,15 @@ namespace cy3d
 
          m3d::Mat4f projectionMatrix;
 
-         VulkanWindow::keyboard_input_callback fnKeyBoardInputCallback;
-         VulkanWindow::mouse_input_callback fnMouseInputCallback;
+         VulkanWindow::listener_id keyboardInputListenerId;
+         VulkanWindow::listener_id mouseInputListenerId;
+
+         VulkanContext& _context;
 
          bool isFirstMouse{ false };
 
     public:
-        Camera(m3d::Vec3f pos = m3d::Vec3f(0.0f, 0.0f, 0.0f), m3d::Vec3f wUp = m3d::Vec3f(0.0f, 1.0f, 0.0f), float yaw0 = YAW, float pitch0 = PITCH);
+        Camera(VulkanContext& context, m3d::Vec3f pos = m3d::Vec3f(0.0f, 0.0f, 0.0f), m3d::Vec3f wUp = m3d::Vec3f(0.0f, 1.0f, 0.0f), float yaw0 = YAW, float pitch0 = PITCH);
         ~Camera();
 
         void print();
@@ -54,7 +60,7 @@ namespace cy3d
         static m3d::Mat4f createLookAtMatrix(Camera& camera);
         static m3d::Mat4f createPerspectiveMatrix(float fov, float aspectRatio, float far, float near);
 
-        static Camera* create3D(Camera* camera, float fov, float aspectRatio, float far, float near);
+        static Camera* create3D(VulkanContext& context, float fov, float width, float height, float far, float near);
     };
 }
 

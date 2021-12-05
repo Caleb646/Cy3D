@@ -7,10 +7,12 @@
 #include "platform/Vulkan/VulkanBuffer.h"
 #include "platform/Vulkan/VulkanTexture.h"
 
+#include "src/Camera.h"
+
 namespace cy3d
 {
 	//temporary
-	struct Camera {};
+	//struct Camera {};
 	struct Mesh {};
 
 	class SceneRenderer
@@ -38,7 +40,7 @@ namespace cy3d
 		SceneRenderer(VulkanContext& context);
 		~SceneRenderer();
 
-		void beginScene(const Camera& camera);
+		void beginScene(std::shared_ptr<Camera> camera);
 		void endScene();
 
 		bool isSceneStart() { return _isSceneStart; }

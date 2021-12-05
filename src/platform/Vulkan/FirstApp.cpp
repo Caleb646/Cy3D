@@ -17,9 +17,17 @@ namespace cy3d
 
 	void FirstApp::run()
 	{
+		float deltaTime = 0.0f;
+		float lastFrame = 0.0f;
+
+		camera.reset(Camera::create3D(cyContext, 90.0f, cyContext.getWindowWidth(), cyContext.getWindowHeight(), 0.1f, 100.0f));
+
 		while (!cyContext.getWindow()->shouldClose())
 		{
-			glfwPollEvents();
+			float currentFrame = glfwGetTime();
+			deltaTime = currentFrame - lastFrame;
+			lastFrame = currentFrame;
+			cyContext.getWindow()->processInput(deltaTime);
 			drawFrame();
 		}
 		vkDeviceWaitIdle(cyContext.getDevice()->device());
@@ -37,7 +45,6 @@ namespace cy3d
 	*/
 	void FirstApp::drawFrame()
 	{
-		Camera camera{};
 		sceneRenderer->beginScene(camera);
 		sceneRenderer->endScene();
 		/*cyContext.getVulkanRenderer()->beginFrame();
