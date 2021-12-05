@@ -10,7 +10,8 @@
 namespace cy3d
 {
 	//temporary
-	struct Camera;
+	struct Camera {};
+	struct Mesh {};
 
 	class SceneRenderer
 	{
@@ -29,6 +30,9 @@ namespace cy3d
 
 		ptr<VulkanBuffer> _vertexBuffer{ nullptr };
 		ptr<VulkanBuffer> _indexBuffer{ nullptr };
+		
+		std::vector<Mesh> _meshes;
+		bool _isSceneStart{ false };
 
 	public:
 		SceneRenderer(VulkanContext& context);
@@ -37,14 +41,21 @@ namespace cy3d
 		void beginScene(const Camera& camera);
 		void endScene();
 
+		bool isSceneStart() { return _isSceneStart; }
+
 	private:
 		void init();
 		void createPipeline();
 		void recreate();
+		void flush();
+
+		void basicRenderPass();
 
 
 
 		void createTestVertices();
+		void testUpdateUbos();
+		void testDraw();
 	};
 }
 

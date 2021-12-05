@@ -6,9 +6,11 @@
 
 namespace cy3d
 {
+
 	FirstApp::FirstApp() 
 	{
 		VulkanContext::createDefaultContext(cyContext);
+		sceneRenderer.reset(new SceneRenderer(cyContext));
 	}
 
 	FirstApp::~FirstApp() {}
@@ -35,10 +37,15 @@ namespace cy3d
 	*/
 	void FirstApp::drawFrame()
 	{
-		cyContext.getVulkanRenderer()->beginFrame();
+		Camera camera{};
+		sceneRenderer->beginScene(camera);
+		sceneRenderer->endScene();
+		/*cyContext.getVulkanRenderer()->beginFrame();
 		cyContext.getVulkanRenderer()->beginRenderPass();
 		cyContext.getVulkanRenderer()->endRenderPass();
-		cyContext.getVulkanRenderer()->endFrame();
+		cyContext.getVulkanRenderer()->endFrame();*/
+
+
 	}
 }
 
