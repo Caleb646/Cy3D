@@ -3,6 +3,7 @@
 
 #include <Logi/Logi.h>
 
+#include "Vulkan.h"
 #include "VulkanBuffer.h"
 #include "Fwd.hpp"
 
@@ -39,7 +40,7 @@ namespace cy3d
 		const VkDescriptorSetLayout& getLayout() const { return _layout; }	
 		const VkDescriptorSetLayoutBinding& getLayoutBinding(const uint32_t binding) const
 		{
-			ASSERT_ERROR(DEFAULT_LOGGABLE, _bindings.count(binding) == 1, "Binding is not valid.");
+			CY_ASSERT(_bindings.count(binding) == 1);
 			return _bindings.at(binding);
 		}
 	};
@@ -112,14 +113,14 @@ namespace cy3d
 
 		value_type& at(std::size_t i)
 		{
-			ASSERT_ERROR(DEFAULT_LOGGABLE, i < _sets.size(), "Index is out of bounds.");
+			CY_ASSERT(i < _sets.size());
 			return _sets.at(i);
 		}
 
 
 		value_type& operator[](std::size_t i)
 		{
-			ASSERT_ERROR(DEFAULT_LOGGABLE, i < _sets.size(), "Index is out of bounds.");
+			CY_ASSERT(i < _sets.size());
 			return _sets[i];
 		}
 

@@ -51,9 +51,8 @@ namespace cy3d
     {
 
 
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreatePipelineLayout(cyContext.getDevice()->device(), &layoutInfo.pipelineLayoutInfo, nullptr, &_pipelineLayout) == VK_SUCCESS, "Failed to create pipeline layout");
-
-        ASSERT_ERROR(DEFAULT_LOGGABLE, configInfo.renderPass != nullptr, "Did not include a valid renderpass in Pipeline Config Info.");
+        VK_CHECK(vkCreatePipelineLayout(cyContext.getDevice()->device(), &layoutInfo.pipelineLayoutInfo, nullptr, &_pipelineLayout));
+        CY_ASSERT(configInfo.renderPass != nullptr);
 
         auto vertCode = readFile(DEFAULT_VERT_SHADER_PATH);
         auto fragCode = readFile(DEFAULT_FRAG_SHADER_PATH);
@@ -134,7 +133,7 @@ namespace cy3d
         pipelineInfo.basePipelineIndex = -1;               // Optional
 
 
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateGraphicsPipelines(cyContext.getDevice()->device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) == VK_SUCCESS, "Failed to create graphics pipeline.");
+        VK_CHECK(vkCreateGraphicsPipelines(cyContext.getDevice()->device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline));
     }
 
     /**
@@ -150,7 +149,7 @@ namespace cy3d
         //std::vector ensures that the data satisfies the worst case alignment requirements.
         createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
         
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateShaderModule(cyContext.getDevice()->device(), &createInfo, nullptr, shaderModule) == VK_SUCCESS, "Failed to create shader module.");
+        VK_CHECK(vkCreateShaderModule(cyContext.getDevice()->device(), &createInfo, nullptr, shaderModule));
     }
 
     /*
@@ -289,7 +288,7 @@ namespace cy3d
     std::vector<char> VulkanPipeline::readFile(const std::string& filename)
     {
         std::ifstream file{ filename, std::ios::ate | std::ios::binary };
-        ASSERT_ERROR(DEFAULT_LOGGABLE, file.is_open() == true, "Failed to open file: " + filename);
+        CY_ASSERT(file.is_open() == true);
         std::size_t fileSize = static_cast<std::size_t>(file.tellg());
         std::vector<char> buffer(fileSize);
 

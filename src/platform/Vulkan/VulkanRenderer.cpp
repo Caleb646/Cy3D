@@ -30,7 +30,7 @@ namespace cy3d
 	void VulkanRenderer::beginFrame()
 	{
 
-        ASSERT_ERROR(DEFAULT_LOGGABLE, isFrameStarted == false, "Cannot begin a frame that hasnt ended.");
+        CY_ASSERT(isFrameStarted == false);
         VkResult res = cyContext.getSwapChain()->acquireNextImage(&currentImageIndex);
 
         /**
@@ -45,7 +45,7 @@ namespace cy3d
         }
         else
         {
-            ASSERT_ERROR(DEFAULT_LOGGABLE, res == VK_SUCCESS, "Failed to acquire image.");
+            CY_ASSERT(res == VK_SUCCESS);
         } 
 
         //needs to be after recreateSwapChain because if the window is resized it will cause 
@@ -55,18 +55,13 @@ namespace cy3d
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-        ASSERT_ERROR(DEFAULT_LOGGABLE, 
-            vkBeginCommandBuffer(getCurrentCommandBuffer(), &beginInfo) == VK_SUCCESS,
-            "Failed to begin recording command buffer.");
+        VK_CHECK(vkBeginCommandBuffer(getCurrentCommandBuffer(), &beginInfo));
 	}
 
 	void VulkanRenderer::endFrame()
 	{
-        ASSERT_ERROR(DEFAULT_LOGGABLE, isFrameStarted == true, "Cannot end a frame that hasnt started.");
-
-        ASSERT_ERROR(DEFAULT_LOGGABLE,
-            vkEndCommandBuffer(getCurrentCommandBuffer()) == VK_SUCCESS,
-            "Failed to record command buffer.");
+        CY_ASSERT(isFrameStarted == true);
+        VK_CHECK(vkEndCommandBuffer(getCurrentCommandBuffer()));
 
         VkResult res = cyContext.getSwapChain()->submitCommandBuffers(&getCurrentCommandBuffer(), &currentImageIndex);
         
@@ -83,7 +78,7 @@ namespace cy3d
 
         else
         {
-            ASSERT_ERROR(DEFAULT_LOGGABLE, res == VK_SUCCESS, "Failed to present swap chain image.");
+            CY_ASSERT(res == VK_SUCCESS);
         }
 
         isFrameStarted = false;
@@ -94,7 +89,7 @@ namespace cy3d
 
     void VulkanRenderer::beginRenderPass(VkRenderPass& renderPass)
     {
-        ASSERT_ERROR(DEFAULT_LOGGABLE, isFrameStarted == true, "Cannot end a frame that hasnt started.");
+        CY_ASSERT(isFrameStarted == true);
 
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -126,7 +121,7 @@ namespace cy3d
 
     void VulkanRenderer::endRenderPass()
     {
-        ASSERT_ERROR(DEFAULT_LOGGABLE, isFrameStarted == true, "Cannot end a frame that hasnt started.");
+        CY_ASSERT(isFrameStarted == true);
 
         vkCmdEndRenderPass(commandBuffers[cyContext.getCurrentFrameIndex()]);
     }
@@ -156,7 +151,7 @@ namespace cy3d
         allocInfo.commandPool = cyContext.getDevice()->getCommandPool();
         allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkAllocateCommandBuffers(cyContext.getDevice()->device(), &allocInfo, commandBuffers.data()) == VK_SUCCESS, "Failed to allocate command buffers");
+        VK_CHECK(vkAllocateCommandBuffers(cyContext.getDevice()->device(), &allocInfo, commandBuffers.data()));
 	}
 
     void VulkanRenderer::recreateSwapChain()

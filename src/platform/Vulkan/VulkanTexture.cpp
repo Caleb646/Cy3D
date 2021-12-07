@@ -19,7 +19,7 @@ namespace cy3d
     VulkanSampler::VulkanSampler(VulkanContext& context) : cyContext(context)
     {
         _samplerInfo = sampler_info_type::createDefaultSampler(context);
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateSampler(cyContext.getDevice()->device(), &_samplerInfo.samplerInfo, nullptr, &_sampler) == VK_SUCCESS, "Failed to create sampler");
+        VK_CHECK(vkCreateSampler(cyContext.getDevice()->device(), &_samplerInfo.samplerInfo, nullptr, &_sampler));
     }
 
     VulkanSampler::~VulkanSampler()
@@ -53,7 +53,7 @@ namespace cy3d
          * The pixels are laid out row by row with 4 bytes per pixel in the case of STBI_rgb_alpha for a total of texWidth * texHeight * 4 values. 
         */
         VkDeviceSize imageSize = texWidth * texHeight * 4;
-        ASSERT_ERROR(DEFAULT_LOGGABLE, pixels != nullptr, "Texture failed to load.");
+        CY_ASSERT(pixels != nullptr);
 
         //create info needed for image buffer creation
         ImageInfo baseInfo{ VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_COLOR_BIT, texWidth, texHeight, imageSize };

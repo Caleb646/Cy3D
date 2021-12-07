@@ -3,6 +3,7 @@
 
 #include <Logi/Logi.h>
 
+#include "Vulkan.h"
 #include "VulkanContext.h"
 #include "VulkanAllocator.h"
 #include "VulkanImage.h"
@@ -59,7 +60,7 @@ namespace cy3d
 
 		sampler_type& getSampler() 
 		{
-			ASSERT_ERROR(DEFAULT_LOGGABLE, _sampler != nullptr, "Failed to instantiate sampler.");
+			CY_ASSERT(_sampler != nullptr);
 			return _sampler;
 		}
 	};

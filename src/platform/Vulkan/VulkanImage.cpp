@@ -99,7 +99,7 @@ namespace cy3d
 
 		else
 		{
-			throw std::invalid_argument("unsupported layout transition!");
+			CY_ASSERT(false);
 		}
 
 		vkCmdPipelineBarrier(

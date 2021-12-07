@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <chrono>
 #include <functional>
+#include <cassert>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>

@@ -20,49 +20,49 @@ namespace cy3d
 
 	uint32_t VulkanContext::getWindowWidth()
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, cySwapChain.get() != nullptr, "SwapChain ptr is null.");
+		CY_ASSERT(cySwapChain.get() != nullptr);
 		return cySwapChain->getWidth();
 	}
 
 	uint32_t VulkanContext::getWindowHeight()
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, cySwapChain.get() != nullptr, "SwapChain ptr is null.");
+		CY_ASSERT(cySwapChain.get() != nullptr);
 		return cySwapChain->getHeight();
 	}
 
 	auto VulkanContext::getWindowExtent()
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, cySwapChain.get() != nullptr, "SwapChain ptr is null.");
+		CY_ASSERT(cySwapChain.get() != nullptr);
 		return cySwapChain->getSwapChainExtent();
 	}
 
 	VulkanWindow* VulkanContext::getWindow()
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, cyWindow.get() != nullptr, "Window ptr is null.");
+		CY_ASSERT(cyWindow.get() != nullptr);
 		return cyWindow.get();
 	}
 
 	VulkanDevice* VulkanContext::getDevice()
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, cyDevice.get() != nullptr, "Device ptr is null.");
+		CY_ASSERT(cyDevice.get() != nullptr);
 		return cyDevice.get();
 	}
 
 	VulkanAllocator* VulkanContext::getAllocator()
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, vulkanAllocator.get() != nullptr, "Allocator ptr is null.");
+		CY_ASSERT(vulkanAllocator.get() != nullptr);
 		return vulkanAllocator.get();
 	}
 
 	VulkanSwapChain* VulkanContext::getSwapChain()
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, cySwapChain.get() != nullptr, "SwapChain ptr is null.");
+		CY_ASSERT(cySwapChain.get() != nullptr);
 		return cySwapChain.get();
 	}
 
 	VulkanRenderer* VulkanContext::getVulkanRenderer()
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, vulkanRenderer.get() != nullptr, "VulkanRenderer ptr is null.");
+		CY_ASSERT(vulkanRenderer.get() != nullptr);
 		return vulkanRenderer.get();
 	}
 

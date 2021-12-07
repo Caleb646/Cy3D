@@ -1,6 +1,9 @@
 #pragma once
 #include "pch.h"
 
+#include <M3D/M3D.h>
+
+#include "define.h"
 #include "platform/Vulkan/VulkanContext.h"
 #include "platform/Vulkan/VulkanDescriptors.h"
 #include "platform/Vulkan/VulkanPipeline.h"
@@ -14,6 +17,37 @@ namespace cy3d
 	//temporary
 	//struct Camera {};
 	struct Mesh {};
+
+	struct CameraUboData
+	{
+		m3d::Mat4f model{};
+		m3d::Mat4f view{};
+		m3d::Mat4f proj{};
+		
+		void update(Camera* camera, float width, float height)
+		{
+			static std::size_t frames = 0;
+			static auto startTime = std::chrono::high_resolution_clock::now();
+			auto currentTime = std::chrono::high_resolution_clock::now();
+			float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+			
+			model.getTranslated(m3d::Vec4f(camera->pos, 1.0f));
+			//TODO view matrix doesnt work
+			view = camera->getLookAt();//m3d::Mat4f::getLookAt(camera->pos, camera->pos + camera->lookDir, camera->cUp);
+
+			/*if (frames % 10000 == 0)
+			{
+				view.print();
+				camera->getLookAt().print();
+				(camera->pos + camera->lookDir).print();
+				frames = 0;
+			}
+			frames++;*/
+			
+			proj = camera->projectionMatrix;//.getPerspectived(m3d::degreesToRadians(45.0f), height / width, 0.1f, 10.0f);
+			proj(1, 1) *= -1;
+		}
+	};
 
 	class SceneRenderer
 	{

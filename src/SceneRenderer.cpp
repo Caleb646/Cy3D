@@ -17,7 +17,7 @@ namespace cy3d
 	void SceneRenderer::beginScene(std::shared_ptr<Camera> camera)
 	{
 
-		ASSERT_ERROR(DEFAULT_LOGGABLE, isSceneStart() == false, "Cannot start a scene that has not been ended.");
+		CY_ASSERT(isSceneStart() == false);
 		_context.getVulkanRenderer()->beginFrame();
 		if (_context.getVulkanRenderer()->needsResize())
 		{
@@ -25,15 +25,22 @@ namespace cy3d
 			return;
 		}
 		_isSceneStart = true;
+
+
+		CameraUboData cd{};
+		/*cd.translation = m3d::Mat4f::getTranslation(m3d::Vec4f(camera->pos, 1.0f));
+		cd.view = m3d::Mat4f::getLookAt(camera->pos, { 0.0f, 0.0f, 0.0f }, camera->cUp);
+		cd.proj = camera->projectionMatrix;*/
+		cd.update(camera.get(), _context.getWindowWidth(), _context.getWindowHeight());
+		_cameraUbos[_context.getVulkanRenderer()->getCurrentImageIndex()]->setData(&cd, 0);
+		//TESTING ONLY
+		//testUpdateUbos();
+		//END
 	}
 
 	void SceneRenderer::endScene()
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, isSceneStart() == true, "Scene hasnt started yet.");
-
-		//TESTING ONLY
-		testUpdateUbos();
-		//END
+		CY_ASSERT(isSceneStart() == true);
 
 		flush();
 
@@ -103,7 +110,7 @@ namespace cy3d
 
 	void SceneRenderer::flush()
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, isSceneStart() == true, "Scene hasnt started yet.");
+		CY_ASSERT(isSceneStart() == true);
 		basicRenderPass();
 
 		_meshes.clear();
@@ -111,7 +118,7 @@ namespace cy3d
 
 	void SceneRenderer::basicRenderPass()
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, isSceneStart() == true, "Scene hasnt started yet.");
+		CY_ASSERT(isSceneStart() == true);
 		_context.getVulkanRenderer()->beginRenderPass(_context.getSwapChain()->getRenderPass());
 
 		//TESTING ONLY

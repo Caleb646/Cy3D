@@ -3,6 +3,7 @@
 
 #include <Logi/Logi.h>
 
+#include "Vulkan.h"
 #include "VulkanContext.h"
 #include "VulkanDevice.h"
 #include "VulkanPipeline.h"
@@ -41,12 +42,12 @@ namespace cy3d
 		bool needsResize() { return _needsResize; }
 		VkCommandBuffer& getCurrentCommandBuffer()
 		{
-			ASSERT_ERROR(DEFAULT_LOGGABLE, isFrameStarted == true, "Cannot get a command buffer when the frame hasnt began.");
+			CY_ASSERT(isFrameStarted == true);
 			return commandBuffers[cyContext.getCurrentFrameIndex()];
 		}
 		uint32_t getCurrentImageIndex()
 		{
-			ASSERT_ERROR(DEFAULT_LOGGABLE, isFrameStarted == true, "Cannot get the current image index when the frame hasnt began.");
+			CY_ASSERT(isFrameStarted == true);
 			return currentImageIndex;
 		}
 

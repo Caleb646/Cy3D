@@ -63,7 +63,7 @@ namespace cy3d
 
 	void VulkanDevice::createInstance() 
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, enableValidationLayers && checkValidationLayerSupport(), "Validation layers requested, but not available");
+		CY_ASSERT(enableValidationLayers && checkValidationLayerSupport());
 		VkApplicationInfo appInfo = {};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pApplicationName = "Cy3D";
@@ -94,7 +94,7 @@ namespace cy3d
 			createInfo.enabledLayerCount = 0;
 			createInfo.pNext = nullptr;
 		}
-		ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateInstance(&createInfo, nullptr, &_instance) == VK_SUCCESS, "Validation layers requested, but not available");
+		VK_CHECK(vkCreateInstance(&createInfo, nullptr, &_instance));
 		hasGlfwRequiredInstanceExtensions();
 	}
 
@@ -107,7 +107,7 @@ namespace cy3d
 		uint32_t deviceCount = 0;
 		//get the device count
 		vkEnumeratePhysicalDevices(_instance, &deviceCount, nullptr);
-		ASSERT_ERROR(DEFAULT_LOGGABLE, deviceCount != 0, "Failed to find GPUs with Vulkan support.");
+		CY_ASSERT(deviceCount != 0);
 		//std::cout << "Device count: " << deviceCount << std::endl;
 		std::vector<VkPhysicalDevice> devices(deviceCount);
 		//place the available devices in the devices vector.
@@ -121,7 +121,7 @@ namespace cy3d
 				break;
 			}
 		}
-		ASSERT_ERROR(DEFAULT_LOGGABLE, _physicalDevice != VK_NULL_HANDLE, "Physical device cannot be null.");
+		CY_ASSERT(_physicalDevice != VK_NULL_HANDLE);
 		vkGetPhysicalDeviceProperties(_physicalDevice, &properties);
 		//std::cout << "physical device: " << properties.deviceName << std::endl;
 	}
@@ -183,7 +183,7 @@ namespace cy3d
 		 * the queue and usage info we just specified, the optional allocation 
 		 * callbacks pointer and a pointer to a variable to store the logical device handle in.
 		*/
-		ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device) == VK_SUCCESS, "Failed to create logical device.");
+		VK_CHECK(vkCreateDevice(_physicalDevice, &createInfo, nullptr, &_device));
 
 		/**
 		 * We can use the vkGetDeviceQueue function to retrieve queue handles for each queue family.
@@ -216,7 +216,7 @@ namespace cy3d
 		*/
 		poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-		ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateCommandPool(_device, &poolInfo, nullptr, &_commandPool) == VK_SUCCESS, "Failed to create command pool.");
+		VK_CHECK(vkCreateCommandPool(_device, &poolInfo, nullptr, &_commandPool));
 	}
 
 	void VulkanDevice::createSurface() 
@@ -510,7 +510,7 @@ namespace cy3d
 			}
 		}
 
-		ASSERT_ERROR(DEFAULT_LOGGABLE, false, "Failed to find memory type.");
+		CY_ASSERT(false);
 	}
 
 	VkCommandBuffer VulkanDevice::beginSingleTimeCommands()
@@ -562,7 +562,7 @@ namespace cy3d
 
 		VkImageView imageView;
 
-		ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateImageView(_device, &viewInfo, nullptr, &imageView) == VK_SUCCESS, "Failed to create texture image view.");
+		VK_CHECK(vkCreateImageView(_device, &viewInfo, nullptr, &imageView));
 		return imageView;
 	}
 

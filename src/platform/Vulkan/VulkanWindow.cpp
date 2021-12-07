@@ -56,19 +56,19 @@ namespace cy3d
 
 	void VulkanWindow::removeKeyboardListener(listener_id id)
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, keyboardInputListeners.count(id) != 0, "Not a valid listener id.");
+		CY_ASSERT(keyboardInputListeners.count(id) != 0);
 		keyboardInputListeners.erase(id);
 	}
 
 	void VulkanWindow::removeMouseListener(listener_id id)
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, mouseInputListeners.count(id) != 0, "Not a valid listener id.");
+		CY_ASSERT(mouseInputListeners.count(id) != 0);
 		mouseInputListeners.erase(id);
 	}
 
 	void VulkanWindow::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface)
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, glfwCreateWindowSurface(instance, window.get(), nullptr, surface) == VK_SUCCESS, "Failed to create window surface.");
+		CY_ASSERT(glfwCreateWindowSurface(instance, window.get(), nullptr, surface) == VK_SUCCESS);
 	}
 
 	/**

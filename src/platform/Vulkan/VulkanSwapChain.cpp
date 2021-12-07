@@ -151,7 +151,7 @@ namespace cy3d {
          * The vkQueueSubmit call includes an optional parameter to pass a fence that should be signaled when the command buffer finishes executing. 
          * We can use this to signal that a frame has finished.
         */
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkQueueSubmit(cyContext.getDevice()->graphicsQueue(), 1, &submitInfo, inFlightFences[cyContext.getCurrentFrameIndex()]) == VK_SUCCESS, "Failed to submit draw command buffer");
+        VK_CHECK(vkQueueSubmit(cyContext.getDevice()->graphicsQueue(), 1, &submitInfo, inFlightFences[cyContext.getCurrentFrameIndex()]));
 
 
         /**
@@ -268,7 +268,7 @@ namespace cy3d {
         createInfo.oldSwapchain = VK_NULL_HANDLE;
 
 
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateSwapchainKHR(cyContext.getDevice()->device(), &createInfo, nullptr, &swapChain) == VK_SUCCESS, "Failed to create swap chain");
+        VK_CHECK(vkCreateSwapchainKHR(cyContext.getDevice()->device(), &createInfo, nullptr, &swapChain));
 
         /**
          * We only specified a minimum number of images in the swap chain, so the implementation is
@@ -324,7 +324,7 @@ namespace cy3d {
             viewInfo.subresourceRange.baseArrayLayer = 0;
             viewInfo.subresourceRange.layerCount = 1;
 
-            ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateImageView(cyContext.getDevice()->device(), &viewInfo, nullptr, &swapChainImageViews[i]) == VK_SUCCESS, "Failed to create texture image view");
+            VK_CHECK(vkCreateImageView(cyContext.getDevice()->device(), &viewInfo, nullptr, &swapChainImageViews[i]));
         }
     }
 
@@ -354,7 +354,7 @@ namespace cy3d {
             framebufferInfo.height = swapChainExtent.height;
             framebufferInfo.layers = 1; //layers refers to the number of layers in image arrays
 
-            ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateFramebuffer(cyContext.getDevice()->device(), &framebufferInfo, nullptr, &swapChainFramebuffers[i]) == VK_SUCCESS, "Failed to create framebuffer");
+            VK_CHECK(vkCreateFramebuffer(cyContext.getDevice()->device(), &framebufferInfo, nullptr, &swapChainFramebuffers[i]));
         }
     }
 
@@ -362,48 +362,13 @@ namespace cy3d {
     {
         VkFormat depthFormat = cyContext.getDevice()->findDepthFormat();
         VkExtent2D swapChainExtent = getSwapChainExtent();
-
         uint32_t w = getWidth();
         uint32_t h = getHeight();
-
         depthImages.resize(imageCount());
-        //depthImageMemorys.resize(imageCount());
-        //depthImageViews.resize(imageCount());
-
         for (int i = 0; i < depthImages.size(); i++) 
         {
 
             depthImages[i] = VulkanImage::createDepthImage(cyContext, w, h);
-
-           /* VkImageCreateInfo imageInfo{};
-            imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-            imageInfo.imageType = VK_IMAGE_TYPE_2D;
-            imageInfo.extent.width = swapChainExtent.width;
-            imageInfo.extent.height = swapChainExtent.height;
-            imageInfo.extent.depth = 1;
-            imageInfo.mipLevels = 1;
-            imageInfo.arrayLayers = 1;
-            imageInfo.format = depthFormat;
-            imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-            imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-            imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-            imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-            imageInfo.flags = 0;
-
-            cyContext.getDevice()->createImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImages[i], depthImageMemorys[i]);
-
-            VkImageViewCreateInfo viewInfo{};
-            viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-            viewInfo.image = depthImages[i];
-            viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-            viewInfo.format = depthFormat;
-            viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-            viewInfo.subresourceRange.baseMipLevel = 0;
-            viewInfo.subresourceRange.levelCount = 1;
-            viewInfo.subresourceRange.baseArrayLayer = 0;
-            viewInfo.subresourceRange.layerCount = 1;
-            ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateImageView(cyContext.getDevice()->device(), &viewInfo, nullptr, &depthImageViews[i]) == VK_SUCCESS, "Failed to create texture image view");*/
         }
     }
 
@@ -522,7 +487,7 @@ namespace cy3d {
         renderPassInfo.dependencyCount = 1;
         renderPassInfo.pDependencies = &dependency;
 
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateRenderPass(cyContext.getDevice()->device(), &renderPassInfo, nullptr, &_renderPass) == VK_SUCCESS, "Failed to create render pass");
+        VK_CHECK(vkCreateRenderPass(cyContext.getDevice()->device(), &renderPassInfo, nullptr, &_renderPass));
     }
 
     void VulkanSwapChain::createSyncObjects()
@@ -541,14 +506,9 @@ namespace cy3d {
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {
-            ASSERT_ERROR
-            (
-                DEFAULT_LOGGABLE, 
-                vkCreateSemaphore(cyContext.getDevice()->device(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) == VK_SUCCESS
-                && vkCreateSemaphore(cyContext.getDevice()->device(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) == VK_SUCCESS
-                && vkCreateFence(cyContext.getDevice()->device(), &fenceInfo, nullptr, &inFlightFences[i]) == VK_SUCCESS, 
-                "Failed to create synchronization objects for a frame"
-            );
+            VK_CHECK(vkCreateSemaphore(cyContext.getDevice()->device(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]));
+            VK_CHECK(vkCreateSemaphore(cyContext.getDevice()->device(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]));
+            VK_CHECK(vkCreateFence(cyContext.getDevice()->device(), &fenceInfo, nullptr, &inFlightFences[i]));
         }
     }
 

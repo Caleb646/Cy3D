@@ -4,6 +4,7 @@
 #include <Logi/Logi.h>
 #include <M3D/M3D.h>
 
+#include "Vulkan.h"
 #include "VulkanDevice.h"
 #include "VulkanContext.h"
 #include "VulkanAllocator.h"
@@ -175,7 +176,7 @@ namespace cy3d
         template<typename T>
         void setData(T* data, offset_type offset)
         {
-            ASSERT_ERROR(DEFAULT_LOGGABLE, _buffer != nullptr && _bufferMemory != nullptr, "Buffer has not been initialized.");
+            CY_ASSERT(_buffer != nullptr && _bufferMemory != nullptr);
             cyContext.getAllocator()->fillBuffer(_bufferInfo.allocInfo, _bufferMemory, _bufferInfo.bufferInfo.size, { {data, _bufferInfo.bufferInfo.size, 0} });
         }
 
@@ -194,7 +195,7 @@ namespace cy3d
 
         buffer_type getBuffer()
         {
-            ASSERT_ERROR(DEFAULT_LOGGABLE, _buffer != nullptr, "Data has not been set. Buffer is null.");
+            CY_ASSERT(_buffer != nullptr);
             return _buffer;
         }
 

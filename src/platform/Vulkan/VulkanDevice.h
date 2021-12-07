@@ -2,6 +2,7 @@
 
 #include "pch.h"
 
+#include "Vulkan.h"
 #include "VulkanWindow.h"
 #include "Fwd.hpp"
 

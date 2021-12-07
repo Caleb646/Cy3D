@@ -26,7 +26,7 @@ namespace cy3d
 
     VulkanDescriptorSetLayout& VulkanDescriptorSetLayout::addBinding(uint32_t binding, VkDescriptorType descType, VkShaderStageFlags sFlags, uint32_t descCount)
     {
-        ASSERT_ERROR(DEFAULT_LOGGABLE, _bindings.count(binding) == 0, "Binding already exists.");
+        CY_ASSERT(_bindings.count(binding) == 0);
 
         VkDescriptorSetLayoutBinding bindingInfo{};
         bindingInfo.binding = binding;
@@ -49,7 +49,7 @@ namespace cy3d
         layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         layoutInfo.bindingCount = static_cast<uint32_t>(layouts.size());
         layoutInfo.pBindings = layouts.data();
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateDescriptorSetLayout(cyContext.getDevice()->device(), &layoutInfo, nullptr, &_layout) == VK_SUCCESS, "Failed to create descriptor set layout.");
+        VK_CHECK(vkCreateDescriptorSetLayout(cyContext.getDevice()->device(), &layoutInfo, nullptr, &_layout));
 
         return *this;
     }
@@ -72,7 +72,7 @@ namespace cy3d
         descriptorPoolInfo.maxSets = _maxSets;
         descriptorPoolInfo.flags = _flags;
 
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkCreateDescriptorPool(cyContext.getDevice()->device(), &descriptorPoolInfo, nullptr, &_pool) == VK_SUCCESS, "Failed to create descriptor pool.");
+        VK_CHECK(vkCreateDescriptorPool(cyContext.getDevice()->device(), &descriptorPoolInfo, nullptr, &_pool));
     }
 
     VulkanDescriptorPool::~VulkanDescriptorPool()
@@ -105,7 +105,7 @@ namespace cy3d
         allocInfo.descriptorPool = _pool;
         allocInfo.descriptorSetCount = count;
         allocInfo.pSetLayouts = layouts;
-        ASSERT_ERROR(DEFAULT_LOGGABLE, vkAllocateDescriptorSets(cyContext.getDevice()->device(), &allocInfo, sets) == VK_SUCCESS, "Failed to allocate descriptor sets.");
+        VK_CHECK(vkAllocateDescriptorSets(cyContext.getDevice()->device(), &allocInfo, sets));
     }
 
 

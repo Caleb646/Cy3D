@@ -29,7 +29,7 @@ namespace cy3d
 
 	void VulkanAllocator::createBuffer(buffer_info_type& buffInfo, buffer_type& buffer, buffer_memory_type& allocation, offsets_type offsets)
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, vmaCreateBuffer(_allocator, &buffInfo.bufferInfo, &buffInfo.allocCreateInfo, &buffer, &allocation, &buffInfo.allocInfo) == VK_SUCCESS, "Failed to create buffer.");
+		VK_CHECK(vmaCreateBuffer(_allocator, &buffInfo.bufferInfo, &buffInfo.allocCreateInfo, &buffer, &allocation, &buffInfo.allocInfo));
 
 		if (offsets.size() > 0)
 		{
@@ -55,7 +55,7 @@ namespace cy3d
 	{
 		//TODO if allocation is not visible to the host create a staging buffer and transfer data to it.
 		//like https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/memory_mapping.html
-		ASSERT_ERROR(DEFAULT_LOGGABLE, isCPUVisible(allocInfo) == true, "Trying to map device memory.");
+		CY_ASSERT(isCPUVisible(allocInfo) == true);
 
 		void* dataDestination;
 		vmaMapMemory(_allocator, allocation, &dataDestination);
@@ -101,7 +101,7 @@ namespace cy3d
 
 	void VulkanAllocator::createImage(image_info_type& imageInfo, image_type& image, image_memory_type& allocation, void* data)
 	{
-		ASSERT_ERROR(DEFAULT_LOGGABLE, vmaCreateImage(_allocator, &imageInfo.imageCreateInfo, &imageInfo.allocCreateInfo, &image, &allocation, &imageInfo.allocInfo) == VK_SUCCESS, "Failed to create image.");
+		VK_CHECK(vmaCreateImage(_allocator, &imageInfo.imageCreateInfo, &imageInfo.allocCreateInfo, &image, &allocation, &imageInfo.allocInfo));
 	}
 
 	void VulkanAllocator::copyBufferToImage(buffer_type& srcBuffer, image_type& dstImage, const image_info_type& imageInfo)
