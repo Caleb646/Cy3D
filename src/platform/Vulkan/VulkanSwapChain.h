@@ -1,8 +1,6 @@
 #pragma once
 #include "pch.h"
 
-#include <M3D/M3D.h>
-
 #include "VulkanDevice.h"
 #include "VulkanPipeline.h"
 #include "VulkanBuffer.h"
@@ -17,9 +15,9 @@ namespace cy3d {
 
     struct UniformBufferObject
     {
-        m3d::Mat4f model;
-        m3d::Mat4f view;
-        m3d::Mat4f proj;
+        alignas(16) m3d::mat4f model;
+        alignas(16) m3d::mat4f view;
+        alignas(16) m3d::mat4f proj;
 
         void update(float width, float height)
         {
@@ -27,10 +25,10 @@ namespace cy3d {
             auto currentTime = std::chrono::high_resolution_clock::now();
             float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
             
-            model.getRotatedZ(time * m3d::degreesToRadians(90.0f));
-            view = m3d::Mat4f::getLookAt({ 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 1.0f});
-            proj.getPerspectived(m3d::degreesToRadians(45.0f), width / height, 0.1f, 10.0f);
-            proj(1, 1) *= -1;
+            /*model.getRotatedZ(time * m3d::degreesToRadians(90.0f));
+            view = m3d::mat4f::getLookAt({ 2.0f, 2.0f, 2.0f }, { 0.0f, 0.0f, 0.0f }, {0.0f, 0.0f, 1.0f});
+            proj = m3d::mat4f::getPerspective(m3d::degreesToRadians(45.0f), width / height, 0.1f, 10.0f);
+            proj(1, 1) *= -1;*/
         }
     };
     //TODO temporary

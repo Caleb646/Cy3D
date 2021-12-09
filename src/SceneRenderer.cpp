@@ -71,7 +71,7 @@ namespace cy3d
 		_descriptorSets.reset(new VulkanDescriptorSets(_context, _descriptorPool.get(), _descriptorLayout.get(), numImages));
 
 		_cameraUbos.resize(numImages);
-		BufferCreationAllocationInfo uniformBuffInfo = BufferCreationAllocationInfo::createDefaultUniformBuffer(static_cast<VkDeviceSize>(sizeof(UniformBufferObject)));
+		BufferCreationAllocationInfo uniformBuffInfo = BufferCreationAllocationInfo::createDefaultUniformBuffer(static_cast<VkDeviceSize>(sizeof(CameraUboData)));
 		for (size_t i = 0; i < numImages; i++)
 		{
 			_cameraUbos[i].reset(new VulkanBuffer(_context, uniformBuffInfo, 1));

@@ -2,7 +2,6 @@
 #include "pch.h"
 
 #include <Logi/Logi.h>
-#include <M3D/M3D.h>
 
 #include "Vulkan.h"
 #include "VulkanDevice.h"
@@ -14,9 +13,12 @@ namespace cy3d
 {
 
     struct Vertex {
-        m3d::Vec3f pos;
-        m3d::Vec3f color;
-        m3d::Vec2f texCoord;
+        m3d::vec3f pos;
+        m3d::vec3f color;
+        m3d::vec3f texCoord;
+        //glm::vec3 pos;
+        //glm::vec3 color;
+        //glm::vec2 texCoord;
 
         /**
          * @brief A vertex binding describes at which rate to load data from memory throughout the vertices.

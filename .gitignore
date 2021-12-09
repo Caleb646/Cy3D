@@ -17,6 +17,7 @@ deps/libraries/
 deps/include/Logi/
 deps/include/M3D/
 deps/include/Tent/
+deps/include/glm/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

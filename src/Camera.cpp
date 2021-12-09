@@ -5,22 +5,9 @@
 
 namespace cy3d
 {
-    Camera::Camera(VulkanContext& context, m3d::Vec3f pos, m3d::Vec3f wUp, float yaw0, float pitch0) : _context(context), pos(pos), worldUp(wUp), yaw(yaw0), pitch(pitch0)
+    Camera::Camera(VulkanContext& context, m3d::vec3f pos, m3d::vec3f wUp, float yaw0, float pitch0) : _context(context), pos(pos), worldUp(wUp), yaw(yaw0), pitch(pitch0)
     {
-        float rYaw = m3d::degreesToRadians(yaw);
-        float rPitch = m3d::degreesToRadians(pitch);
-        m3d::Vec3f cNewLookDir;
-        cNewLookDir.x() = std::cos(rYaw) * std::cos(rPitch);
-        cNewLookDir.y() = std::sin(rPitch);
-        cNewLookDir.z() = std::sin(rYaw) * std::cos(rPitch);
-
-        lookDir = cNewLookDir;
-        right = m3d::Vec3f::cross(lookDir, worldUp);
-        cUp = m3d::Vec3f::cross(right, lookDir);
-
-        lookDir.normalized();
-        right.normalized();
-        cUp.normalized();
+        updateVectors();
     }
 
     Camera::~Camera()
@@ -45,34 +32,23 @@ namespace cy3d
         //std::cout << std::endl;
     }
 
-    m3d::Mat4f Camera::getLookAt()
+    void Camera::updateVectors()
     {
-        //return m3d::Mat4f::getLookAt(pos, pos + lookDir, cUp);
+        float rYaw = m3d::toRadians(yaw);
+        float rPitch = m3d::toRadians(pitch);
+        m3d::vec3f cNewLookDir;
+        cNewLookDir.x() = std::cos(rYaw) * std::cos(rPitch);
+        cNewLookDir.y() = std::sin(rPitch);
+        cNewLookDir.z() = std::sin(rYaw) * std::cos(rPitch);
 
-        m3d::Vec3f f((pos + lookDir) - pos);
-        f.normalized();
-        m3d::Vec3f s;
-        s = m3d::Vec3f::cross(f, cUp);
-        s.normalized();
-        m3d::Vec3f u;
-        u = m3d::Vec3f::cross(s, f);
+        lookDir = m3d::normalize(cNewLookDir); //m3d::vec3f(0.0f, 0.0f, 1.0f); //;
+        right = m3d::normalize(m3d::cross(lookDir, worldUp));
+        cUp = m3d::normalize(m3d::cross(right, lookDir));
+    }
 
-        m3d::Mat4f out;
-        out(0, 0) = s.x();
-        out(0, 1) = s.y();
-        out(0, 2) = s.z();
-        out(1, 0) = u.x();
-        out(1, 1) = u.y();
-        out(1, 2) = u.z();
-        out(2, 0) = f.x();
-        out(2, 1) = f.y();
-        out(2, 2) = -f.z();
-
-        out(0, 3) = -m3d::Vec3f::dot(s, pos);
-        out(1, 3) = -m3d::Vec3f::dot(u, pos);
-        out(2, 3) = m3d::Vec3f::dot(f, pos);
-
-        return out;
+    m3d::mat4f Camera::getLookAt()
+    {
+        return m3d::lookAt(pos, pos + lookDir, cUp);
     }
 
 
@@ -83,19 +59,19 @@ namespace cy3d
     * 
     * 
     */
-    m3d::Mat4f  Camera::createLookAtMatrix(m3d::Vec3f pos, m3d::Vec3f lookDir, m3d::Vec3f cUp)
+    m3d::mat4f  Camera::createLookAtMatrix(m3d::vec3f pos, m3d::vec3f lookDir, m3d::vec3f cUp)
     {
-        return m3d::Mat4f::getLookAt(pos, pos + lookDir, cUp);
+        return m3d::lookAt(pos, pos + lookDir, cUp);
     }
 
-    m3d::Mat4f  Camera::createLookAtMatrix(Camera& camera)
+    m3d::mat4f  Camera::createLookAtMatrix(Camera& camera)
     {
-        return m3d::Mat4f::getLookAt(camera.pos, camera.pos + camera.lookDir, camera.cUp);
+        return m3d::lookAt(camera.pos, camera.pos + camera.lookDir, camera.cUp);
     }
 
-    m3d::Mat4f  Camera::createPerspectiveMatrix(float fov, float aspectRatio, float far, float near)
+    m3d::mat4f  Camera::createPerspectiveMatrix(float fov, float aspectRatio, float far, float near)
     {
-        return m3d::Mat4f::getPerspective(m3d::degreesToRadians(fov), aspectRatio, far, near);
+        return m3d::perspective(m3d::toRadians(fov), aspectRatio, far, near);
     }
 
     Camera* Camera::create3D(VulkanContext& context, float fov, float width, float height, float far, float near)
@@ -118,11 +94,11 @@ namespace cy3d
                 }
                 else if (e.key == GLFW_KEY_A && (e.action == GLFW_PRESS || e.action == GLFW_REPEAT))
                 {
-                    cam->pos += cam->right * velocity;
+                    cam->pos -= cam->right * velocity;
                 }
                 else if (e.key == GLFW_KEY_D && (e.action == GLFW_PRESS || e.action == GLFW_REPEAT))
                 {
-                    cam->pos -= cam->right * velocity;
+                    cam->pos += cam->right * velocity;
                 }               
             }
         );
@@ -157,20 +133,7 @@ namespace cy3d
                 //if (cam->pitch < -89.0f)
                 //    cam->pitch = -89.0f;
                 //
-                //float rYaw = m3d::degreesToRadians(cam->yaw);
-                //float rPitch = m3d::degreesToRadians(cam->pitch);
-                //m3d::Vec3f cNewLookDir;
-                //cNewLookDir.x() = std::cos(rYaw) * std::cos(rPitch);
-                //cNewLookDir.y() = std::sin(rPitch);
-                //cNewLookDir.z() = std::sin(rYaw) * std::cos(rPitch);
-
-                //cam->lookDir = cNewLookDir;
-                //cam->right = m3d::Vec3f::cross(cam->lookDir, cam->worldUp);
-                //cam->cUp = m3d::Vec3f::cross(cam->right, cam->lookDir);
-
-                //cam->lookDir.normalized();
-                //cam->right.normalized();
-                //cam->cUp.normalized();
+                //cam->updateVectors();
             }
         );
 
