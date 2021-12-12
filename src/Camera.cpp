@@ -105,35 +105,42 @@ namespace cy3d
 
         camera->mouseInputListenerId = context.getWindow()->registerMouseListener
         (
+            //TODO input events should store the window width and height
+            //and some kind of void* userData that could be cast back.
+            //such as static_cast<Camera*>(void* userData);
+            //this would remove the need for std::function
             [cam = camera, width, height](MouseInputEvent& e, double deltaTime)
             {
-                //cam->lastX = width / 2.0f;
-                //cam->lastY = height / 2.0f;
-                //if (cam->isFirstMouse)
-                //{
-                //    cam->lastX = e.xpos;
-                //    cam->lastY = e.ypos;
-                //    cam->isFirstMouse = false;
-                //}
+                if (cam->isFirstMouse)
+                {
+                    cam->lastX = width * 0.5f;
+                    cam->lastY = height * 0.5f;
+                    cam->isFirstMouse = false;
+                }
 
-                //float xoffset = e.xpos - cam->lastX;
-                //float yoffset = cam->lastY - e.ypos; // reversed since y-coordinates go from bottom to top
+                float xoffset = e.xpos - cam->lastX;
+                float yoffset = e.ypos - cam->lastY;
 
-                //cam->lastX = e.xpos;
-                //cam->lastY = e.ypos;
+                cam->lastX = e.xpos;
+                cam->lastY = e.ypos;
 
-                //xoffset *= cam->mouseSensitivity;
-                //yoffset *= cam->mouseSensitivity;
-                //
-                //cam->yaw += xoffset;
-                //cam->pitch += yoffset;
-                //
-                //if (cam->pitch > 89.0f)
-                //    cam->pitch = 89.0f;
-                //if (cam->pitch < -89.0f)
-                //    cam->pitch = -89.0f;
-                //
-                //cam->updateVectors();
+                xoffset *= cam->mouseSensitivity;
+                yoffset *= cam->mouseSensitivity;
+                
+                cam->yaw -= xoffset;
+                cam->pitch += yoffset;
+                
+                if (cam->pitch > 89.0f)
+                {
+                    cam->pitch = 89.0f;
+                }
+
+                if (cam->pitch < -89.0f)
+                {
+                    cam->pitch = -89.0f;
+                }
+       
+                cam->updateVectors();
             }
         );
 

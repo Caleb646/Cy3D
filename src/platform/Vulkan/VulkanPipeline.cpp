@@ -9,8 +9,8 @@
 namespace cy3d
 {
 
-    constexpr auto DEFAULT_VERT_SHADER_PATH = "src/resources/shaders/SimpleShader.vert.spv";
-    constexpr auto DEFAULT_FRAG_SHADER_PATH = "src/resources/shaders/SimpleShader.frag.spv";
+    constexpr auto DEFAULT_VERT_SHADER_PATH = "resources/shaders/SimpleShader.vert.spv";
+    constexpr auto DEFAULT_FRAG_SHADER_PATH = "resources/shaders/SimpleShader.frag.spv";
 
     VulkanPipeline::VulkanPipeline(VulkanContext& context, PipelineConfigInfo& config, PipelineLayoutConfigInfo& layoutInfo) : cyContext(context)
     {

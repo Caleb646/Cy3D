@@ -67,7 +67,7 @@ namespace cy3d
 			.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
 			.build();
 
-		_texture.reset(new VulkanTexture(_context, "src/resources/textures/viking_room.png"));
+		_texture.reset(new VulkanTexture(_context, "resources/textures/viking_room.png"));
 		_descriptorSets.reset(new VulkanDescriptorSets(_context, _descriptorPool.get(), _descriptorLayout.get(), numImages));
 
 		_cameraUbos.resize(numImages);
@@ -112,7 +112,6 @@ namespace cy3d
 	{
 		CY_ASSERT(isSceneStart() == true);
 		basicRenderPass();
-
 		_meshes.clear();
 	}
 

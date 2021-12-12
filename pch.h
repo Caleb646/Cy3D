@@ -19,17 +19,27 @@
 #include <chrono>
 #include <functional>
 #include <cassert>
+#include <filesystem>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+//#define GLM_FORCE_RADIANS
+//#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+//#include <glm/glm.hpp>
+//#include <glm/gtc/matrix_transform.hpp>
 
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+#include <shaderc/shaderc.hpp>
+#include <spirv_cross/spirv_glsl.hpp>
 
 #define M3D_FORCE_COLUMN_MAJOR_ORDERING
 #define M3D_FORCE_DEPTH_ZERO_TO_ONE
 #include <M3D/M3D.h>
 
+
+#include <Logi/Logi.h>

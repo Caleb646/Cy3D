@@ -56,7 +56,7 @@ namespace cy3d
 			proj[1][1] *= -1;
 
 
-			glm::mat4 gModel(1.0f);
+			/*glm::mat4 gModel(1.0f);
 			gModel = glm::translate(glm::mat4(1.0f), glm::vec3(camera->pos.x(), camera->pos.y(), camera->pos.z()));
 			glm::mat4 gview(1.0f);
 			gview = glm::lookAt
@@ -68,7 +68,7 @@ namespace cy3d
 
 			glm::mat4 gproj(1.0f);
 			gproj = glm::perspective(glm::radians(45.0f), width / height, 0.1f, 10.0f);
-			gproj[1][1] *= -1;
+			gproj[1][1] *= -1;*/
 			
 
 			//glm::mat4 gModel(1.0f);
@@ -112,7 +112,7 @@ namespace cy3d
 			//proj(1, 1) *= -1;
 		}
 
-		void areEqual(m3d::mat4f& m, glm::mat4& g, std::string name)
+		/*void areEqual(m3d::mat4f& m, glm::mat4& g, std::string name)
 		{
 			for (std::size_t i = 0; i < 4; i++)
 			{
@@ -124,7 +124,7 @@ namespace cy3d
 					CY_ASSERT(res < 0.01f);
 				}
 			}
-		}
+		}*/
 	};
 
 	class SceneRenderer

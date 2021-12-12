@@ -47,7 +47,7 @@ namespace cy3d
 
          VulkanContext& _context;
 
-         bool isFirstMouse{ false };
+         bool isFirstMouse{ true };
 
     public:
         Camera(VulkanContext& context, m3d::vec3f pos = m3d::vec3f(2.0f, 2.0f, 2.0f), m3d::vec3f wUp = m3d::vec3f(0.0f, -1.0f, 0.0f), float yaw0 = YAW, float pitch0 = PITCH);

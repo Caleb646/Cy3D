@@ -124,7 +124,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)deps\include\glm;$(SolutionDir)deps\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)deps\include\glm;$(SolutionDir)deps\include\</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -133,8 +133,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)deps\libraries\glfw;$(SolutionDir)deps\libraries\vulkan</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;user32.lib;gdi32.lib;shell32.lib;msvcrtd.lib;vcruntime.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)deps\libraries\glfw;$(SolutionDir)deps\libraries\shaderc\debug;$(SolutionDir)deps\libraries\assimp;$(SolutionDir)deps\libraries\spirv_cross;$(SolutionDir)deps\libraries\vulkan</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;user32.lib;gdi32.lib;shell32.lib;msvcrtd.lib;vcruntimed.lib;IrrXMLd.lib;zlibstaticd.lib;assimp-vc142-mtd.lib;spirv-cross-cored.lib;spirv-cross-glsld.lib;spirv-cross-cppd.lib;spirv-cross-cd.lib;shaderc_combinedd.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -171,6 +171,8 @@
   <ItemGroup>
     <ClCompile Include="deps\include\stb_image\stb_image.cpp" />
     <ClCompile Include="deps\include\vma\vk_mem_alloc.cpp" />
+    <ClCompile Include="src\Mesh.cpp" />
+    <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
@@ -190,7 +192,7 @@
     <ClCompile Include="src\platform\Vulkan\VulkanDescriptors.cpp" />
     <ClCompile Include="src\platform\Vulkan\VulkanImage.cpp" />
     <ClCompile Include="src\platform\Vulkan\VulkanTexture.cpp" />
-    <ClCompile Include="src\TPCamera3D.cpp" />
+    <ClCompile Include="src\platform\Vulkan\VulkanShader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="deps\libraries\vulkan\dxcompiler.lib" />
@@ -266,6 +268,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="define.h" />
+    <ClInclude Include="src\core\core.h" />
+    <ClInclude Include="src\Mesh.h" />
+    <ClInclude Include="src\Model.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="src\Camera.h" />
     <ClInclude Include="src\SceneRenderer.h" />
@@ -283,7 +288,7 @@
     <ClInclude Include="src\platform\Vulkan\VulkanDescriptors.h" />
     <ClInclude Include="src\platform\Vulkan\VulkanImage.h" />
     <ClInclude Include="src\platform\Vulkan\VulkanTexture.h" />
-    <ClInclude Include="src\TPCamera3D.h" />
+    <ClInclude Include="src\platform\Vulkan\VulkanShader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
