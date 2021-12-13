@@ -98,6 +98,9 @@
     <ClCompile Include="src\platform\Vulkan\VulkanShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ShaderManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="deps\libraries\vulkan\dxcompiler.lib" />
@@ -227,7 +230,10 @@
     <ClInclude Include="src\core\core.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\CoreLogging.h">
+    <ClInclude Include="src\platform\Vulkan\VulkanBufferTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ShaderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

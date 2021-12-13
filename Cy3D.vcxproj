@@ -129,6 +129,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -171,6 +172,7 @@
   <ItemGroup>
     <ClCompile Include="deps\include\stb_image\stb_image.cpp" />
     <ClCompile Include="deps\include\vma\vk_mem_alloc.cpp" />
+    <ClCompile Include="src\ShaderManager.cpp" />
     <ClCompile Include="src\Mesh.cpp" />
     <ClCompile Include="src\Model.cpp" />
     <ClCompile Include="pch.cpp">
@@ -268,12 +270,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="define.h" />
+    <ClInclude Include="src\ShaderManager.h" />
     <ClInclude Include="src\core\core.h" />
-    <ClInclude Include="src\core\CoreLogging.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\Model.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="src\Camera.h" />
+    <ClInclude Include="src\platform\Vulkan\VulkanBufferTypes.h" />
     <ClInclude Include="src\SceneRenderer.h" />
     <ClInclude Include="src\platform\Vulkan\VulkanSwapChain.h" />
     <ClInclude Include="src\platform\Vulkan\VulkanDevice.h" />

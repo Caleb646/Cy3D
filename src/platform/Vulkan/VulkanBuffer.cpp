@@ -1,5 +1,4 @@
 #include "pch.h"
-
 #include "VulkanBuffer.h"
 
 namespace cy3d

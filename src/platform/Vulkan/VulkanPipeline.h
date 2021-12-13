@@ -4,6 +4,7 @@
 #include "Vulkan.h"
 #include "VulkanDevice.h"
 #include "VulkanDescriptors.h"
+#include "VulkanShader.h"
 #include "Fwd.hpp"
 
 namespace cy3d
@@ -76,6 +77,7 @@ namespace cy3d
 		VkShaderModule fragShaderModule{ nullptr };
 
 	public:
+		VulkanPipeline(VulkanContext& context, PipelineConfigInfo& config, PipelineLayoutConfigInfo& layoutInfo);
 		VulkanPipeline(VulkanContext& context, PipelineConfigInfo& config, PipelineLayoutConfigInfo& layoutInfo);
 		~VulkanPipeline();
 

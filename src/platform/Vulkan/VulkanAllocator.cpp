@@ -27,7 +27,7 @@ namespace cy3d
 	}
 
 
-	void VulkanAllocator::createBuffer(buffer_info_type& buffInfo, buffer_type& buffer, buffer_memory_type& allocation, offsets_type offsets)
+	void VulkanAllocator::createBuffer(BufferCreateInfo& buffInfo, buffer_type& buffer, buffer_memory_type& allocation, offsets_type offsets)
 	{
 		VK_CHECK(vmaCreateBuffer(_allocator, &buffInfo.bufferInfo, &buffInfo.allocCreateInfo, &buffer, &allocation, &buffInfo.allocInfo));
 
@@ -37,7 +37,7 @@ namespace cy3d
 			{
 				buffer_type stagingBuffer;
 				buffer_memory_type stagingMemory;
-				buffer_info_type stagingBuffInfo = buffer_info_type::createDefaultStagingBufferInfo(buffInfo.bufferInfo.size);
+				BufferCreateInfo stagingBuffInfo = BufferCreateInfo::createDefaultStagingBufferInfo(buffInfo.bufferInfo.size);
 				vmaCreateBuffer(_allocator, &stagingBuffInfo.bufferInfo, &stagingBuffInfo.allocCreateInfo, &stagingBuffer, &stagingMemory, &stagingBuffInfo.allocInfo);
 				fillBuffer(stagingBuffInfo.allocInfo, stagingMemory, stagingBuffInfo.bufferInfo.size, offsets);
 				copyBuffer(stagingBuffer, buffer, stagingBuffInfo.bufferInfo.size);

@@ -1,8 +1,7 @@
 #pragma once
 #include "pch.h"
-#include <Logi/Logi.h>
 
-#include "define.h"
+#include "../../core/core.h"
 
 #define VK_CHECK(expression)		\
 do {								\

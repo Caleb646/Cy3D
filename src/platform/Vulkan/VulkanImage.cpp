@@ -12,7 +12,7 @@ namespace cy3d
 		//create and fill staging buffer
 		buffer_type stagingBuffer;
 		buffer_memory_type stagingMemory;
-		buffer_info_type stagingBuffInfo = buffer_info_type::createDefaultStagingBufferInfo(getImageSize());
+		BufferCreateInfo stagingBuffInfo = BufferCreateInfo::createDefaultStagingBufferInfo(getImageSize());
 		cyContext.getAllocator()->createBuffer(stagingBuffInfo, stagingBuffer, stagingMemory);
 		cyContext.getAllocator()->fillBuffer(stagingBuffInfo.allocInfo, stagingMemory, stagingBuffInfo.bufferInfo.size, { {data, getImageSize(), 0} });
 
@@ -136,7 +136,7 @@ namespace cy3d
 			width*height
 		};
 
-		ImageCreationAllocationInfo imageInfo = ImageCreationAllocationInfo::createDefaultImageInfo(info);
+		ImageCreateInfo imageInfo = ImageCreateInfo::createDefaultImageInfo(info);
 
 		return std::make_unique<VulkanImage>(context, imageInfo);
 	}

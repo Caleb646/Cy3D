@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 
-#include "define.h"
+#include "core/core.h"
 #include "platform/Vulkan/VulkanContext.h"
 #include "platform/Vulkan/VulkanDescriptors.h"
 #include "platform/Vulkan/VulkanPipeline.h"

@@ -2,7 +2,7 @@
 #include "SceneRenderer.h"
 #include "platform/Vulkan/VulkanSwapChain.h"
 #include "platform/Vulkan/VulkanRenderer.h"
-#include "core/CoreLogging.h"
+#include "core/core.h"
 
 namespace cy3d
 {
@@ -72,16 +72,23 @@ namespace cy3d
 		_descriptorSets.reset(new VulkanDescriptorSets(_context, _descriptorPool.get(), _descriptorLayout.get(), numImages));
 
 		_cameraUbos.resize(numImages);
-		BufferCreationAllocationInfo uniformBuffInfo = BufferCreationAllocationInfo::createDefaultUniformBuffer(static_cast<VkDeviceSize>(sizeof(CameraUboData)));
-		for (size_t i = 0; i < numImages; i++)
+		BufferCreateInfo uniformBuffInfo = BufferCreateInfo::createUBOInfo(static_cast<VkDeviceSize>(sizeof(CameraUboData)));
+		for (std::size_t i = 0; i < numImages; i++)
 		{
 			_cameraUbos[i].reset(new VulkanBuffer(_context, uniformBuffInfo, 1));
 		}
-
+		/*
+		* 
+		* sets info = shader.getalldescsets(0
+		* 
+		* for name, info in sets_info.ubos:
+		*	
+		
+		*/
 		for (std::size_t i = 0; i < numImages; i++)
 		{
-			_descriptorSets->writeBufferToSet(_cameraUbos[i]->descriptorBufferInfo(), i, 0);
-			_descriptorSets->writeImageToSet(_texture->descriptorImageInfo(), i, 1);
+			_descriptorSets->writeBufferToSet(_cameraUbos[i]->descriptorInfo(), i, 0);
+			_descriptorSets->writeImageToSet(_texture->descriptorInfo(), i, 1);
 		}
 		_descriptorSets->updateSets();
 
@@ -157,10 +164,10 @@ namespace cy3d
 		VkDeviceSize vSize = sizeof(vertices[0]) * vertices.size();
 		VkDeviceSize iSize = sizeof(indices[0]) * indices.size();
 
-		BufferCreationAllocationInfo vertexInfo = BufferCreationAllocationInfo::createGPUOnlyBufferInfo(vSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+		BufferCreateInfo vertexInfo = BufferCreateInfo::createGPUOnlyBufferInfo(vSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 		_vertexBuffer.reset(new VulkanBuffer(_context, vertexInfo, vertices.data()));
 
-	    BufferCreationAllocationInfo indexInfo = BufferCreationAllocationInfo::createGPUOnlyBufferInfo(iSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+	    BufferCreateInfo indexInfo = BufferCreateInfo::createGPUOnlyBufferInfo(iSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 		_indexBuffer.reset(new VulkanBuffer(_context, indexInfo, indices.data()));
 
 	}

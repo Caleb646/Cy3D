@@ -3,6 +3,7 @@
 #include "Vulkan.h"
 #include "VulkanAllocator.h"
 #include "VulkanContext.h"
+#include "VulkanBufferTypes.h"
 
 namespace cy3d
 {
@@ -16,10 +17,7 @@ namespace cy3d
 
 		using buffer_type = VulkanAllocator::buffer_type;
 		using buffer_memory_type = VulkanAllocator::buffer_memory_type;
-		using buffer_info_type = VulkanAllocator::buffer_info_type;
-		
-		
-
+	
 	private:
 		image_type _image{ nullptr };
 		image_memory_type _imageMemory{ nullptr };

@@ -3,7 +3,7 @@
 //
 namespace cy3d
 {
-	VulkanShader::VulkanShader(VulkanContext& context, const std::string& shaderDirectory) : _context(context)
+	VulkanShader::VulkanShader(const std::string& shaderDirectory)
 	{
 		init(shaderDirectory);
 	}
@@ -28,12 +28,45 @@ namespace cy3d
 			{
 				const auto& name = resource.name;
 				auto& bufferType = compiler.get_type(resource.base_type_id);
-				int memberCount = (uint32_t)bufferType.member_types.size();
+				int memberCount = static_cast<uint32_t>(bufferType.member_types.size());
 				uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
 				uint32_t descriptorSet = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-				uint32_t size = (uint32_t)compiler.get_declared_struct_size(bufferType);
+				uint32_t size = static_cast<uint32_t>(compiler.get_declared_struct_size(bufferType));
+				CY_BASE_LOG_INFO("UBO -> name: {0} binding {1} desc set {2} size: {3}", name, binding, descriptorSet, size);
+				CY_ASSERT(_descriptorSetsInfo.count(descriptorSet) == 0); //shouldn't have multiple ubos bound at the same descriptor set
 
-				CY_BASE_LOG_INFO("name: {0} binding {1} desc set {2} size: {3}", name, binding, descriptorSet, size);
+				_descriptorSetsInfo[descriptorSet] = ShaderDescriptorSetInfo();
+				ShaderUBOSetInfo uboInfo{};
+				uboInfo.binding = binding;
+				uboInfo.descriptorSet = descriptorSet;
+				uboInfo.stage = stage;
+				uboInfo.createInfo = BufferCreateInfo::createUBOInfo(size);
+				_descriptorSetsInfo[descriptorSet].ubosInfo[name] = (uboInfo);
+			}
+
+			for (const auto& resource : resources.sampled_images)
+			{
+				//TODO what if UBO is in both the vertex and fragment shader.
+				//Its stage should be VK_SHADER_STAGE_ALL but as of now if its both the vertex
+				//and fragment shader it will be marked as VK_SHADER_STAGE_FRAGMENT.
+				const auto& name = resource.name;
+				auto& baseType = compiler.get_type(resource.base_type_id);
+				auto& type = compiler.get_type(resource.type_id);
+				uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+				uint32_t descriptorSet = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+				uint32_t dimension = baseType.image.dim;
+				uint32_t arraySize = type.array[0];
+				
+				if (_descriptorSetsInfo.count(descriptorSet) == 0)
+				{
+					_descriptorSetsInfo[descriptorSet] = ShaderDescriptorSetInfo();
+				}
+				ShaderImageSamplerSetInfo imageSamplerInfo{};
+				imageSamplerInfo.binding = binding;
+				imageSamplerInfo.descriptorSet = descriptorSet;
+				imageSamplerInfo.stage = stage;
+				_descriptorSetsInfo[descriptorSet].imageSamplersInfo[name] = imageSamplerInfo;
+				CY_BASE_LOG_INFO("Sampler -> name: {0} binding {1} desc set {2}", name, binding, descriptorSet);
 			}
 		}
 		

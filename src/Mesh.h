@@ -2,7 +2,7 @@
 
 #include "platform/Vulkan/VulkanTexture.h"
 
-#include "define.h"
+//#include "define.h"
 
 namespace cy3d
 {
