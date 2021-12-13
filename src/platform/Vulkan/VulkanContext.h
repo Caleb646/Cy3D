@@ -1,6 +1,8 @@
 #pragma once
 #include "pch.h"
 
+#include "../../core/core.h"
+
 #include "Vulkan.h"
 #include "VulkanWindow.h"
 #include "Fwd.hpp"
@@ -21,6 +23,7 @@ namespace cy3d
 		std::unique_ptr<VulkanAllocator> vulkanAllocator{ nullptr };
 		std::unique_ptr<VulkanSwapChain> cySwapChain{ nullptr };
 		std::unique_ptr<VulkanRenderer> vulkanRenderer{ nullptr };
+		Ref<ShaderManager> shaderManager{ nullptr };
 
 	public:
 		VulkanContext() = default;
@@ -40,6 +43,8 @@ namespace cy3d
 		VulkanAllocator* getAllocator();
 		VulkanSwapChain* getSwapChain();
 		VulkanRenderer* getVulkanRenderer();
+
+		Ref<ShaderManager> getShaderManager();
 
 		/**
 		 * PUBLIC STATIC METHODS

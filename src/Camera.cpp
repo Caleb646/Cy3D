@@ -69,15 +69,15 @@ namespace cy3d
         return m3d::lookAt(camera.pos, camera.pos + camera.lookDir, camera.cUp);
     }
 
-    m3d::mat4f  Camera::createPerspectiveMatrix(float fov, float aspectRatio, float far, float near)
+    m3d::mat4f  Camera::createPerspectiveMatrix(float fov, float aspectRatio, float zfar, float znear)
     {
-        return m3d::perspective(m3d::toRadians(fov), aspectRatio, far, near);
+        return m3d::perspective(m3d::toRadians(fov), aspectRatio, zfar, znear);
     }
 
-    Camera* Camera::create3D(VulkanContext& context, float fov, float width, float height, float far, float near)
+    Camera* Camera::create3D(VulkanContext& context, float fov, float width, float height, float zfar, float znear)
     {
         Camera* camera = new Camera(context);
-        camera->projectionMatrix = createPerspectiveMatrix(fov, height / width, far, near);
+        camera->projectionMatrix = createPerspectiveMatrix(fov, height / width, zfar, znear);
 
         camera->keyboardInputListenerId = context.getWindow()->registerKeyboardListener
         (

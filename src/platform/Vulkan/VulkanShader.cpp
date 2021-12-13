@@ -1,9 +1,10 @@
 #include "pch.h"
 #include "VulkanShader.h"
+#include "VulkanDevice.h"
 //
 namespace cy3d
 {
-	VulkanShader::VulkanShader(const std::string& shaderDirectory)
+	VulkanShader::VulkanShader(VulkanContext& context, const std::string& shaderDirectory) : _context(context)
 	{
 		init(shaderDirectory);
 	}
@@ -14,6 +15,77 @@ namespace cy3d
 		readDirectory(directory);
 		compile(binary);
 		reflect(binary);
+		createShaderModules(binary);
+		createDescriptorSetLayouts();
+	}
+
+	bool VulkanShader::createDescriptorSetLayouts()
+	{
+		_descriptorSetLayouts.resize(_descriptorSetsInfo.size());
+		for (const auto [setId, setMap] : _descriptorSetsInfo)
+		{
+			std::vector<VkDescriptorSetLayoutBinding> bindings{};
+
+			for (const auto [uboName, uboInfo] : setMap.ubosInfo)
+			{
+				VkDescriptorSetLayoutBinding bindingInfo{};
+				bindingInfo.binding = uboInfo.binding;
+				bindingInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				bindingInfo.descriptorCount = setMap.ubosInfo.size();
+				bindingInfo.stageFlags = uboInfo.stage;
+				bindingInfo.pImmutableSamplers = nullptr; // Optional
+				//CY_ASSERT(_bindings.count(uboInfo.binding) == 0);
+				//_bindings[uboInfo.binding] = bindingInfo;
+				bindings.push_back(bindingInfo);
+			}
+
+			for (const auto [samplerName, samplerInfo] : setMap.imageSamplersInfo)
+			{
+				//TODO need to make sure duplicate bindings raise an error
+				VkDescriptorSetLayoutBinding bindingInfo{};
+				bindingInfo.binding = samplerInfo.binding;
+				bindingInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				bindingInfo.descriptorCount = setMap.imageSamplersInfo.size();
+				bindingInfo.stageFlags = samplerInfo.stage;
+				bindingInfo.pImmutableSamplers = nullptr; // Optional
+				//CY_ASSERT(_bindings.count(samplerInfo.binding) == 0);
+				//_bindings[samplerInfo.binding] = bindingInfo;
+				bindings.push_back(bindingInfo);
+			}
+
+			VkDescriptorSetLayoutCreateInfo layoutInfo{};
+			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+			layoutInfo.pBindings = bindings.data();
+			VK_CHECK(vkCreateDescriptorSetLayout(_context.getDevice()->device(), &layoutInfo, nullptr, &_descriptorSetLayouts[setId]));
+		}
+
+		return true;
+	}
+
+	bool VulkanShader::createShaderModules(std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>>& binary)
+	{
+		for (auto [stage, bin] : binary)
+		{
+			CY_ASSERT(bin.size() != 0);
+			VkShaderModuleCreateInfo moduleCreateInfo{};
+			moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+			moduleCreateInfo.codeSize = bin.size() * sizeof(uint32_t);
+			moduleCreateInfo.pCode = bin.data();
+
+			VkShaderModule shaderModule;
+			VK_CHECK(vkCreateShaderModule(_context.getDevice()->device(), &moduleCreateInfo, NULL, &shaderModule));
+
+			VkPipelineShaderStageCreateInfo shaderStage{};
+			shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			shaderStage.stage = stage;
+			shaderStage.module = shaderModule;
+			shaderStage.pName = "main";
+
+			_pipelineCreateInfo.push_back(std::move(shaderStage));
+		}
+
+		return true;
 	}
 
 	void VulkanShader::reflect(std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>>& binary)
@@ -33,7 +105,11 @@ namespace cy3d
 				uint32_t descriptorSet = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
 				uint32_t size = static_cast<uint32_t>(compiler.get_declared_struct_size(bufferType));
 				CY_BASE_LOG_INFO("UBO -> name: {0} binding {1} desc set {2} size: {3}", name, binding, descriptorSet, size);
-				CY_ASSERT(_descriptorSetsInfo.count(descriptorSet) == 0); //shouldn't have multiple ubos bound at the same descriptor set
+				//CY_ASSERT(_descriptorSetsInfo.count(descriptorSet) == 0); //shouldn't have multiple ubos bound at the same descriptor set
+				if (_descriptorSetsInfo.count(descriptorSet) == 0)
+				{
+					_descriptorSetsInfo[descriptorSet] = ShaderDescriptorSetInfo();
+				}
 
 				_descriptorSetsInfo[descriptorSet] = ShaderDescriptorSetInfo();
 				ShaderUBOSetInfo uboInfo{};
@@ -131,6 +207,8 @@ namespace cy3d
 				CY_ASSERT(false);
 			}
 		}
+		//remove extension from shader name
+		stripFilenameExtension();
 		return true;
 	}
 
@@ -176,6 +254,14 @@ namespace cy3d
 			return true;
 		}
 		return false;
+	}
+
+	bool VulkanShader::stripFilenameExtension()
+	{
+		std::size_t index = _name.find(".");
+		CY_ASSERT(index != std::string::npos);
+		_name = std::move(_name.substr(0, index));
+		return true;
 	}
 
 	shaderc_shader_kind VulkanShader::vkShaderStageToShaderCStage(VkShaderStageFlagBits stage)

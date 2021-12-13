@@ -54,6 +54,9 @@ namespace cy3d
 	void SceneRenderer::init()
 	{
 
+		_context.getShaderManager()->add("resources/shaders/simpleshaders");
+		const auto& shader = _context.getShaderManager()->get("SimpleShader");
+
 		uint32_t numImages = static_cast<uint32_t>(_context.getSwapChain()->imageCount());
 		_descriptorPool.reset(new VulkanDescriptorPool(_context,
 			{

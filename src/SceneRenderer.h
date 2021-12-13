@@ -8,7 +8,8 @@
 #include "platform/Vulkan/VulkanBuffer.h"
 #include "platform/Vulkan/VulkanTexture.h"
 
-#include "src/Camera.h"
+#include "ShaderManager.h"
+#include "Camera.h"
 
 namespace cy3d
 {

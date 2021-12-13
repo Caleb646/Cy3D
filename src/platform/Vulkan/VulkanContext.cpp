@@ -2,13 +2,13 @@
 
 #include "VulkanContext.h"
 
-#include <Logi/Logi.h>
-
 #include "VulkanWindow.h"
 #include "VulkanDevice.h"
 #include "VulkanAllocator.h"
 #include "VulkanSwapChain.h"
 #include "VulkanRenderer.h"
+#include "../../src/ShaderManager.h"
+
 
 
 namespace cy3d
@@ -66,6 +66,12 @@ namespace cy3d
 		return vulkanRenderer.get();
 	}
 
+	Ref<ShaderManager> VulkanContext::getShaderManager()
+	{
+		CY_ASSERT(shaderManager.get() != nullptr);
+		return shaderManager;
+	}
+
 	/**
 	 * PUBLIC STATIC METHODS
 	*/
@@ -76,5 +82,6 @@ namespace cy3d
 		emptyContext.vulkanAllocator.reset(new VulkanAllocator(emptyContext));
 		emptyContext.cySwapChain.reset(new VulkanSwapChain(emptyContext));
 		emptyContext.vulkanRenderer.reset(new VulkanRenderer(emptyContext));
+		emptyContext.shaderManager.reset(new ShaderManager(emptyContext));
 	}
 }

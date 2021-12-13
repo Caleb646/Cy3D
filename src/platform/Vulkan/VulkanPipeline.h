@@ -5,6 +5,7 @@
 #include "VulkanDevice.h"
 #include "VulkanDescriptors.h"
 #include "VulkanShader.h"
+#include "../../core/core.h"
 #include "Fwd.hpp"
 
 namespace cy3d
@@ -22,6 +23,12 @@ namespace cy3d
 			pipelineLayoutInfo.pushConstantRangeCount = 0; //used to send data to shaders
 			pipelineLayoutInfo.pPushConstantRanges = nullptr;
 		}
+	};
+
+	struct PipelineSpec
+	{
+		VkRenderPass renderpass;
+		uint32_t width, height;  
 	};
 
 	struct PipelineConfigInfo
@@ -78,7 +85,7 @@ namespace cy3d
 
 	public:
 		VulkanPipeline(VulkanContext& context, PipelineConfigInfo& config, PipelineLayoutConfigInfo& layoutInfo);
-		VulkanPipeline(VulkanContext& context, PipelineConfigInfo& config, PipelineLayoutConfigInfo& layoutInfo);
+		VulkanPipeline(VulkanContext& context, const VulkanShader& shader, const PipelineSpec& spec);
 		~VulkanPipeline();
 
 		//delete copy methods
@@ -93,10 +100,13 @@ namespace cy3d
 		/*
 		* PUBLIC STATIC METHODS
 		*/
+		static void defaultPipelineConfigInfo(const PipelineSpec& spec, PipelineConfigInfo& outConfig);
 		static void defaultPipelineConfigInfo(PipelineConfigInfo& configInfo, uint32_t width, uint32_t height);
 
 	private:
-
+		void init(const VulkanShader& shader, const PipelineSpec& spec);
+		void createLayout(const VulkanShader& shader);
+		void createGraphicsPipeline(const VulkanShader& shader, const PipelineSpec& spec);
 		void cleanup();
 
 		void createGraphicsPipeline(PipelineConfigInfo& config, PipelineLayoutConfigInfo& layoutInfo);

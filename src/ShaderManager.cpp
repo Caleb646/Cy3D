@@ -10,7 +10,7 @@ namespace cy3d
 
 	bool ShaderManager::add(const std::string& directory)
 	{
-		Ref<VulkanShader> shader = std::make_shared<VulkanShader>(directory);
+		Ref<VulkanShader> shader = std::make_shared<VulkanShader>(_context, directory);
 		_shaders[shader->getName()] = shader;
 		return true;
 	}

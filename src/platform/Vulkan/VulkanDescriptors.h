@@ -5,6 +5,7 @@
 
 #include "Vulkan.h"
 #include "VulkanBuffer.h"
+#include "VulkanShader.h"
 #include "Fwd.hpp"
 
 namespace cy3d
@@ -31,6 +32,7 @@ namespace cy3d
 
 	public:
 		VulkanDescriptorSetLayout(VulkanContext&);
+		VulkanDescriptorSetLayout(VulkanContext&, const VulkanShader& shader);
 		~VulkanDescriptorSetLayout();
 
 		VulkanDescriptorSetLayout& addBinding(uint32_t binding, VkDescriptorType descType, VkShaderStageFlags sFlags, uint32_t descCount = 1);
@@ -43,6 +45,9 @@ namespace cy3d
 			CY_ASSERT(_bindings.count(binding) == 1);
 			return _bindings.at(binding);
 		}
+
+	private:
+		void init(const VulkanShader& shader);
 	};
 
 	/**

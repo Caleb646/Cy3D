@@ -17,7 +17,15 @@ namespace cy3d
      *
      *
     */
-    VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(VulkanContext& context) : cyContext(context) {}
+    VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(VulkanContext& context) : cyContext(context)
+    {
+
+    }
+
+    VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(VulkanContext& context, const VulkanShader& shader) : cyContext(context)
+    {
+        init(shader);
+    }
 
     VulkanDescriptorSetLayout::~VulkanDescriptorSetLayout()
     {
@@ -52,6 +60,39 @@ namespace cy3d
         VK_CHECK(vkCreateDescriptorSetLayout(cyContext.getDevice()->device(), &layoutInfo, nullptr, &_layout));
 
         return *this;
+    }
+
+    void VulkanDescriptorSetLayout::init(const VulkanShader& shader)
+    {
+        const VulkanShader::shader_descriptors_info_type& dInfo = shader.getDescriptorSetsInfo();
+
+        for (const auto [dSetNumber, dMap] : dInfo)
+        {
+            for (const auto [uboName, uboInfo] : dMap.ubosInfo)
+            {
+                VkDescriptorSetLayoutBinding bindingInfo{};
+                bindingInfo.binding = uboInfo.binding;
+                bindingInfo.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                bindingInfo.descriptorCount = dMap.ubosInfo.size();
+                bindingInfo.stageFlags = uboInfo.stage;
+                bindingInfo.pImmutableSamplers = nullptr; // Optional
+                CY_ASSERT(_bindings.count(uboInfo.binding) == 0);
+                _bindings[uboInfo.binding] = bindingInfo;
+            }
+
+            for (const auto [samplerName, samplerInfo] : dMap.imageSamplersInfo)
+            {
+                VkDescriptorSetLayoutBinding bindingInfo{};
+                bindingInfo.binding = samplerInfo.binding;
+                bindingInfo.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                bindingInfo.descriptorCount = dMap.imageSamplersInfo.size();
+                bindingInfo.stageFlags = samplerInfo.stage;
+                bindingInfo.pImmutableSamplers = nullptr; // Optional
+                CY_ASSERT(_bindings.count(samplerInfo.binding) == 0);
+                _bindings[samplerInfo.binding] = bindingInfo;
+            }
+        }
+        build();
     }
 
     /**
