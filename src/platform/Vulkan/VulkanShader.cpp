@@ -10,59 +10,62 @@ namespace cy3d
 
 	void VulkanShader::init(const std::string& directory)
 	{
-		std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>> shaderData{};
-		readDirectory(directory, shaderData);
+		std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>> binary{};
+		readDirectory(directory);
+		compile(binary);
+		reflect(binary);
 	}
 
-	void VulkanShader::reflect()
+	void VulkanShader::reflect(std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>>& binary)
 	{
-		std::vector<uint32_t> spirv_binary = std::vector<uint32_t>();// load_spirv_file();
 
-		spirv_cross::CompilerGLSL glsl(std::move(spirv_binary));
-
-		// The SPIR-V is now parsed, and we can perform reflection on it.
-		spirv_cross::ShaderResources resources = glsl.get_shader_resources();
-
-		// Get all sampled images in the shader.
-		for (auto& resource : resources.sampled_images)
+		for (auto [stage, bin] : binary)
 		{
-			unsigned set = glsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
-			unsigned binding = glsl.get_decoration(resource.id, spv::DecorationBinding);
-			printf("Image %s at set = %u, binding = %u\n", resource.name.c_str(), set, binding);
+			spirv_cross::Compiler compiler(bin);
+			auto resources = compiler.get_shader_resources();
 
-			// Modify the decoration to prepare it for GLSL.
-			glsl.unset_decoration(resource.id, spv::DecorationDescriptorSet);
+			for (const auto& resource : resources.uniform_buffers)
+			{
+				const auto& name = resource.name;
+				auto& bufferType = compiler.get_type(resource.base_type_id);
+				int memberCount = (uint32_t)bufferType.member_types.size();
+				uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+				uint32_t descriptorSet = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+				uint32_t size = (uint32_t)compiler.get_declared_struct_size(bufferType);
 
-			// Some arbitrary remapping if we want.
-			glsl.set_decoration(resource.id, spv::DecorationBinding, set * 16 + binding);
+				CY_BASE_LOG_INFO("name: {0} binding {1} desc set {2} size: {3}", name, binding, descriptorSet, size);
+			}
 		}
-
-		// Set some options.
-		spirv_cross::CompilerGLSL::Options options;
-		options.version = 310;
-		options.es = true;
-		glsl.set_common_options(options);
-
-		// Compile to GLSL, ready to give to GL driver.
-		std::string source = glsl.compile();
+		
 	}
 
-	bool VulkanShader::compileShaders(std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>>& outShaderData)
+	bool VulkanShader::compile(std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>>& outShaderBinary)
 	{
-		/*shaderc::Compiler compiler;
+		shaderc::Compiler compiler;
 		shaderc::CompileOptions options;
 		options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2);
 		options.SetWarningsAsErrors();
-		options.SetGenerateDebugInfo();*/
+		options.SetGenerateDebugInfo();
 
-		for (auto [shaderStage, source] : outShaderData)
+		for (auto [stage, shaderData] : _source)
 		{
+			shaderc::SpvCompilationResult spirvBinary = compiler.CompileGlslToSpv(shaderData.source, vkShaderStageToShaderCStage(stage), shaderData.filepath.string().c_str(), options);
 
+			if (spirvBinary.GetCompilationStatus() != shaderc_compilation_status_success)
+			{
+				CY_BASE_LOG_ERROR(spirvBinary.GetErrorMessage());
+				CY_ASSERT(false);
+			}
+			const uint8_t* begin = reinterpret_cast<const uint8_t*>(spirvBinary.cbegin());
+			const uint8_t* end = reinterpret_cast<const uint8_t*>(spirvBinary.cend());
+			const ptrdiff_t size = end - begin;
+
+			outShaderBinary[stage] = std::vector<uint32_t>(spirvBinary.cbegin(), spirvBinary.cend());
 		}
 		return true;
 	}
 
-	bool VulkanShader::readDirectory(const std::string& directory, std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>>& outShaderData)
+	bool VulkanShader::readDirectory(const std::string& directory)
 	{
 
 		CY_ASSERT(std::filesystem::exists(directory));
@@ -70,57 +73,87 @@ namespace cy3d
 
 		for (const auto& file : std::filesystem::directory_iterator(directory))
 		{
-			auto& path = file.path();
-			LOG_INFO((const char*)path.filename().c_str());
-			LOG_INFO((const char*)path.extension().c_str());
+			const auto& path = file.path();
+			//set name to be the filename
+			_name = path.filename().string();
+			CY_BASE_LOG_INFO("Filename: {0}", path.filename().string());
+			CY_BASE_LOG_INFO("Extension: {0}", path.extension().string());
 
 			if (isFileType(path, VERT_EXTENSION))
 			{
-				CY_ASSERT(outShaderData.count(VK_SHADER_STAGE_VERTEX_BIT) == 0); //multiple vert shaders cant be in the same directory
-				outShaderData[VK_SHADER_STAGE_VERTEX_BIT] = std::vector<uint32_t>();
-				readFile(path, outShaderData[VK_SHADER_STAGE_VERTEX_BIT]);
+				CY_ASSERT(_source.count(VK_SHADER_STAGE_VERTEX_BIT) == 0); //multiple vert shaders cant be in the same directory
+				ShaderData{ std::string(), path };
+				_source[VK_SHADER_STAGE_VERTEX_BIT] = ShaderData{ std::string(), path };
+				readFile(_source[VK_SHADER_STAGE_VERTEX_BIT]);
 			}
 			else if (isFileType(path, FRAG_EXTENSION))
 			{
-				CY_ASSERT(outShaderData.count(VK_SHADER_STAGE_FRAGMENT_BIT) == 0); //multiple vert shaders cant be in the same directory
-				outShaderData[VK_SHADER_STAGE_FRAGMENT_BIT] = std::vector<uint32_t>();
-				readFile(path, outShaderData[VK_SHADER_STAGE_FRAGMENT_BIT]);
+				CY_ASSERT(_source.count(VK_SHADER_STAGE_FRAGMENT_BIT) == 0); //multiple frag shaders cant be in the same directory
+				_source[VK_SHADER_STAGE_FRAGMENT_BIT] = ShaderData{ std::string(), path };
+				readFile(_source[VK_SHADER_STAGE_FRAGMENT_BIT]);
 			}
 			else
 			{
-				CY_ASSERT(false); //unsupported shader type in directory
+				CY_BASE_LOG_ERROR("Extension not found: {0}", path.string());
+				CY_ASSERT(false);
 			}
 		}
 		return true;
 	}
 
-	bool VulkanShader::readFile(const std::filesystem::path& filepath, std::vector<uint32_t>& outShaderData)
+	bool VulkanShader::readFile(ShaderData& data)
 	{
-		FILE* file;
-		errno_t err = fopen_s(&file, (const char*)filepath.relative_path().c_str(), "rb");
+		std::string result;
+		std::ifstream file(data.filepath, std::ios::in | std::ios::binary);
+		if (file)
+		{
+			file.seekg(0, std::ios::end);
+			result.resize(file.tellg());
+			file.seekg(0, std::ios::beg);
+			file.read(&result[0], result.size());
+			data.source = result;
+		}
+		else
+		{
+			CY_BASE_LOG_ERROR("Failed to open file: {0}", data.filepath.string());
+		}
+		file.close();
+		return true;
+
+		/*FILE* file;
+		errno_t err = fopen_s(&file, filepath.string().c_str(), "rb");
 		if (!err)
 		{
 			fseek(file, 0, SEEK_END);
 			uint64_t size = ftell(file);
 			fseek(file, 0, SEEK_SET);
-			outShaderData.resize(size / sizeof(uint32_t));
+			outSource.resize(size / sizeof(uint32_t));
 			fread(outShaderData.data(), sizeof(uint32_t), outShaderData.size(), file);
 			fclose(file);
-		}
-		else
-		{
-			LOG_ERROR(err + "");
-		}
-		return true;
+			return true;
+		}	*/
+		//CY_BASE_LOG_ERROR("Failed to open file: {0}", filepath.relative_path().string());
+		//return false;
 	}
 
 	bool VulkanShader::isFileType(const std::filesystem::path& filepath, const std::string& type)
 	{
-		if (filepath.filename().string().find(type) != std::string::npos)
+		if (filepath.extension().string().find(type) != std::string::npos)
 		{
 			return true;
 		}
-		LOG_WARNING("Extension not found.");
 		return false;
+	}
+
+	shaderc_shader_kind VulkanShader::vkShaderStageToShaderCStage(VkShaderStageFlagBits stage)
+	{
+		switch (stage)
+		{
+			case VK_SHADER_STAGE_VERTEX_BIT:    return shaderc_vertex_shader;
+			case VK_SHADER_STAGE_FRAGMENT_BIT:  return shaderc_fragment_shader;
+			case VK_SHADER_STAGE_COMPUTE_BIT:   return shaderc_compute_shader;
+		}
+		CY_ASSERT(false);
+		return static_cast<shaderc_shader_kind>(0);
 	}
 }

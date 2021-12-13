@@ -133,8 +133,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)deps\libraries\glfw;$(SolutionDir)deps\libraries\shaderc\debug;$(SolutionDir)deps\libraries\assimp;$(SolutionDir)deps\libraries\spirv_cross;$(SolutionDir)deps\libraries\vulkan</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;user32.lib;gdi32.lib;shell32.lib;msvcrtd.lib;vcruntimed.lib;IrrXMLd.lib;zlibstaticd.lib;assimp-vc142-mtd.lib;spirv-cross-cored.lib;spirv-cross-glsld.lib;spirv-cross-cppd.lib;spirv-cross-cd.lib;shaderc_combinedd.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)deps\libraries\glfw;$(SolutionDir)deps\libraries\shaderc\debug;$(SolutionDir)deps\libraries\assimp;$(SolutionDir)deps\libraries\spdlog;$(SolutionDir)deps\libraries\spirv_cross;$(SolutionDir)deps\libraries\vulkan</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;user32.lib;gdi32.lib;shell32.lib;msvcrtd.lib;vcruntimed.lib;IrrXMLd.lib;zlibstaticd.lib;assimp-vc142-mtd.lib;spirv-cross-cored.lib;spirv-cross-glsld.lib;spirv-cross-cppd.lib;spirv-cross-cd.lib;shaderc_combinedd.lib;spdlogd.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -269,6 +269,7 @@
   <ItemGroup>
     <ClInclude Include="define.h" />
     <ClInclude Include="src\core\core.h" />
+    <ClInclude Include="src\core\CoreLogging.h" />
     <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\Model.h" />
     <ClInclude Include="pch.h" />

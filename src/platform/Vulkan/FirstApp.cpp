@@ -22,7 +22,7 @@ namespace cy3d
 
 		camera.reset(Camera::create3D(cyContext, 90.0f, cyContext.getWindowWidth(), cyContext.getWindowHeight(), 0.1f, 100.0f));
 
-		//VulkanShader shader(cyContext, "resources/shaders");
+		VulkanShader shader(cyContext, "resources/shaders/simpleshaders");
 
 		while (!cyContext.getWindow()->shouldClose())
 		{

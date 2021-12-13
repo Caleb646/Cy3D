@@ -2,6 +2,7 @@
 #include "SceneRenderer.h"
 #include "platform/Vulkan/VulkanSwapChain.h"
 #include "platform/Vulkan/VulkanRenderer.h"
+#include "core/CoreLogging.h"
 
 namespace cy3d
 {
