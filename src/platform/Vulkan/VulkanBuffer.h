@@ -16,9 +16,6 @@ namespace cy3d
         m3d::vec3f pos;
         m3d::vec3f color;
         m3d::vec3f texCoord;
-        //glm::vec3 pos;
-        //glm::vec3 color;
-        //glm::vec2 texCoord;
 
         /**
          * @brief A vertex binding describes at which rate to load data from memory throughout the vertices.
