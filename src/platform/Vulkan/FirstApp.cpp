@@ -49,10 +49,10 @@ namespace cy3d
 	{
 		sceneRenderer->beginScene(camera);
 		sceneRenderer->endScene();
-		/*cyContext.getVulkanRenderer()->beginFrame();
-		cyContext.getVulkanRenderer()->beginRenderPass();
-		cyContext.getVulkanRenderer()->endRenderPass();
-		cyContext.getVulkanRenderer()->endFrame();*/
+		/*cyContext.getRenderer()->beginFrame();
+		cyContext.getRenderer()->beginRenderPass();
+		cyContext.getRenderer()->endRenderPass();
+		cyContext.getRenderer()->endFrame();*/
 
 
 	}

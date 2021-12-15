@@ -36,21 +36,15 @@ namespace cy3d
 
 	class SceneRenderer
 	{
-	public:
-		template<typename T>
-		using ptr = std::unique_ptr<T>;
-
 	private:
 		VulkanContext& _context;
-		ptr<VulkanPipeline> _pipeline{ nullptr };
-		ptr<VulkanDescriptorPool> _descriptorPool{ nullptr };
-		ptr<VulkanDescriptorSetLayout> _descriptorLayout{ nullptr };
-		ptr<VulkanDescriptorSets> _descriptorSets{ nullptr };
-		std::vector<ptr<VulkanBuffer>> _cameraUbos;
-		ptr<VulkanTexture> _texture{ nullptr };
+		Scope<VulkanPipeline> _pipeline{ nullptr };
+		Scope<VulkanDescriptorSets> _descriptorSets{ nullptr };
+		std::vector<Scope<VulkanBuffer>> _cameraUbos;
+		Scope<VulkanTexture> _texture{ nullptr };
 
-		ptr<VulkanBuffer> _vertexBuffer{ nullptr };
-		ptr<VulkanBuffer> _indexBuffer{ nullptr };
+		Scope<VulkanBuffer> _vertexBuffer{ nullptr };
+		Scope<VulkanBuffer> _indexBuffer{ nullptr };
 		
 		std::vector<Mesh> _meshes;
 		bool _isSceneStart{ false };

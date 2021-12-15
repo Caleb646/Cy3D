@@ -77,14 +77,15 @@ namespace cy3d
 	{
 	private:
 		//VulkanDevice& cyDevice;
-		VulkanContext& cyContext;
+		VulkanContext& _context;
 		VkPipeline graphicsPipeline{ nullptr };
 		VkPipelineLayout _pipelineLayout{ nullptr };
-		VkShaderModule vertShaderModule{ nullptr };
-		VkShaderModule fragShaderModule{ nullptr };
+
+		std::vector<VkPipelineShaderStageCreateInfo> _shaderStages;
+		std::vector<VkDescriptorSetLayout> _descriptorSetLayouts;
+
 
 	public:
-		VulkanPipeline(VulkanContext& context, PipelineConfigInfo& config, PipelineLayoutConfigInfo& layoutInfo);
 		VulkanPipeline(VulkanContext& context, const Ref<VulkanShader>& shader, const PipelineSpec& spec);
 		~VulkanPipeline();
 
@@ -94,6 +95,7 @@ namespace cy3d
 		VulkanPipeline(VulkanPipeline&&) = delete;
 		VulkanPipeline& operator=(const VulkanPipeline&) = delete;
 
+		bool recreate(const PipelineSpec& spec);
 		void bind(VkCommandBuffer commandBuffer);
 		VkPipeline getGraphicsPipeline() { return graphicsPipeline; }
 		VkPipelineLayout getPipelineLayout() { return _pipelineLayout; }
@@ -101,21 +103,12 @@ namespace cy3d
 		* PUBLIC STATIC METHODS
 		*/
 		static void defaultPipelineConfigInfo(const PipelineSpec& spec, PipelineConfigInfo& outConfig);
-		static void defaultPipelineConfigInfo(PipelineConfigInfo& configInfo, uint32_t width, uint32_t height);
 
 	private:
 		void init(const Ref<VulkanShader>& shader, const PipelineSpec& spec);
-		void createLayout(const Ref<VulkanShader>& shader);
-		void createGraphicsPipeline(const Ref<VulkanShader>& shader, const PipelineSpec& spec);
+		void createLayout();
+		void createGraphicsPipeline(const PipelineSpec& spec);
 		void cleanup();
-
-		void createGraphicsPipeline(PipelineConfigInfo& config, PipelineLayoutConfigInfo& layoutInfo);
-		void createShaderModule(const std::vector<char>& code, VkShaderModule* shaderModule);
-
-		/*
-		* PRIVATE STATIC METHODS
-		*/
-		static std::vector<char> readFile(const std::string& filename);
 	};
 }
 

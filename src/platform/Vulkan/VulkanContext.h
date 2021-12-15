@@ -43,7 +43,7 @@ namespace cy3d
 		VulkanDevice* getDevice();
 		VulkanAllocator* getAllocator();
 		VulkanSwapChain* getSwapChain();
-		VulkanRenderer* getVulkanRenderer();
+		VulkanRenderer* getRenderer();
 
 		Ref<VulkanDescriptorPoolManager> getDescriptorPoolManager();
 		Ref<ShaderManager> getShaderManager();

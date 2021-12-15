@@ -19,8 +19,8 @@ namespace cy3d
 	{
 
 		CY_ASSERT(isSceneStart() == false);
-		_context.getVulkanRenderer()->beginFrame();
-		if (_context.getVulkanRenderer()->needsResize())
+		_context.getRenderer()->beginFrame();
+		if (_context.getRenderer()->needsResize())
 		{
 			recreate(); 
 			return;
@@ -33,7 +33,7 @@ namespace cy3d
 		cd.view = m3d::Mat4f::getLookAt(camera->pos, { 0.0f, 0.0f, 0.0f }, camera->cUp);
 		cd.proj = camera->projectionMatrix;*/
 		cd.update(camera.get(), _context.getWindowWidth(), _context.getWindowHeight());
-		_cameraUbos[_context.getVulkanRenderer()->getCurrentImageIndex()]->setData(&cd, 0);
+		_cameraUbos[_context.getRenderer()->getCurrentImageIndex()]->setData(&cd, 0);
 		//TESTING ONLY
 		//testUpdateUbos();
 		//END
@@ -45,8 +45,8 @@ namespace cy3d
 
 		flush();
 
-		_context.getVulkanRenderer()->endFrame();
-		if (_context.getVulkanRenderer()->needsResize()) recreate();
+		_context.getRenderer()->endFrame();
+		if (_context.getRenderer()->needsResize()) recreate();
 
 		_isSceneStart = false;
 	}
@@ -66,7 +66,6 @@ namespace cy3d
 			_cameraUbos[i].reset(new VulkanBuffer(_context, cameraInfo));
 		}
 		_texture.reset(new VulkanTexture(_context, "resources/textures/viking_room.png"));
-
 		_descriptorSets.reset(new VulkanDescriptorSets(_context, shader, numImages));
 
 
@@ -83,69 +82,24 @@ namespace cy3d
 		spec.renderpass = _context.getSwapChain()->getRenderPass();
 		_pipeline.reset(new VulkanPipeline(_context, shader, spec));
 
-
-
-		//uint32_t numImages = static_cast<uint32_t>(_context.getSwapChain()->imageCount());
-		//_descriptorPool.reset(new VulkanDescriptorPool(_context,
-		//	{
-		//		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, numImages },
-		//		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, numImages }
-		//	}
-		//));
-
-		////_descriptorLayout.reset(new VulkanDescriptorSetLayout(_context));
-		///*_descriptorLayout->
-		//	 addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-		//	.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-		//	.build();*/
-
-		////_texture.reset(new VulkanTexture(_context, "resources/textures/viking_room.png"));
-		//_descriptorSets.reset(new VulkanDescriptorSets(_context, _descriptorPool.get(), _descriptorLayout.get(), numImages));
-
-		///*_cameraUbos.resize(numImages);
-		//BufferCreateInfo uniformBuffInfo = BufferCreateInfo::createUBOInfo(static_cast<VkDeviceSize>(sizeof(CameraUboData)));
-		//for (std::size_t i = 0; i < numImages; i++)
-		//{
-		//	_cameraUbos[i].reset(new VulkanBuffer(_context, uniformBuffInfo, 1));
-		//}*/
-
-		///*
-		//* 
-		//* sets info = shader.getalldescsets(0
-		//* 
-		//* for name, info in sets_info.ubos:	
-		//*
-		//*/
-
-		//for (std::size_t i = 0; i < numImages; i++)
-		//{
-		//	_descriptorSets->writeBufferToSet(_cameraUbos[i]->descriptorInfo(), i, 0);
-		//	_descriptorSets->writeImageToSet(_texture->descriptorInfo(), i, 1);
-		//}
-		//_descriptorSets->updateSets();
-
-		//createPipeline();
-
-
 		//TESTING ONLY
 		createTestVertices();
 	}
 
 	void SceneRenderer::createPipeline()
 	{
-		//set up pipeline
-		PipelineConfigInfo pipelineConfig{};
-		VulkanPipeline::defaultPipelineConfigInfo(pipelineConfig, _context.getWindowWidth(), _context.getWindowHeight());
-		pipelineConfig.renderPass = _context.getSwapChain()->getRenderPass();
-		PipelineLayoutConfigInfo layoutInfo(&_descriptorLayout->getLayout());
-		_pipeline.reset(new VulkanPipeline(_context, pipelineConfig, layoutInfo));
+
 	}
 
 	void SceneRenderer::recreate()
 	{
-		_pipeline.reset();
-		createPipeline();
-		_context.getVulkanRenderer()->resetNeedsResize();
+		PipelineSpec spec{};
+		spec.width = _context.getWindowWidth();
+		spec.height = _context.getWindowHeight();
+		spec.renderpass = _context.getSwapChain()->getRenderPass();
+		_pipeline->recreate(spec);
+
+		_context.getRenderer()->resetNeedsResize();
 	}
 
 	void SceneRenderer::flush()
@@ -158,7 +112,7 @@ namespace cy3d
 	void SceneRenderer::basicRenderPass()
 	{
 		CY_ASSERT(isSceneStart() == true);
-		_context.getVulkanRenderer()->beginRenderPass(_context.getSwapChain()->getRenderPass());
+		_context.getRenderer()->beginRenderPass(_context.getSwapChain()->getRenderPass());
 
 		//TESTING ONLY
 		testDraw();
@@ -168,7 +122,7 @@ namespace cy3d
 		//	//TODO draw meshs here.
 		//}
 
-		_context.getVulkanRenderer()->endRenderPass();
+		_context.getRenderer()->endRenderPass();
 	}
 
 
@@ -209,7 +163,7 @@ namespace cy3d
 		//FOR TESTING ONLY
 		UniformBufferObject ubo{};
 		ubo.update(_context.getSwapChain()->getWidth(), _context.getSwapChain()->getHeight());
-		_cameraUbos[_context.getVulkanRenderer()->getCurrentImageIndex()]->setData(&ubo, 0);
+		_cameraUbos[_context.getRenderer()->getCurrentImageIndex()]->setData(&ubo, 0);
 		//END
 	}
 
@@ -227,8 +181,8 @@ namespace cy3d
 			* The second parameter specifies if the pipeline object is a graphics or compute pipeline.
 			* We've now told Vulkan which operations to execute in the graphics pipeline and which attachment to use in the fragment shader,
 		*/
-		_pipeline->bind(_context.getVulkanRenderer()->getCurrentCommandBuffer());
-		vkCmdBindDescriptorSets(_context.getVulkanRenderer()->getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline->getPipelineLayout(), 0, 1, _descriptorSets->at(_context.getCurrentFrameIndex()).data(), 0, nullptr);
+		_pipeline->bind(_context.getRenderer()->getCurrentCommandBuffer());
+		vkCmdBindDescriptorSets(_context.getRenderer()->getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline->getPipelineLayout(), 0, 1, _descriptorSets->at(_context.getCurrentFrameIndex()).data(), 0, nullptr);
 
 		/**
 			* The vkCmdBindVertexBuffers function is used to bind vertex buffers to bindings, like the
@@ -237,7 +191,7 @@ namespace cy3d
 			* two parameters specify the array of vertex buffers to bind and the byte offsets to start reading
 			* vertex data from.
 		*/
-		vkCmdBindVertexBuffers(_context.getVulkanRenderer()->getCurrentCommandBuffer(), 0, 1, vertexBuffers, offsets);
+		vkCmdBindVertexBuffers(_context.getRenderer()->getCurrentCommandBuffer(), 0, 1, vertexBuffers, offsets);
 
 
 		/**
@@ -247,9 +201,9 @@ namespace cy3d
 		//vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer.get()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
 		//Binding with the vertex and index buffers being combined.
-		//vkCmdBindIndexBuffer(_context.getVulkanRenderer()->getCurrentCommandBuffer(), _omniBuffer->getBuffer(), _omniBuffer->offset(), VK_INDEX_TYPE_UINT16);
+		//vkCmdBindIndexBuffer(_context.getRenderer()->getCurrentCommandBuffer(), _omniBuffer->getBuffer(), _omniBuffer->offset(), VK_INDEX_TYPE_UINT16);
 
-		vkCmdBindIndexBuffer(_context.getVulkanRenderer()->getCurrentCommandBuffer(), _indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(_context.getRenderer()->getCurrentCommandBuffer(), _indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
 		/**
 			* vkCmdDraw has the following parameters, aside from the command buffer:
@@ -261,7 +215,7 @@ namespace cy3d
 		*/
 		//vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertexBuffer.get()->size()), 1, 0, 0); 
 
-		vkCmdDrawIndexed(_context.getVulkanRenderer()->getCurrentCommandBuffer(), static_cast<uint32_t>(_indexBuffer->count()), 1, 0, 0, 0);
+		vkCmdDrawIndexed(_context.getRenderer()->getCurrentCommandBuffer(), static_cast<uint32_t>(_indexBuffer->count()), 1, 0, 0, 0);
 
 		//vkCmdEndRenderPass(commandBuffers[i]);
 

@@ -61,7 +61,7 @@ namespace cy3d
 		return cySwapChain.get();
 	}
 
-	VulkanRenderer* VulkanContext::getVulkanRenderer()
+	VulkanRenderer* VulkanContext::getRenderer()
 	{
 		CY_ASSERT(vulkanRenderer.get() != nullptr);
 		return vulkanRenderer.get();
