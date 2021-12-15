@@ -23,6 +23,7 @@ namespace cy3d
 		std::unique_ptr<VulkanAllocator> vulkanAllocator{ nullptr };
 		std::unique_ptr<VulkanSwapChain> cySwapChain{ nullptr };
 		std::unique_ptr<VulkanRenderer> vulkanRenderer{ nullptr };
+		Ref<VulkanDescriptorPoolManager> descriptorPoolManager{ nullptr };
 		Ref<ShaderManager> shaderManager{ nullptr };
 
 	public:
@@ -44,6 +45,7 @@ namespace cy3d
 		VulkanSwapChain* getSwapChain();
 		VulkanRenderer* getVulkanRenderer();
 
+		Ref<VulkanDescriptorPoolManager> getDescriptorPoolManager();
 		Ref<ShaderManager> getShaderManager();
 
 		/**

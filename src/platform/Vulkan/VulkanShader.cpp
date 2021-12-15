@@ -110,8 +110,6 @@ namespace cy3d
 				{
 					_descriptorSetsInfo[descriptorSet] = ShaderDescriptorSetInfo();
 				}
-
-				_descriptorSetsInfo[descriptorSet] = ShaderDescriptorSetInfo();
 				ShaderUBOSetInfo uboInfo{};
 				uboInfo.binding = binding;
 				uboInfo.descriptorSet = descriptorSet;
@@ -183,11 +181,9 @@ namespace cy3d
 		for (const auto& file : std::filesystem::directory_iterator(directory))
 		{
 			const auto& path = file.path();
-			//set name to be the filename
+			//set name to be the filename it will be strimmed later
 			_name = path.filename().string();
 			CY_BASE_LOG_INFO("Filename: {0}", path.filename().string());
-			CY_BASE_LOG_INFO("Extension: {0}", path.extension().string());
-
 			if (isFileType(path, VERT_EXTENSION))
 			{
 				CY_ASSERT(_source.count(VK_SHADER_STAGE_VERTEX_BIT) == 0); //multiple vert shaders cant be in the same directory

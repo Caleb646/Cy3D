@@ -85,7 +85,7 @@ namespace cy3d
 
 	public:
 		VulkanPipeline(VulkanContext& context, PipelineConfigInfo& config, PipelineLayoutConfigInfo& layoutInfo);
-		VulkanPipeline(VulkanContext& context, const VulkanShader& shader, const PipelineSpec& spec);
+		VulkanPipeline(VulkanContext& context, const Ref<VulkanShader>& shader, const PipelineSpec& spec);
 		~VulkanPipeline();
 
 		//delete copy methods
@@ -104,9 +104,9 @@ namespace cy3d
 		static void defaultPipelineConfigInfo(PipelineConfigInfo& configInfo, uint32_t width, uint32_t height);
 
 	private:
-		void init(const VulkanShader& shader, const PipelineSpec& spec);
-		void createLayout(const VulkanShader& shader);
-		void createGraphicsPipeline(const VulkanShader& shader, const PipelineSpec& spec);
+		void init(const Ref<VulkanShader>& shader, const PipelineSpec& spec);
+		void createLayout(const Ref<VulkanShader>& shader);
+		void createGraphicsPipeline(const Ref<VulkanShader>& shader, const PipelineSpec& spec);
 		void cleanup();
 
 		void createGraphicsPipeline(PipelineConfigInfo& config, PipelineLayoutConfigInfo& layoutInfo);

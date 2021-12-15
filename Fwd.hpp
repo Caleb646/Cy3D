@@ -15,6 +15,8 @@ namespace cy3d
 
 	class VulkanRenderer;
 
+	class VulkanDescriptorPoolManager;
+
 	class ShaderManager;
 
 	class SceneRenderer;

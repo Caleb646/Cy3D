@@ -53,49 +53,78 @@ namespace cy3d
 
 	void SceneRenderer::init()
 	{
+		uint32_t numImages = static_cast<uint32_t>(_context.getSwapChain()->imageCount());
 
 		_context.getShaderManager()->add("resources/shaders/simpleshaders");
 		const auto& shader = _context.getShaderManager()->get("SimpleShader");
 
-		uint32_t numImages = static_cast<uint32_t>(_context.getSwapChain()->imageCount());
-		_descriptorPool.reset(new VulkanDescriptorPool(_context,
-			{
-				{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, numImages },
-				{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, numImages }
-			}
-		));
-
-		_descriptorLayout.reset(new VulkanDescriptorSetLayout(_context));
-		_descriptorLayout->
-			 addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-			.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-			.build();
-
-		_texture.reset(new VulkanTexture(_context, "resources/textures/viking_room.png"));
-		_descriptorSets.reset(new VulkanDescriptorSets(_context, _descriptorPool.get(), _descriptorLayout.get(), numImages));
+		BufferCreateInfo cameraInfo = shader->getDescriptorSetUBOInfo(0, "CameraUboData").createInfo;
 
 		_cameraUbos.resize(numImages);
-		BufferCreateInfo uniformBuffInfo = BufferCreateInfo::createUBOInfo(static_cast<VkDeviceSize>(sizeof(CameraUboData)));
 		for (std::size_t i = 0; i < numImages; i++)
 		{
-			_cameraUbos[i].reset(new VulkanBuffer(_context, uniformBuffInfo, 1));
+			_cameraUbos[i].reset(new VulkanBuffer(_context, cameraInfo));
 		}
-		/*
-		* 
-		* sets info = shader.getalldescsets(0
-		* 
-		* for name, info in sets_info.ubos:
-		*	
-		
-		*/
+		_texture.reset(new VulkanTexture(_context, "resources/textures/viking_room.png"));
+
+		_descriptorSets.reset(new VulkanDescriptorSets(_context, shader, numImages));
+
+
 		for (std::size_t i = 0; i < numImages; i++)
 		{
-			_descriptorSets->writeBufferToSet(_cameraUbos[i]->descriptorInfo(), i, 0);
-			_descriptorSets->writeImageToSet(_texture->descriptorInfo(), i, 1);
+			_descriptorSets->writeBufferToSet(_cameraUbos[i]->descriptorInfo(), i, 0, 0);
+			_descriptorSets->writeImageToSet(_texture->descriptorInfo(), i, 0, 1);
 		}
 		_descriptorSets->updateSets();
 
-		createPipeline();
+		PipelineSpec spec{};
+		spec.width = _context.getWindowWidth();
+		spec.height = _context.getWindowHeight();
+		spec.renderpass = _context.getSwapChain()->getRenderPass();
+		_pipeline.reset(new VulkanPipeline(_context, shader, spec));
+
+
+
+		//uint32_t numImages = static_cast<uint32_t>(_context.getSwapChain()->imageCount());
+		//_descriptorPool.reset(new VulkanDescriptorPool(_context,
+		//	{
+		//		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, numImages },
+		//		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, numImages }
+		//	}
+		//));
+
+		////_descriptorLayout.reset(new VulkanDescriptorSetLayout(_context));
+		///*_descriptorLayout->
+		//	 addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+		//	.addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+		//	.build();*/
+
+		////_texture.reset(new VulkanTexture(_context, "resources/textures/viking_room.png"));
+		//_descriptorSets.reset(new VulkanDescriptorSets(_context, _descriptorPool.get(), _descriptorLayout.get(), numImages));
+
+		///*_cameraUbos.resize(numImages);
+		//BufferCreateInfo uniformBuffInfo = BufferCreateInfo::createUBOInfo(static_cast<VkDeviceSize>(sizeof(CameraUboData)));
+		//for (std::size_t i = 0; i < numImages; i++)
+		//{
+		//	_cameraUbos[i].reset(new VulkanBuffer(_context, uniformBuffInfo, 1));
+		//}*/
+
+		///*
+		//* 
+		//* sets info = shader.getalldescsets(0
+		//* 
+		//* for name, info in sets_info.ubos:	
+		//*
+		//*/
+
+		//for (std::size_t i = 0; i < numImages; i++)
+		//{
+		//	_descriptorSets->writeBufferToSet(_cameraUbos[i]->descriptorInfo(), i, 0);
+		//	_descriptorSets->writeImageToSet(_texture->descriptorInfo(), i, 1);
+		//}
+		//_descriptorSets->updateSets();
+
+		//createPipeline();
 
 
 		//TESTING ONLY
@@ -199,7 +228,7 @@ namespace cy3d
 			* We've now told Vulkan which operations to execute in the graphics pipeline and which attachment to use in the fragment shader,
 		*/
 		_pipeline->bind(_context.getVulkanRenderer()->getCurrentCommandBuffer());
-		vkCmdBindDescriptorSets(_context.getVulkanRenderer()->getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline->getPipelineLayout(), 0, 1, &_descriptorSets->at(_context.getCurrentFrameIndex()), 0, nullptr);
+		vkCmdBindDescriptorSets(_context.getVulkanRenderer()->getCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline->getPipelineLayout(), 0, 1, _descriptorSets->at(_context.getCurrentFrameIndex()).data(), 0, nullptr);
 
 		/**
 			* The vkCmdBindVertexBuffers function is used to bind vertex buffers to bindings, like the

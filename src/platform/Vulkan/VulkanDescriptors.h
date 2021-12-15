@@ -83,6 +83,35 @@ namespace cy3d
 		void allocateDescriptorSets(const VkDescriptorSetLayout* layouts, VkDescriptorSet* sets, uint32_t count) const;
 	};
 
+	/**
+	 *
+	 *
+	 * Pool Manager
+	 *
+	 *
+	*/
+	class VulkanDescriptorPoolManager
+	{
+	private:
+		VulkanContext& _context;
+		std::vector<VkDescriptorPool> _usedPools;
+		std::vector<VkDescriptorPool> _openPools;
+		VkDescriptorPool _currentPool{ VK_NULL_HANDLE };
+	public:
+		VulkanDescriptorPoolManager(VulkanContext& context);
+		~VulkanDescriptorPoolManager();
+
+		bool allocateSets(std::vector<VkDescriptorSet>& sets, VkDescriptorSetLayout layout);
+		bool freeSets(uint32_t poolId, std::vector<VkDescriptorSet>& descriptors);
+		bool resetPools();
+
+	private:
+		void init();
+		bool cleanup();
+		VkDescriptorPool createPool();
+		VkDescriptorPool getPool();
+	};
+
 
 	/**
 	 *
@@ -109,14 +138,26 @@ namespace cy3d
 		sets_type _sets;
 		writes_type _writes;
 
+		std::unordered_map<uint32_t, std::vector<VkDescriptorSet>> _descriptorSets; //  frame - set id - descriptor set
+
 	public:
+		VulkanDescriptorSets(VulkanContext& context, const Ref<VulkanShader>& shader, uint32_t frames);
 		VulkanDescriptorSets(VulkanContext& context, const VulkanDescriptorPool* pool, const VulkanDescriptorSetLayout* layout, uint32_t count);
+
+		bool writeBufferToSet(const VkDescriptorBufferInfo& info, std::size_t frame,  std::size_t setId, uint32_t bindingIndex);
+		bool writeImageToSet(const VkDescriptorImageInfo& info, std::size_t frame, std::size_t setId, uint32_t bindingIndex);
 
 		VulkanDescriptorSets& writeBufferToSet(const VkDescriptorBufferInfo& info, std::size_t index, uint32_t bindingIndex);
 		VulkanDescriptorSets& writeImageToSet(const VkDescriptorImageInfo& info, std::size_t index, uint32_t bindingIndex);
 		VulkanDescriptorSets& updateSets();
 
-		value_type& at(std::size_t i)
+		std::vector<VkDescriptorSet>& at(std::size_t frame)
+		{
+			CY_ASSERT(frame < _descriptorSets.size());
+			return _descriptorSets.at(frame);
+		}
+
+		/*value_type& at(std::size_t i)
 		{
 			CY_ASSERT(i < _sets.size());
 			return _sets.at(i);
@@ -127,10 +168,12 @@ namespace cy3d
 		{
 			CY_ASSERT(i < _sets.size());
 			return _sets[i];
-		}
+		}*/
 
 		iterator_type begin() { return _sets.begin(); }
 		iterator_type end() { return _sets.end(); }
+	private:
+		void init(const Ref<VulkanShader>& shader, uint32_t frames);
 
 	};
 }

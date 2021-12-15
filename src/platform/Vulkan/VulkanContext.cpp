@@ -7,6 +7,7 @@
 #include "VulkanAllocator.h"
 #include "VulkanSwapChain.h"
 #include "VulkanRenderer.h"
+#include "VulkanDescriptors.h"
 #include "../../src/ShaderManager.h"
 
 
@@ -66,6 +67,12 @@ namespace cy3d
 		return vulkanRenderer.get();
 	}
 
+	Ref<VulkanDescriptorPoolManager> VulkanContext::getDescriptorPoolManager()
+	{
+		CY_ASSERT(descriptorPoolManager.get() != nullptr);
+		return descriptorPoolManager;
+	}
+
 	Ref<ShaderManager> VulkanContext::getShaderManager()
 	{
 		CY_ASSERT(shaderManager.get() != nullptr);
@@ -82,6 +89,8 @@ namespace cy3d
 		emptyContext.vulkanAllocator.reset(new VulkanAllocator(emptyContext));
 		emptyContext.cySwapChain.reset(new VulkanSwapChain(emptyContext));
 		emptyContext.vulkanRenderer.reset(new VulkanRenderer(emptyContext));
+
+		emptyContext.descriptorPoolManager.reset(new VulkanDescriptorPoolManager(emptyContext));
 		emptyContext.shaderManager.reset(new ShaderManager(emptyContext));
 	}
 }

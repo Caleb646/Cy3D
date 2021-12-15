@@ -28,7 +28,7 @@ namespace cy3d
 		uint32_t binding;
 		uint32_t descriptorSet;
 		BufferCreateInfo createInfo;
-		VkShaderStageFlagBits stage { VK_SHADER_STAGE_ALL };
+		VkShaderStageFlagBits stage{ VK_SHADER_STAGE_ALL };
 	};
 
 	struct ShaderDescriptorSetInfo
@@ -42,24 +42,37 @@ namespace cy3d
 	{
 		//VK_SHADER_STAGE_VERTEX_BIT,
 		//VK_SHADER_STAGE_FRAGMENT_BIT
-	public:
-		using shader_descriptors_info_type = std::unordered_map<uint32_t, ShaderDescriptorSetInfo>;
-
 	private:
 		VulkanContext& _context;
 		std::string _name;
-		//uint32_t is the descriptor set the info refers to
-		shader_descriptors_info_type _descriptorSetsInfo;
+		//uint32_t is the descriptor set id the info refers to
+		std::unordered_map<uint32_t, ShaderDescriptorSetInfo> _descriptorSetsInfo;
 		std::unordered_map<VkShaderStageFlagBits, ShaderData> _source;
 		std::vector<VkPipelineShaderStageCreateInfo> _pipelineCreateInfo;
+		//index is the setId
 		std::vector<VkDescriptorSetLayout> _descriptorSetLayouts;
+		//std::unordered_map<uint32_t, std::unordered_map<uint32_t, VkDescriptorSet>> _descriptorSets;
 
 	public:
 		VulkanShader(VulkanContext& context, const std::string& shaderDirectory);
 
 		std::string getName() { return _name; }
-		shader_descriptors_info_type& getDescriptorSetsInfo() { return _descriptorSetsInfo; }
-		const shader_descriptors_info_type& getDescriptorSetsInfo() const { return _descriptorSetsInfo; }
+
+		ShaderUBOSetInfo getDescriptorSetUBOInfo(uint32_t setId, const std::string& name)
+		{ 
+			CY_ASSERT(_descriptorSetsInfo.count(setId) != 0);
+			CY_ASSERT(_descriptorSetsInfo[setId].ubosInfo.count(name) != 0);
+			return _descriptorSetsInfo.at(setId).ubosInfo.at(name);
+		}
+		const ShaderUBOSetInfo& getDescriptorSetUBOInfo(uint32_t setId, const std::string& name) const
+		{ 
+			CY_ASSERT(_descriptorSetsInfo.count(setId) != 0);
+			CY_ASSERT(_descriptorSetsInfo.at(setId).ubosInfo.count(name) != 0);
+			return _descriptorSetsInfo.at(setId).ubosInfo.at(name);
+		}
+
+		std::unordered_map<uint32_t, ShaderDescriptorSetInfo>& getDescriptorSetsInfo() { return _descriptorSetsInfo; }
+		const std::unordered_map<uint32_t, ShaderDescriptorSetInfo>& getDescriptorSetsInfo() const { return _descriptorSetsInfo; }
 
 		std::vector<VkPipelineShaderStageCreateInfo>& getPipelineCreateInfo() { return _pipelineCreateInfo; }
 		const std::vector<VkPipelineShaderStageCreateInfo>& getPipelineCreateInfo() const { return _pipelineCreateInfo; }

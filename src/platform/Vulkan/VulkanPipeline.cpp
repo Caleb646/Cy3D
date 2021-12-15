@@ -17,7 +17,7 @@ namespace cy3d
         createGraphicsPipeline(config, layoutInfo); 
     }
 
-    VulkanPipeline::VulkanPipeline(VulkanContext& context, const VulkanShader& shader, const PipelineSpec& spec) : cyContext(context)
+    VulkanPipeline::VulkanPipeline(VulkanContext& context, const Ref<VulkanShader>& shader, const PipelineSpec& spec) : cyContext(context)
     {
         init(shader, spec);
     }
@@ -27,27 +27,27 @@ namespace cy3d
         cleanup();
     }
 
-    void VulkanPipeline::init(const VulkanShader& shader, const PipelineSpec& spec)
+    void VulkanPipeline::init(const Ref<VulkanShader>& shader, const PipelineSpec& spec)
     {
         createLayout(shader);
         createGraphicsPipeline(shader, spec);
     }
 
-    void VulkanPipeline::createLayout(const VulkanShader& shader)
+    void VulkanPipeline::createLayout(const Ref<VulkanShader>& shader)
     {
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = shader.getDescriptorSetLayouts().size();
-        pipelineLayoutInfo.pSetLayouts = shader.getDescriptorSetLayouts().data();
+        pipelineLayoutInfo.setLayoutCount = shader->getDescriptorSetLayouts().size();
+        pipelineLayoutInfo.pSetLayouts = shader->getDescriptorSetLayouts().data();
         pipelineLayoutInfo.pushConstantRangeCount = 0; //used to send data to shaders
         pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
         VK_CHECK(vkCreatePipelineLayout(cyContext.getDevice()->device(), &pipelineLayoutInfo, nullptr, &_pipelineLayout));
     }
 
-    void VulkanPipeline::createGraphicsPipeline(const VulkanShader& shader, const PipelineSpec& spec)
+    void VulkanPipeline::createGraphicsPipeline(const Ref<VulkanShader>& shader, const PipelineSpec& spec)
     {
-        const auto& shaderStages = shader.getPipelineCreateInfo();
+        const auto& shaderStages = shader->getPipelineCreateInfo();
 
         auto bindingDescription = Vertex::getBindingDescription();
         auto attributeDescriptions = Vertex::getAttributeDescriptions();
@@ -76,7 +76,7 @@ namespace cy3d
         pipelineInfo.pDepthStencilState = &configInfo.depthStencilInfo;
 
         pipelineInfo.layout = _pipelineLayout;
-        pipelineInfo.renderPass = configInfo.renderPass;
+        pipelineInfo.renderPass = spec.renderpass;
         pipelineInfo.subpass = configInfo.subpass;
 
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;  // Optional
