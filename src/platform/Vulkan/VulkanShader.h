@@ -37,7 +37,7 @@ namespace cy3d
 		std::unordered_map<std::string, ShaderUBOSetInfo> ubosInfo;
 		std::unordered_map<std::string, ShaderImageSamplerSetInfo> imageSamplersInfo;
 	};
-
+	//TODO need to cache a the binaries so the shaders are compiled only when they've been changed
 	class VulkanShader
 	{
 		//VK_SHADER_STAGE_VERTEX_BIT,
@@ -49,12 +49,14 @@ namespace cy3d
 		std::unordered_map<uint32_t, ShaderDescriptorSetInfo> _descriptorSetsInfo;
 		std::unordered_map<VkShaderStageFlagBits, ShaderData> _source;
 		std::vector<VkPipelineShaderStageCreateInfo> _pipelineCreateInfo;
-		//index is the setId
+		//index is the set id
 		std::vector<VkDescriptorSetLayout> _descriptorSetLayouts;
 		//std::unordered_map<uint32_t, std::unordered_map<uint32_t, VkDescriptorSet>> _descriptorSets;
 
 	public:
 		VulkanShader(VulkanContext& context, const std::string& shaderDirectory);
+
+		CY_NOCOPY(VulkanShader);
 
 		std::string getName() { return _name; }
 
