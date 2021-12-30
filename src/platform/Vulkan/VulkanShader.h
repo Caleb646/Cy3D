@@ -9,6 +9,8 @@ namespace cy3d
 {
 	constexpr auto VERT_EXTENSION = ".vert";
 	constexpr auto FRAG_EXTENSION = ".frag";
+	constexpr auto SHADER_BIN_FOLDER = "cache";
+	constexpr auto SHADER_COMPILED_EXTENSION = ".spv";
 
 	struct ShaderData
 	{
@@ -54,7 +56,7 @@ namespace cy3d
 		//std::unordered_map<uint32_t, std::unordered_map<uint32_t, VkDescriptorSet>> _descriptorSets;
 
 	public:
-		VulkanShader(VulkanContext& context, const std::string& shaderDirectory);
+		VulkanShader(VulkanContext& context, const std::string& shaderDirectory, const std::string& name);
 
 		CY_NOCOPY(VulkanShader);
 
@@ -87,11 +89,15 @@ namespace cy3d
 		bool createDescriptorSetLayouts();
 		bool createShaderModules(std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>>& binary);
 		void reflect(std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>>& binary);
-		bool compile(std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>>& outBinary);
-		bool readDirectory(const std::string& directory);
-		bool readFile(ShaderData& data);
+		bool compile(const std::string& directory, std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>>& outBinary);
+		bool cacheBinary(const std::string& path, std::vector<uint32_t> binary);
+		bool needsRecompiled(const std::string& directory);
+		bool readSourceDirectory(const std::string& directory);
+		bool readBinaryDirectory(const std::string& directory, std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>>& binary);
+		bool readSource(ShaderData& data);
+		bool readBinary(const std::string& filepath, std::vector<uint32_t>& outBinary);
 		bool isFileType(const std::filesystem::path& filepath, const std::string& type);
-		bool stripFilenameExtension();
+		//bool stripFilenameExtension();
 		shaderc_shader_kind vkShaderStageToShaderCStage(VkShaderStageFlagBits stage);
 	};
 }

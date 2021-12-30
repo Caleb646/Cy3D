@@ -55,7 +55,7 @@ namespace cy3d
 	{
 		uint32_t numImages = static_cast<uint32_t>(_context.getSwapChain()->imageCount());
 
-		_context.getShaderManager()->add("resources/shaders/simpleshaders");
+		_context.getShaderManager()->add("resources/shaders/simpleshaders", "SimpleShader");
 		const auto& shader = _context.getShaderManager()->get("SimpleShader");
 
 		BufferCreateInfo cameraInfo = shader->getDescriptorSetUBOInfo(0, "CameraUboData").createInfo;

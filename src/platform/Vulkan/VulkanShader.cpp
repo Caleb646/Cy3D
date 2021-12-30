@@ -4,7 +4,7 @@
 //
 namespace cy3d
 {
-	VulkanShader::VulkanShader(VulkanContext& context, const std::string& shaderDirectory) : _context(context)
+	VulkanShader::VulkanShader(VulkanContext& context, const std::string& shaderDirectory, const std::string& name) : _context(context), _name(name)
 	{
 		init(shaderDirectory);
 	}
@@ -12,8 +12,16 @@ namespace cy3d
 	void VulkanShader::init(const std::string& directory)
 	{
 		std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>> binary{};
-		readDirectory(directory);
-		compile(binary);
+
+		if (needsRecompiled(directory))
+		{
+			readSourceDirectory(directory);
+			compile(directory, binary);
+		}
+		else
+		{
+			readBinaryDirectory(directory, binary);
+		}	
 		reflect(binary);
 		createShaderModules(binary);
 		createDescriptorSetLayouts();
@@ -146,7 +154,7 @@ namespace cy3d
 		
 	}
 
-	bool VulkanShader::compile(std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>>& outShaderBinary)
+	bool VulkanShader::compile(const std::string& directory, std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>>& outShaderBinary)
 	{
 		shaderc::Compiler compiler;
 		shaderc::CompileOptions options;
@@ -163,18 +171,87 @@ namespace cy3d
 				CY_BASE_LOG_ERROR(spirvBinary.GetErrorMessage());
 				CY_ASSERT(false);
 			}
-			const uint8_t* begin = reinterpret_cast<const uint8_t*>(spirvBinary.cbegin());
-			const uint8_t* end = reinterpret_cast<const uint8_t*>(spirvBinary.cend());
+			const std::byte* begin = reinterpret_cast<const std::byte*>(spirvBinary.cbegin());
+			const std::byte* end = reinterpret_cast<const std::byte*>(spirvBinary.cend());
 			const ptrdiff_t size = end - begin;
 
 			outShaderBinary[stage] = std::vector<uint32_t>(spirvBinary.cbegin(), spirvBinary.cend());
 		}
+
+		auto shaderCacheDir = directory + "/" + SHADER_BIN_FOLDER;
+		if (!(std::filesystem::exists(shaderCacheDir)))
+		{
+			std::filesystem::create_directory(shaderCacheDir);
+			CY_BASE_LOG_INFO("Created shader cache directory: {0}", shaderCacheDir);
+		}
+
+		for (auto& [stage, binary] : outShaderBinary)
+		{
+			if (stage == VK_SHADER_STAGE_VERTEX_BIT)
+			{
+				cacheBinary(shaderCacheDir + "/" + _name + ".vert.spv", binary);
+			}
+			else if (stage == VK_SHADER_STAGE_FRAGMENT_BIT)
+			{
+				cacheBinary(shaderCacheDir + "/" + _name + ".frag.spv", binary);
+			}
+			else
+			{
+				CY_BASE_LOG_INFO("Cannot cache shader binary of unknown shader stage: {0}", stage);
+			}
+		}
 		return true;
 	}
 
-	bool VulkanShader::readDirectory(const std::string& directory)
+	bool VulkanShader::cacheBinary(const std::string& path, std::vector<uint32_t> binary)
 	{
+		std::ofstream fout(path, std::ios::out | std::ios::binary);
+		fout.write(reinterpret_cast<const char*>(binary.data()), binary.size() * sizeof(uint32_t));
+		fout.close();
+		CY_BASE_LOG_INFO("Cached shader to {0}", path);
+		return true;
+	}
 
+	bool VulkanShader::needsRecompiled(const std::string& directory)
+	{
+		auto shaderCacheDir = directory + "/" + SHADER_BIN_FOLDER;
+		if (!(std::filesystem::exists(shaderCacheDir)))
+		{
+			CY_BASE_LOG_INFO("Shader cache directory does not exist so: {0} will be recompiled.", _name);
+			return true;
+		}
+
+		std::chrono::time_point<std::filesystem::_File_time_clock>::clock::duration maxShaderSourceModifiedTime{};
+		bool first{ true };
+		for (const auto& file : std::filesystem::directory_iterator(directory))
+		{
+			auto modTime = file.last_write_time().time_since_epoch();
+			if (first)
+			{
+				maxShaderSourceModifiedTime = modTime;
+				first = false;
+			}
+
+			if (modTime > maxShaderSourceModifiedTime)
+			{
+				maxShaderSourceModifiedTime = modTime;
+			}
+		}
+
+		for (const auto& file : std::filesystem::directory_iterator(shaderCacheDir))
+		{
+			auto modTime = file.last_write_time().time_since_epoch();
+			if (modTime < maxShaderSourceModifiedTime)
+			{
+				CY_BASE_LOG_INFO("Shader {0} will be recompiled.", _name);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool VulkanShader::readSourceDirectory(const std::string& directory)
+	{
 		CY_ASSERT(std::filesystem::exists(directory));
 		CY_ASSERT(std::filesystem::is_directory(directory));
 
@@ -182,20 +259,24 @@ namespace cy3d
 		{
 			const auto& path = file.path();
 			//set name to be the filename it will be strimmed later
-			_name = path.filename().string();
+			//_name = path.filename().string();
 			CY_BASE_LOG_INFO("Filename: {0}", path.filename().string());
+			if (file.is_directory())
+			{
+				continue;
+			}
 			if (isFileType(path, VERT_EXTENSION))
 			{
 				CY_ASSERT(_source.count(VK_SHADER_STAGE_VERTEX_BIT) == 0); //multiple vert shaders cant be in the same directory
 				ShaderData{ std::string(), path };
 				_source[VK_SHADER_STAGE_VERTEX_BIT] = ShaderData{ std::string(), path };
-				readFile(_source[VK_SHADER_STAGE_VERTEX_BIT]);
+				readSource(_source[VK_SHADER_STAGE_VERTEX_BIT]);
 			}
 			else if (isFileType(path, FRAG_EXTENSION))
 			{
 				CY_ASSERT(_source.count(VK_SHADER_STAGE_FRAGMENT_BIT) == 0); //multiple frag shaders cant be in the same directory
 				_source[VK_SHADER_STAGE_FRAGMENT_BIT] = ShaderData{ std::string(), path };
-				readFile(_source[VK_SHADER_STAGE_FRAGMENT_BIT]);
+				readSource(_source[VK_SHADER_STAGE_FRAGMENT_BIT]);
 			}
 			else
 			{
@@ -204,11 +285,47 @@ namespace cy3d
 			}
 		}
 		//remove extension from shader name
-		stripFilenameExtension();
+		//stripFilenameExtension();
 		return true;
 	}
 
-	bool VulkanShader::readFile(ShaderData& data)
+	bool VulkanShader::readBinaryDirectory(const std::string& directory, std::unordered_map<VkShaderStageFlagBits, std::vector<uint32_t>>& binary)
+	{
+		auto shaderCacheDir = directory + "/" + SHADER_BIN_FOLDER;
+		CY_ASSERT(std::filesystem::exists(shaderCacheDir));
+		CY_ASSERT(std::filesystem::is_directory(shaderCacheDir));
+
+		for (const auto& file : std::filesystem::directory_iterator(shaderCacheDir))
+		{
+			const auto& path = file.path();
+			CY_BASE_LOG_INFO("Filename: {0}", path.filename().string());
+			if (file.is_directory())
+			{
+				continue;
+			}
+			if (isFileType(path, VERT_EXTENSION))
+			{
+				CY_ASSERT(binary.count(VK_SHADER_STAGE_VERTEX_BIT) == 0); //multiple vert shaders cant be in the same directory
+				ShaderData{ std::string(), path };
+				binary[VK_SHADER_STAGE_VERTEX_BIT] = std::vector<uint32_t>();
+				readBinary(path.string(), binary[VK_SHADER_STAGE_VERTEX_BIT]);
+			}
+			else if (isFileType(path, FRAG_EXTENSION))
+			{
+				CY_ASSERT(binary.count(VK_SHADER_STAGE_FRAGMENT_BIT) == 0); //multiple frag shaders cant be in the same directory
+				binary[VK_SHADER_STAGE_FRAGMENT_BIT] = std::vector<uint32_t>();
+				readBinary(path.string(), binary[VK_SHADER_STAGE_FRAGMENT_BIT]);
+			}
+			else
+			{
+				CY_BASE_LOG_ERROR("Extension not found: {0}", path.string());
+				CY_ASSERT(false);
+			}
+		}
+		return true;
+	}
+
+	bool VulkanShader::readSource(ShaderData& data)
 	{
 		std::string result;
 		std::ifstream file(data.filepath, std::ios::in | std::ios::binary);
@@ -226,39 +343,43 @@ namespace cy3d
 		}
 		file.close();
 		return true;
+	}
 
-		/*FILE* file;
-		errno_t err = fopen_s(&file, filepath.string().c_str(), "rb");
+	bool VulkanShader::readBinary(const std::string& filepath, std::vector<uint32_t>& outBinary)
+	{
+		FILE* file;
+		errno_t err = fopen_s(&file, filepath.c_str(), "rb");
 		if (!err)
 		{
 			fseek(file, 0, SEEK_END);
 			uint64_t size = ftell(file);
 			fseek(file, 0, SEEK_SET);
-			outSource.resize(size / sizeof(uint32_t));
-			fread(outShaderData.data(), sizeof(uint32_t), outShaderData.size(), file);
+			outBinary.resize(size / sizeof(uint32_t));
+			fread(outBinary.data(), sizeof(uint32_t), outBinary.size(), file);
 			fclose(file);
 			return true;
-		}	*/
-		//CY_BASE_LOG_ERROR("Failed to open file: {0}", filepath.relative_path().string());
-		//return false;
+		}
+		CY_BASE_LOG_ERROR("Failed to open file: {0}", filepath);
+		return false;
 	}
 
 	bool VulkanShader::isFileType(const std::filesystem::path& filepath, const std::string& type)
 	{
-		if (filepath.extension().string().find(type) != std::string::npos)
+		//auto ext = filepath.string();
+		if (filepath.string().find(type) != std::string::npos)
 		{
 			return true;
 		}
 		return false;
 	}
 
-	bool VulkanShader::stripFilenameExtension()
-	{
-		std::size_t index = _name.find(".");
-		CY_ASSERT(index != std::string::npos);
-		_name = std::move(_name.substr(0, index));
-		return true;
-	}
+	//bool VulkanShader::stripFilenameExtension()
+	//{
+	//	std::size_t index = _name.find(".");
+	//	CY_ASSERT(index != std::string::npos);
+	//	_name = std::move(_name.substr(0, index));
+	//	return true;
+	//}
 
 	shaderc_shader_kind VulkanShader::vkShaderStageToShaderCStage(VkShaderStageFlagBits stage)
 	{
